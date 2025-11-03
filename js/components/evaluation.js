@@ -18,6 +18,29 @@ const SCORE_BREAKDOWN_MAX = {
 };
 const TOTAL_MAX_SCORE = 100;
 
+const ROLE_BADGE_META = {
+  'team-leader': {
+    label: 'টিম লিডার',
+    className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-100 dark:border-amber-500/40',
+  },
+  'time-keeper': {
+    label: 'টাইম কিপার',
+    className: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-500/20 dark:text-sky-100 dark:border-sky-500/40',
+  },
+  reporter: {
+    label: 'রিপোর্টার',
+    className: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-100 dark:border-purple-500/40',
+  },
+  'resource-manager': {
+    label: 'রিসোর্স ম্যানেজার',
+    className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-100 dark:border-emerald-500/40',
+  },
+  'peace-maker': {
+    label: 'পিস মেকার',
+    className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-100 dark:border-rose-500/40',
+  },
+};
+
 // Additional Criteria Definitions
 const additionalCriteria = {
   topic: [
@@ -30,6 +53,22 @@ const additionalCriteria = {
     { id: 'attendance_regular', text: 'সাপ্তাহিক নিয়মিত উপস্থিতি', marks: 10 },
   ],
 };
+
+function _renderStudentRoleBadge(roleCode) {
+  const baseClasses =
+    'inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border mt-1';
+  if (!roleCode) {
+    return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">দায়িত্ব নির্ধারিত নয়</span>`;
+  }
+  const meta = ROLE_BADGE_META[roleCode] || {
+    label: helpers?.ensureBengaliText ? helpers.ensureBengaliText(roleCode) : roleCode,
+    className:
+      'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
+  };
+  const label = meta.label || (helpers?.ensureBengaliText ? helpers.ensureBengaliText(roleCode) : roleCode);
+  const className = meta.className || '';
+  return `<span class="${baseClasses} ${className}">${label}</span>`;
+}
 
 /**
  * Evaluation কম্পোনেন্ট শুরু করে (Initialize)।
@@ -211,7 +250,7 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                 <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
                     <tr>
                         <th scope="col" class="th w-1/12">রোল</th>
-                        <th scope="col" class="th w-2/12">নাম</th>
+                        <th scope="col" class="th w-2/12">নাম ও দায়িত্ব</th>
                         <th scope="col" class="th text-center w-1/12">টাস্ক (${helpers.convertToBanglaNumber(
                           maxTask
                         )})</th>
@@ -246,7 +285,10 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                 <td class="td font-medium text-gray-900 dark:text-white">${helpers.convertToBanglaNumber(
                   student.roll
                 )}</td>
-                <td class="td">${student.name}</td>
+                <td class="td">
+                    <div class="font-semibold text-gray-900 dark:text-white">${helpers.ensureBengaliText ? helpers.ensureBengaliText(student.name || '') : student.name || ''}</div>
+                    ${_renderStudentRoleBadge(student.role)}
+                </td>
                 <td class="td"><input type="number" step="any" class="score-input task-score" min="0" max="${maxTask}" data-max="${maxTask}" value="${
       scoreData?.taskScore ?? ''
     }" aria-label="${student.name} Task Score"></td>

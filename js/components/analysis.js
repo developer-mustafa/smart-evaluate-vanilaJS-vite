@@ -35,12 +35,13 @@ const SUMMARY_EVAL_VIEWS = {
 };
 
 const ROLE_LABELS = {
-  'team-leader': '??? ?????',
-  'time-keeper': '???? ?????',
-  'reporter': '?????????',
-  'resource-manager': '??????? ?????????',
-  'peace-maker': '??? ?????',
+  'team-leader': 'টিম লিডার',
+  'time-keeper': 'টাইম কিপার',
+  'reporter': 'রিপোর্টার',
+  'resource-manager': 'রিসোর্স ম্যানেজার',
+  'peace-maker': 'পিস মেকার',
 };
+
 
 const CRITERIA_MAPPING = {
   topic: {
@@ -345,7 +346,7 @@ function _renderGroupHeader(groupData) {
     <div class="card card-body flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">${groupName}</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Students: ${totalStudents} · Participation: ${participation}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Students: ${totalStudents} জন। Participation: ${participation}</p>
         ${mentor ? `<p class="text-sm text-gray-500 dark:text-gray-400">Mentor: ${mentor}</p>` : ''}
       </div>
       <div class="text-sm text-gray-500 dark:text-gray-400">Latest evaluation: ${latestEvaluation}</div>
@@ -697,7 +698,7 @@ function _renderGraphFilters(filters, analysisData) {
         <div class="text-sm text-gray-500 dark:text-gray-400">
           সক্রিয় গ্রুপ: ${_formatNumber(summary.groupsInView)} / ${_formatNumber(
     summary.totalGroups
-  )} Â· অংশগ্রহণ হার: ${_formatPercent(summary.participationRate)} Â· সর্বশেষ মূল্যায়ন: ${
+  )} অংশগ্রহণ হার: ${_formatPercent(summary.participationRate)} সর্বশেষ মূল্যায়ন: ${
     summary.latestEvaluation || '—'
   }
         </div>
@@ -1911,12 +1912,11 @@ function _renderGroupTable(groupMetrics, filters) {
             metric.improvementCount > 0 ? 'text-rose-500 font-semibold' : 'text-gray-600 dark:text-gray-300'
           }">${_formatNumber(metric.improvementCount)}</td>
           <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">${metric.fullCriteriaEvaluations
-            .map(
-              (name) =>
-                `<span class="inline-flex items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200 rounded-full mr-1 mb-1">${_formatText(
-                  name
-                )}</span>`
-            )
+            .map((name, index) => {
+              const assignmentLabel = _formatText(`এসাইনমেন্ট - ${_formatNumber(index + 1)}`);
+              const tooltip = _escapeAttribute(name);
+              return `<span class="inline-flex items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200 rounded-full mr-1 mb-1 whitespace-nowrap" title="${tooltip}">${assignmentLabel}</span>`;
+            })
             .join('')}</td>
         </tr>
       `;
@@ -2198,6 +2198,17 @@ function _formatText(value) {
   }
   if (typeof value === 'string') return value.trim();
   return String(value);
+}
+
+function _escapeAttribute(value) {
+  const text = _formatText(value);
+  const normalized = typeof text === 'string' ? text.replace(/\r?\n/g, ' ') : '';
+  return normalized
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function _scoreColorClass(value) {

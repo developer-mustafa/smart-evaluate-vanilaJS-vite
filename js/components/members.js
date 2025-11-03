@@ -34,6 +34,106 @@ const elements = {
 let membersSearchDebouncer;
 let cardsSearchDebouncer;
 
+const BADGE_BASE_CLASS = 'inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border';
+
+const ROLE_BADGE_META = {
+  'team-leader': {
+    label: 'টিম লিডার',
+    className:
+      'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-100 dark:border-amber-500/40',
+  },
+  'time-keeper': {
+    label: 'টাইম কিপার',
+    className: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-500/20 dark:text-sky-100 dark:border-sky-500/40',
+  },
+  reporter: {
+    label: 'রিপোর্টার',
+    className:
+      'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-100 dark:border-purple-500/40',
+  },
+  'resource-manager': {
+    label: 'রিসোর্স ম্যানেজার',
+    className:
+      'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-100 dark:border-emerald-500/40',
+  },
+  'peace-maker': {
+    label: 'পিস মেকার',
+    className:
+      'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-100 dark:border-rose-500/40',
+  },
+};
+
+const ACADEMIC_BADGE_META = {
+  science: {
+    className: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-100 dark:border-sky-500/40',
+  },
+  humanities: {
+    className:
+      'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-100 dark:border-amber-500/40',
+  },
+  business: {
+    className:
+      'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-100 dark:border-emerald-500/40',
+  },
+  other: {
+    className: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
+  },
+};
+
+function _renderStudentRoleBadge(roleCode) {
+  const baseClasses = `${BADGE_BASE_CLASS} mt-1`;
+  if (!roleCode) {
+    return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">দায়িত্ব নির্ধারিত নয়</span>`;
+  }
+  const meta = ROLE_BADGE_META[roleCode] || {
+    label: roleCode,
+    className: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
+  };
+  const label = meta.label ? _formatLabel(meta.label) : _formatLabel(roleCode);
+  return `<span class="${baseClasses} ${meta.className || ''}">${label}</span>`;
+}
+
+function _renderAcademicBadge(academicGroup) {
+  const baseClasses = BADGE_BASE_CLASS;
+  const value = (academicGroup || '').toString().trim();
+  if (!value) {
+    return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">একাডেমিক শাখা নির্ধারিত নয়</span>`;
+  }
+  const key = _getAcademicKey(value);
+  const meta = ACADEMIC_BADGE_META[key] || {
+    className: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700',
+  };
+  const label = _formatLabel(value);
+  return `<span class="${baseClasses} ${meta.className}">${label}</span>`;
+}
+
+function _formatLabel(value) {
+  if (value === null || value === undefined) return '';
+  const text =
+    helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+      ? helpers.ensureBengaliText(value)
+      : String(value);
+  return _escapeHtml(text.trim());
+}
+
+function _escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function _getAcademicKey(academicGroup) {
+  const value = (academicGroup || '').toString().toLowerCase();
+  if (!value) return 'other';
+  if (value.includes('science') || value.includes('বিজ্ঞান')) return 'science';
+  if (value.includes('human') || value.includes('মানবিক')) return 'humanities';
+  if (value.includes('business') || value.includes('ব্যবসা') || value.includes('কমার্স')) return 'business';
+  return 'other';
+}
+
 /**
  * Members কম্পোনেন্ট শুরু করে (Initialize)।
  */
@@ -236,62 +336,149 @@ function _renderStudentsList() {
   const filters = stateManager.getFilterSection('membersList');
   const filteredStudents = _applyFilters(filters);
 
-  filteredStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'bn'));
   uiManager.clearContainer(elements.studentsListContainer);
 
-  if (filteredStudents.length === 0) {
+  if (!filteredStudents.length) {
     uiManager.displayEmptyMessage(elements.studentsListContainer, 'কোনো শিক্ষার্থী পাওয়া যায়নি।');
     return;
   }
 
-  const groupsMap = new Map(stateManager.get('groups').map((g) => [g.id, g.name]));
+  const groups = stateManager.get('groups') || [];
+  const groupMap = new Map(groups.map((g) => [g.id, g]));
+  const groupColors = _getGroupColorClasses(groups);
 
-  const html = filteredStudents
-    .map((student) => {
-      const groupName = groupsMap.get(student.groupId) || '<span class="text-red-500">গ্রুপ নেই</span>';
-      const roleText = student.role ? _getRoleText(student.role) : 'কোনোটি না';
+  const groupedStudents = new Map();
+  filteredStudents.forEach((student) => {
+    const key = student.groupId || 'unassigned';
+    if (!groupedStudents.has(key)) groupedStudents.set(key, []);
+    groupedStudents.get(key).push(student);
+  });
+
+  const sortedGroupEntries = Array.from(groupedStudents.entries()).sort((a, b) => {
+    if (a[0] === 'unassigned') return 1;
+    if (b[0] === 'unassigned') return -1;
+    const nameA = groupMap.get(a[0])?.name || '';
+    const nameB = groupMap.get(b[0])?.name || '';
+    return nameA.localeCompare(nameB, 'bn');
+  });
+
+  const sections = sortedGroupEntries
+    .map(([groupId, students]) => {
+      const palette = groupColors[groupId] || groupColors.__default;
+      const groupInfo = groupMap.get(groupId);
+      const groupNameRaw = groupInfo?.name || 'গ্রুপ নির্ধারিত নয়';
+      const groupName =
+        helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+          ? helpers.ensureBengaliText(groupNameRaw)
+          : groupNameRaw;
+      const totalLabel =
+        helpers?.convertToBanglaNumber && typeof helpers.convertToBanglaNumber === 'function'
+          ? helpers.convertToBanglaNumber(students.length)
+          : students.length;
+
+      students.sort((a, b) => {
+        const rollA = a.roll !== undefined && a.roll !== null ? a.roll.toString() : '';
+        const rollB = b.roll !== undefined && b.roll !== null ? b.roll.toString() : '';
+        const rollCompare = rollA.localeCompare(rollB, undefined, { numeric: true });
+        if (rollCompare !== 0) return rollCompare;
+        return (a.name || '').localeCompare(b.name || '', 'bn');
+      });
+
+      const studentCards = students
+        .map((student) => {
+          const name =
+            helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+              ? helpers.ensureBengaliText(student.name || '')
+              : student.name || '';
+          const hasRoll = student.roll !== undefined && student.roll !== null && `${student.roll}`.trim() !== '';
+          const rollDisplay = hasRoll
+            ? helpers?.convertToBanglaNumber && typeof helpers.convertToBanglaNumber === 'function'
+              ? helpers.convertToBanglaNumber(student.roll)
+              : student.roll
+            : '';
+          const session =
+            helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+              ? helpers.ensureBengaliText(student.session || '')
+              : student.session || '';
+          const gender =
+            helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+              ? helpers.ensureBengaliText(student.gender || '')
+              : student.gender || '';
+          const academicGroupText =
+            helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+              ? helpers.ensureBengaliText(student.academicGroup || '')
+              : student.academicGroup || '';
+          const contactMarkup = student.contact
+            ? `<div class="mt-2 text-xs text-gray-500 dark:text-gray-400">যোগাযোগ: ${student.contact}</div>`
+            : '';
+
+          return `
+            <article class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-4 shadow-sm hover:shadow-md transition">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h5 class="text-base font-semibold text-gray-900 dark:text-white">${name || 'নাম নেই'}</h5>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    ${_renderAcademicBadge(student.academicGroup)}
+                    ${_renderStudentRoleBadge(student.role)}
+                  </div>
+                </div>
+                <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">${
+                  rollDisplay ? `রোল ${rollDisplay}` : ''
+                }</span>
+              </div>
+              <div class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                <p><span class="font-medium text-gray-700 dark:text-gray-200">সেশন:</span> ${session || 'N/A'}</p>
+                <p><span class="font-medium text-gray-700 dark:text-gray-200">লিঙ্গ:</span> ${gender || 'N/A'}</p>
+                <p><span class="font-medium text-gray-700 dark:text-gray-200">একাডেমিক গ্রুপ:</span> ${
+                  academicGroupText || 'N/A'
+                }</p>
+              </div>
+              ${contactMarkup}
+              <div class="mt-4 flex justify-end gap-2">
+                <button data-id="${
+                  student.id
+                }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা"><i class="fas fa-edit pointer-events-none"></i></button>
+                <button data-id="${
+                  student.id
+                }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট"><i class="fas fa-trash pointer-events-none"></i></button>
+              </div>
+            </article>
+          `;
+        })
+        .join('');
+
+      const headerClasses = `px-4 py-3 bg-gradient-to-r ${
+        palette.headerBg || 'from-slate-500 to-slate-600'
+      } text-white flex items-center justify-between`;
+      const sectionWrapper = `mb-6 rounded-xl overflow-hidden shadow-sm border ${
+        palette.panelBorder || 'border-gray-200 dark:border-gray-700'
+      }`;
+      const bodyWrapper = `p-4 ${palette.sectionBg || 'bg-gray-50 dark:bg-gray-900/40'}`;
 
       return `
-        <div class="card p-4">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div class="mb-2 sm:mb-0">
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">${helpers.ensureBengaliText(
-                      student.name
-                    )}</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        রোল: ${helpers.convertToBanglaNumber(student.roll)} | ${student.academicGroup || ''} | ${
-        student.session || ''
-      }
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                       গ্রুপ: ${groupName} | দায়িত্ব: ${roleText} | লিঙ্গ: ${student.gender}
-                    </p>
-                    ${
-                      student.contact
-                        ? `<p class="text-xs text-gray-500 dark:text-gray-500">যোগাযোগ: ${student.contact}</p>`
-                        : ''
-                    }
-                </div>
-                <div class="flex space-x-2 flex-shrink-0 mt-2 sm:mt-0 self-end sm:self-auto">
-                    <button data-id="${
-                      student.id
-                    }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা"><i class="fas fa-edit pointer-events-none"></i></button>
-                    <button data-id="${
-                      student.id
-                    }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট"><i class="fas fa-trash pointer-events-none"></i></button>
-                </div>
+        <section class="${sectionWrapper}">
+          <header class="${headerClasses}">
+            <h3 class="text-lg font-semibold">${groupName}</h3>
+            <span class="text-sm font-medium">মোট শিক্ষার্থী: ${totalLabel}</span>
+          </header>
+          <div class="${bodyWrapper}">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              ${studentCards}
             </div>
-        </div>
-        `;
+          </div>
+        </section>
+      `;
     })
     .join('');
-  elements.studentsListContainer.innerHTML = html;
+
+  elements.studentsListContainer.innerHTML = sections;
 }
 
 /**
  * ফিল্টার করা শিক্ষার্থীদের কার্ড ভিউ (#page-all-students) রেন্ডার করে।
  * @private
  */
+
 function _renderStudentCardsList() {
   if (!elements.allStudentsCardsContainer) return;
 
@@ -303,44 +490,199 @@ function _renderStudentCardsList() {
   );
   uiManager.clearContainer(elements.allStudentsCardsContainer);
 
-  if (filteredStudents.length === 0) {
+  if (!filteredStudents.length) {
     uiManager.displayEmptyMessage(elements.allStudentsCardsContainer, 'কোনো শিক্ষার্থী পাওয়া যায়নি।');
     return;
   }
 
-  const groupsMap = new Map(stateManager.get('groups').map((g) => [g.id, g.name]));
-  const groupColors = _getGroupColorClasses(stateManager.get('groups'));
+  const groups = stateManager.get('groups') || [];
+  const groupsMap = new Map(groups.map((g) => [g.id, g]));
+  const groupColors = _getGroupColorClasses(groups);
+  const allStudents = stateManager.get('students') || [];
+  const groupStudentCountMap = new Map();
+  allStudents.forEach((student) => {
+    const key = student.groupId || '__ungrouped';
+    groupStudentCountMap.set(key, (groupStudentCountMap.get(key) || 0) + 1);
+  });
 
-  const html = filteredStudents
+  const totalStudents = filteredStudents.length;
+  const groupIds = new Set();
+  const academicCounts = { science: 0, humanities: 0, business: 0, other: 0 };
+  let contactable = 0;
+  let roleAssigned = 0;
+  let maleCount = 0;
+  let femaleCount = 0;
+
+  filteredStudents.forEach((student) => {
+    const groupId = student.groupId;
+    if (groupId) groupIds.add(groupId);
+    const key = _getAcademicKey(student.academicGroup);
+    academicCounts[key] = (academicCounts[key] || 0) + 1;
+    if (student.contact && String(student.contact).trim()) contactable++;
+    if (student.role) roleAssigned++;
+    const gender = (student.gender || '').trim();
+    if (gender.includes('ছেলে')) maleCount++;
+    else if (gender.includes('মেয়ে')) femaleCount++;
+  });
+
+  const formatNumber = (value, fractionDigits = 0) => {
+    const numeric = Number.isFinite(value) ? value : 0;
+    const formatted = fractionDigits > 0 ? numeric.toFixed(fractionDigits) : Math.round(numeric).toString();
+    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(formatted) : formatted;
+  };
+
+  const contactRate = totalStudents > 0 ? (contactable / totalStudents) * 100 : 0;
+  const roleRate = totalStudents > 0 ? (roleAssigned / totalStudents) * 100 : 0;
+
+  const academicLabels = {
+    science: 'বিজ্ঞান শাখা',
+    humanities: 'মানবিক শাখা',
+    business: 'ব্যবসায় শাখা',
+    other: 'অন্যান্য',
+  };
+
+  const academicChips = Object.entries(academicCounts)
+    .filter(([, count]) => count > 0)
+    .map(
+      ([key, count]) =>
+        `<span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm"><i class="fas fa-folder-open"></i> ${
+          academicLabels[key]
+        }: ${formatNumber(count)}</span>`
+    )
+    .join('');
+
+  const summary = `
+  <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-sky-900 to-slate-900 text-white shadow-xl">
+  <div class="absolute inset-0 opacity-35 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]"></div>
+  <div class="absolute -left-24 -bottom-24 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
+  <div class="relative p-6 md:p-10 space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs uppercase tracking-[0.35em] text-white/70">Student Directory</p>
+        <h2 class="text-3xl md:text-4xl font-bold leading-tight">সমস্ত শিক্ষার্থীর কার্ড ভিউ</h2>
+        <p class="mt-2 max-w-2xl text-sm md:text-base text-white/75 leading-relaxed">ফিল্টার অনুযায়ী শিক্ষার্থীদের তথ্য দ্রুত ব্রাউজ করুন। একাডেমিক শাখা, দায়িত্ব, সেশন ও যোগাযোগের তথ্য এক নজরে উপলব্ধ।</p>
+      </div>
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold text-white tracking-widest uppercase">
+        <i class="fas fa-users"></i> ${formatNumber(totalStudents)} শিক্ষার্থী
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur flex-grow">
+        <p class="text-xs uppercase tracking-wide text-white/70">মোট শিক্ষার্থী</p>
+        <p class="mt-2 text-2xl font-semibold">${formatNumber(totalStudents)}</p>
+        <p class="text-xs text-white/70 mt-1">বর্তমান ফিল্টারের ফলাফল</p>
+      </div>
+      <div class="rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur flex-grow">
+        <p class="text-xs uppercase tracking-wide text-white/70">সম্পৃক্ত গ্রুপ</p>
+        <p class="mt-2 text-2xl font-semibold">${formatNumber(groupIds.size)}</p>
+        <p class="text-xs text-white/70 mt-1">ফিল্টারকৃত শিক্ষার্থীরা</p>
+      </div>
+      <div class="rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur flex-grow">
+        <p class="text-xs uppercase tracking-wide text-white/70">যোগাযোগযোগ্য</p>
+        <p class="mt-2 text-2xl font-semibold">${formatNumber(contactable)}</p>
+        <p class="text-xs text-white/70 mt-1">${formatNumber(contactRate, 0)}% যোগাযোগ তথ্য</p>
+      </div>
+      <div class="rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur flex-grow">
+        <p class="text-xs uppercase tracking-wide text-white/70">দায়িত্ব নির্ধারিত</p>
+        <p class="mt-2 text-2xl font-semibold">${formatNumber(roleAssigned)}</p>
+        <p class="text-xs text-white/70 mt-1">${formatNumber(roleRate, 0)}% ভূমিকা সম্পন্ন</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/80">
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-male"></i> ছেলে: ${formatNumber(
+        maleCount
+      )}</span>
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-female"></i> মেয়ে: ${formatNumber(
+        femaleCount
+      )}</span>
+      ${academicChips}
+    </div>
+  </div>
+</section>
+  `;
+
+  const cards = filteredStudents
     .map((student) => {
-      const groupName = groupsMap.get(student.groupId) || 'N/A';
-      const roleText = student.role ? _getRoleText(student.role) : 'N/A';
-      const colorClasses =
-        groupColors[student.groupId] || 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600';
+      const groupInfo = groupsMap.get(student.groupId);
+      const groupNameRaw = groupInfo?.name || 'গ্রুপ নির্ধারিত নয়';
+      const groupName = _formatLabel(groupNameRaw);
+      const palette = groupColors[student.groupId] || groupColors.__default;
+      const name = _formatLabel(student.name || 'নাম নেই');
+      const hasRoll = student.roll !== undefined && student.roll !== null && `${student.roll}`.trim() !== '';
+      const rollDisplay = hasRoll
+        ? helpers?.convertToBanglaNumber && typeof helpers.convertToBanglaNumber === 'function'
+          ? helpers.convertToBanglaNumber(student.roll)
+          : String(student.roll)
+        : '';
+      const session = _formatLabel(student.session || 'N/A');
+      const gender = _formatLabel(student.gender || 'N/A');
+      const academicGroup = _formatLabel(student.academicGroup || 'N/A');
+      const contactText = student.contact ? _formatLabel(student.contact) : '';
+      const contactBlock = contactText
+        ? `<div class="flex items-center gap-2 rounded-xl bg-gray-100/80 px-3 py-2 text-xs text-gray-600 shadow-sm dark:bg-gray-800/70 dark:text-gray-200"><i class="fas fa-phone text-emerald-500"></i><span>${contactText}</span></div>`
+        : '';
+      const groupMemberCount = groupStudentCountMap.get(student.groupId || '__ungrouped') || 0;
 
       return `
-        <div class="${colorClasses} p-4 rounded-lg shadow border transform transition-all hover:scale-[1.03] hover:shadow-lg">
-            <h4 class="text-lg font-bold text-gray-900 dark:text-white truncate">${helpers.ensureBengaliText(
-              student.name
-            )}</h4>
-            <p class="text-sm text-gray-700 dark:text-gray-300">রোল: ${helpers.convertToBanglaNumber(student.roll)}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">${student.academicGroup || ''} (${
-        student.session || ''
-      })</p>
-            <div class="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600 space-y-1">
-                <p class="text-xs text-gray-800 dark:text-gray-200"><span class="font-medium">গ্রুপ:</span> ${helpers.ensureBengaliText(
-                  groupName
-                )}</p>
-                <p class="text-xs text-gray-800 dark:text-gray-200"><span class="font-medium">দায়িত্ব:</span> ${roleText}</p>
-                <p class="text-xs text-gray-800 dark:text-gray-200"><span class="font-medium">লিঙ্গ:</span> ${
-                  student.gender
-                }</p>
+        <article class="relative overflow-hidden rounded-2xl border ${
+          palette.panelBorder || 'border-gray-200 dark:border-gray-700'
+        } bg-white dark:bg-gray-900/80 shadow-sm transition hover:-translate-y-1 hover:shadow-xl h-full">
+          <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
+            palette.headerBg || 'from-indigo-500 to-blue-500'
+          }"></div>
+          <div class="relative flex h-full flex-col space-y-4 p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div class="space-y-2 min-w-0">
+                <h4 class="text-lg font-semibold leading-snug text-gray-900 dark:text-white break-words" title="${name}">${name}</h4>
+                <div class="flex flex-wrap gap-2">
+                  ${_renderAcademicBadge(student.academicGroup)}
+                  ${_renderStudentRoleBadge(student.role)}
+                  <span class="${BADGE_BASE_CLASS} ${
+        palette.chipBg ||
+        'bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
+      }">গ্রুপ: ${groupName}</span>
+                </div>
+              </div>
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-700 shadow-inner dark:bg-gray-800 dark:text-gray-200">${
+                rollDisplay ? `রোল ${rollDisplay}` : 'N/A'
+              }
+              </span>
             </div>
-        </div>
-        `;
+            <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600 dark:text-gray-300">
+              <span class="inline-flex items-center gap-2"><i class="fas fa-calendar text-indigo-500"></i> সেশন: ${session}</span>
+              <span class="inline-flex items-center gap-2 justify-end"><i class="fas fa-venus-mars text-pink-500"></i> লিঙ্গ: ${gender}</span>
+              <span class="inline-flex items-center gap-2"><i class="fas fa-university text-sky-500"></i> একাডেমিক: ${academicGroup}</span>
+              <span class="inline-flex items-center gap-2 justify-end"><i class="fas fa-users text-emerald-500"></i> মোট সদস্য: ${formatNumber(
+                groupMemberCount
+              )}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <span class="inline-flex items-center gap-2 rounded-full bg-gray-100/80 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm dark:bg-gray-800/70 dark:text-gray-200">
+                <i class="fas fa-user-tag text-indigo-500"></i> দায়িত্ব: ${_formatLabel(
+                  _getRoleText(student.role) || 'দায়িত্বহীন'
+                )}
+              </span>
+              <span class="inline-flex items-center gap-2 rounded-full bg-gray-100/80 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm dark:bg-gray-800/70 dark:text-gray-200">
+                <i class="fas fa-address-book text-emerald-500"></i> যোগাযোগ: ${contactText ? 'উপলব্ধ' : 'অনুপস্থিত'}
+              </span>
+            </div>
+            ${contactBlock}
+          </div>
+        </article>
+      `;
     })
     .join('');
-  elements.allStudentsCardsContainer.innerHTML = html;
+
+  elements.allStudentsCardsContainer.innerHTML = `
+    <div class="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8">
+      ${summary}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        ${cards}
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -753,19 +1095,71 @@ function _getRoleText(roleCode) {
 }
 
 function _getGroupColorClasses(groups) {
-  const colors = [
-    'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700',
-    'bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700',
-    'bg-yellow-100 dark:bg-yellow-900/50 border-yellow-300 dark:border-yellow-700',
-    'bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-700',
-    'bg-pink-100 dark:bg-pink-900/50 border-pink-300 dark:border-pink-700',
-    'bg-indigo-100 dark:bg-indigo-900/50 border-indigo-300 dark:border-indigo-700',
-    'bg-teal-100 dark:bg-teal-900/50 border-teal-300 dark:border-teal-700',
-    'bg-red-100 dark:bg-red-900/50 border-red-300 dark:border-red-700',
+  const palette = [
+    {
+      panelBorder: 'border-blue-300 dark:border-blue-700',
+      sectionBg: 'bg-blue-50/80 dark:bg-blue-900/15',
+      headerBg: 'from-blue-500 to-indigo-500',
+      chipBg: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-100 dark:border-blue-800',
+    },
+    {
+      panelBorder: 'border-emerald-300 dark:border-emerald-700',
+      sectionBg: 'bg-emerald-50/80 dark:bg-emerald-900/15',
+      headerBg: 'from-emerald-500 to-teal-500',
+      chipBg:
+        'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-100 dark:border-emerald-800',
+    },
+    {
+      panelBorder: 'border-amber-300 dark:border-amber-700',
+      sectionBg: 'bg-amber-50/80 dark:bg-amber-900/20',
+      headerBg: 'from-amber-500 to-orange-500',
+      chipBg:
+        'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-800',
+    },
+    {
+      panelBorder: 'border-purple-300 dark:border-purple-700',
+      sectionBg: 'bg-purple-50/80 dark:bg-purple-900/15',
+      headerBg: 'from-violet-500 to-purple-600',
+      chipBg:
+        'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-100 dark:border-purple-800',
+    },
+    {
+      panelBorder: 'border-rose-300 dark:border-rose-700',
+      sectionBg: 'bg-rose-50/80 dark:bg-rose-900/15',
+      headerBg: 'from-rose-500 to-pink-500',
+      chipBg: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-100 dark:border-rose-800',
+    },
+    {
+      panelBorder: 'border-sky-300 dark:border-sky-700',
+      sectionBg: 'bg-sky-50/80 dark:bg-sky-900/15',
+      headerBg: 'from-sky-500 to-cyan-500',
+      chipBg: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:text-sky-100 dark:border-sky-800',
+    },
+    {
+      panelBorder: 'border-indigo-300 dark:border-indigo-700',
+      sectionBg: 'bg-indigo-50/80 dark:bg-indigo-900/15',
+      headerBg: 'from-indigo-500 to-blue-600',
+      chipBg:
+        'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-100 dark:border-indigo-800',
+    },
+    {
+      panelBorder: 'border-lime-300 dark:border-lime-700',
+      sectionBg: 'bg-lime-50/80 dark:bg-lime-900/15',
+      headerBg: 'from-lime-500 to-green-500',
+      chipBg: 'bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/40 dark:text-lime-100 dark:border-lime-800',
+    },
   ];
-  const groupColorMap = {};
+
+  const fallback = {
+    panelBorder: 'border-gray-200 dark:border-gray-700',
+    sectionBg: 'bg-gray-50 dark:bg-gray-900/40',
+    headerBg: 'from-slate-500 to-slate-600',
+    chipBg: 'bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600',
+  };
+
+  const map = { __default: fallback };
   (groups || []).forEach((group, index) => {
-    groupColorMap[group.id] = colors[index % colors.length];
+    map[group.id] = palette[index % palette.length];
   });
-  return groupColorMap;
+  return map;
 }

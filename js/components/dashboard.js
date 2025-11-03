@@ -74,43 +74,216 @@ export function render() {
  * @private
  */
 function _getDashboardHTMLStructure() {
-  // This HTML must match the IDs used in _cacheInnerDOMElements
   return `
-        <div class="max-w-7xl mx-auto space-y-6">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-3">
-                <div class="stat-card"><div id="totalGroups">-</div><div>মোট গ্রুপ</div></div>
-                <div class="stat-card"><div id="totalStudents">-</div><div>মোট শিক্ষার্থী</div></div>
-                <div class="stat-card"><div id="totalAcademicGroups">-</div><div>একাডেমিক গ্রুপ</div></div>
-                <div class="stat-card"><div id="pendingRoles">-</div><div>দায়িত্ব বাকি</div></div>
-                <div class="stat-card"><div id="maleStudents">-</div><div id="malePercentage" class="text-xs text-indigo-600"></div><div>ছেলে</div></div>
-                <div class="stat-card"><div id="femaleStudents">-</div><div id="femalePercentage" class="text-xs text-pink-600"></div><div>মেয়ে</div></div>
-                <div class="stat-card"><div id="totalTasks">-</div><div>মোট টাস্ক</div></div>
-                <div class="stat-card"><div id="pendingEvaluations">-</div><div>বাকি মূল্যায়ন</div></div>
+    <div class="max-w-7xl mx-auto space-y-8">
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-800 text-white shadow-2xl">
+        <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_55%)]"></div>
+        <div class="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative p-6 md:p-10">
+          <div class="grid gap-8 md:grid-cols-2">
+            <div class="space-y-4">
+              <p class="text-xs uppercase tracking-[0.35em] text-white/70">Smart Overview</p>
+              <h2 class="text-3xl md:text-4xl font-bold leading-tight">ড্যাশবোর্ড ইন্টেলিজেন্স</h2>
+              <p class="text-sm md:text-base text-white/75 leading-relaxed">
+                রিয়েল-টাইমে গ্রুপ, একাডেমিক শাখা এবং মূল্যায়নের ফলাফল বিশ্লেষণ করে দ্রুত সিদ্ধান্ত নিন।
+                প্রগতির প্রতিটি ধাপকে মাপুন এবং দলকে এগিয়ে রাখুন।
+              </p>
+              <div class="flex flex-wrap gap-2 text-xs font-medium text-white/70">
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-bolt"></i> লাইভ আপডেট</span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-chart-line"></i> পারফরম্যান্স ট্র্যাকিং</span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-shield-alt"></i> নেতৃত্ব মেট্রিক্স</span>
+              </div>
             </div>
-            <div class="card p-2">
-                <div class="relative w-full h-10 sm:h-12 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                    <div id="progressBar" class="absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out bg-green-500" style="width: 0%;"></div>
-                    <div class="absolute inset-0 flex flex-col sm:flex-row items-center justify-between px-4 text-xs sm:text-sm font-medium">
-                        <span class="text-gray-700 dark:text-gray-300">সামগ্রিক অগ্রগতি</span>
-                        <span id="overallProgress" class="font-bold text-lg sm:text-xl text-gray-800 dark:text-white">0%</span>
-                        <span class="text-gray-700 dark:text-gray-300">গড় পারফরম্যান্স</span>
-                    </div>
-                </div>
+            <div class="rounded-2xl bg-white/10 p-6 backdrop-blur">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-white/70">সামগ্রিক পারফরম্যান্স সূচক</span>
+                <span id="overallProgress" class="text-3xl font-semibold text-white">-</span>
+              </div>
+              <div class="mt-4 h-3 w-full overflow-hidden rounded-full bg-white/20">
+                <div id="progressBar" class="h-full w-0 rounded-full transition-all duration-1000 ease-out" style="background: linear-gradient(90deg,#22c55e,#16a34a); box-shadow: 0 8px 20px rgba(34,197,94,0.35);"></div>
+              </div>
+              <p class="mt-3 text-xs text-white/70">এই সপ্তাহে মূল্যায়িত সব গ্রুপের গড় স্কোরের ভিত্তিতে আপডেট করা হয়।</p>
             </div>
-            <div id="topGroupsContainer" class="card card-body">
-                <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> শীর্ষ গ্রুপ লোড হচ্ছে...</div>
-            </div>
-            <div id="academicGroupStatsList" class="card card-body">
-                 <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> একাডেমিক গ্রুপ লোড হচ্ছে...</div>
-            </div>
-            <div class="card">
-                <div class="card-header">গ্রুপ র‌্যাঙ্কিং (গড় নম্বরের ভিত্তিতে)</div>
-                <div id="groupsRankingList" class="card-body space-y-3">
-                     <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> র‍্যাঙ্কিং লোড হচ্ছে...</div>
-                </div>
-            </div>
+          </div>
         </div>
-    `;
+      </section>
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">ড্যাশবোর্ড স্টেট</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মোট গ্রুপ</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="totalGroups">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">সক্রিয় সব গ্রুপ সংখ্যা</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">
+              <i class="fas fa-layer-group text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">মোট শিক্ষার্থী</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মোট শিক্ষার্থী</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="totalStudents">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">সিস্টেমে নিবন্ধিত সব সদস্য</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">
+              <i class="fas fa-user-graduate text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">একাডেমিক কভারেজ</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">একাডেমিক গ্রুপ</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="totalAcademicGroups">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">বিজ্ঞান · মানবিক · ব্যবসায়</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-300">
+              <i class="fas fa-university text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">দায়িত্ব বণ্টন</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">দায়িত্ব বাকি</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="pendingRoles">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">যাদের ভূমিকা নির্ধারণ হয়নি</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-300">
+              <i class="fas fa-user-clock text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">জেন্ডার অন্তর্ভুক্তি</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">ছেলে সদস্য</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="maleStudents">-</p>
+              <div class="mt-1 inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
+                <i class="fas fa-male"></i>
+                <span id="malePercentage">-</span>
+              </div>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-300">
+              <i class="fas fa-venus-mars text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">জেন্ডার অন্তর্ভুক্তি</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মেয়ে সদস্য</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="femaleStudents">-</p>
+              <div class="mt-1 inline-flex items-center gap-2 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-600 dark:text-rose-300">
+                <i class="fas fa-female"></i>
+                <span id="femalePercentage">-</span>
+              </div>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300">
+              <i class="fas fa-user-friends text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">টাস্ক ম্যানেজমেন্ট</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মোট টাস্ক</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="totalTasks">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">নির্ধারিত সব মূল্যায়ন টাস্ক</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-300">
+              <i class="fas fa-tasks text-lg"></i>
+            </span>
+          </div>
+        </article>
+
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-transparent"></div>
+          <div class="relative flex items-start justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">মূল্যায়ন কভারেজ</p>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">বাকি মূল্যায়ন</h3>
+              <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="pendingEvaluations">-</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">যেগুলো এখনও সম্পন্ন হয়নি</p>
+            </div>
+            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/15 text-red-600 dark:text-red-300">
+              <i class="fas fa-hourglass-half text-lg"></i>
+            </span>
+          </div>
+        </article>
+      </section>
+
+      <div class="grid gap-8 xl:grid-cols-5">
+        <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 xl:col-span-3">
+          <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">শীর্ষ ৩ গ্রুপ</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">সর্বোচ্চ গড় স্কোরের ভিত্তিতে সাজানো</p>
+              </div>
+              <span class="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300">
+                <i class="fas fa-trophy"></i> লিডারবোর্ড
+              </span>
+            </div>
+          </div>
+          <div id="topGroupsContainer" class="p-6"></div>
+        </section>
+
+        <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 xl:col-span-2">
+          <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">একাডেমিক গ্রুপ পারফরম্যান্স</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">শাখাভিত্তিক গড় স্কোর ও অংশগ্রহণ</p>
+              </div>
+              <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                <i class="fas fa-chart-bar"></i> ট্রেন্ড
+              </span>
+            </div>
+          </div>
+          <div id="academicGroupStatsList" class="p-6 space-y-4"></div>
+        </section>
+      </div>
+
+      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">গ্রুপ র‌্যাঙ্কিং · গড় নম্বরের ভিত্তিতে</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">গড় স্কোর, সদস্য সংখ্যা, মূল্যায়িত সদস্য এবং টাস্ক কাভারেজ</p>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-300">
+              <i class="fas fa-star"></i> ডেটা ইনসাইট
+            </span>
+          </div>
+        </div>
+        <div id="groupsRankingList" class="p-6 space-y-4"></div>
+      </section>
+    </div>
+  `;
 }
 
 /** Caches the main page element. */
@@ -198,6 +371,8 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
       const groupEvals = evaluations.filter((e) => e.groupId === group.id);
       let totalPercentageScore = 0;
       let validEvalsCount = 0;
+      const evaluatedMemberIds = new Set();
+      const taskIds = new Set();
       groupEvals.forEach((evaluation) => {
         // Use the average percentage score stored in the evaluation document
         const avgEvalScorePercent = parseFloat(evaluation.groupAverageScore);
@@ -215,6 +390,7 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
             Object.values(evaluation.scores).forEach((scoreData) => {
               evalScoreSum += parseFloat(scoreData.totalScore) || 0;
               studentCountInEval++;
+              if (scoreData.studentId) evaluatedMemberIds.add(scoreData.studentId);
             });
             if (studentCountInEval > 0) {
               totalPercentageScore += (evalScoreSum / studentCountInEval / maxScore) * 100;
@@ -222,14 +398,27 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
             }
           }
         }
+        if (evaluation?.scores) {
+          Object.keys(evaluation.scores).forEach((studentId) => {
+            if (studentId) evaluatedMemberIds.add(studentId);
+          });
+        }
+        if (evaluation?.taskId) taskIds.add(evaluation.taskId);
       });
       const averageScore = validEvalsCount > 0 ? totalPercentageScore / validEvalsCount : 0;
+      const evaluatedMembers = evaluatedMemberIds.size;
+      const taskCount = taskIds.size;
+      const participationRate =
+        groupStudents.length > 0 ? Math.min(100, (evaluatedMembers / groupStudents.length) * 100) : 0;
       return {
         group,
         groupName: group.name,
         studentCount: groupStudents.length,
         averageScore: averageScore,
         evalCount: validEvalsCount,
+        evaluatedMembers,
+        taskCount,
+        participationRate,
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
@@ -285,9 +474,14 @@ function _renderStats(stats) {
   const progressInt = Math.round(progress);
   setText(elements.overallProgress, `${formatNum(progressInt)}%`);
   if (elements.progressBar) {
+    const palette = _getScorePalette(progress);
     elements.progressBar.style.width = `${progressInt}%`;
-    const progressColorClass = helpers.getPerformanceBgClass(progress);
-    elements.progressBar.className = `absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out ${progressColorClass}`;
+    elements.progressBar.style.background = `linear-gradient(90deg, ${palette.solid}, ${palette.solid})`;
+    elements.progressBar.style.boxShadow = `0 8px 20px ${palette.shadow}`;
+    elements.progressBar.className = 'h-full rounded-full transition-all duration-1000 ease-out';
+  }
+  if (elements.overallProgress) {
+    elements.overallProgress.style.color = _getScorePalette(progress).solid;
   }
 }
 
@@ -300,25 +494,60 @@ function _renderTopGroups(groupData) {
     uiManager.displayEmptyMessage(elements.topGroupsContainer, 'শীর্ষ গ্রুপ গণনা করার ডেটা নেই।');
     return;
   }
-  const rankingColors = ['bg-yellow-400', 'bg-gray-300', 'bg-orange-400'];
-  let html = '<h3 class="text-xl font-semibold mb-4 text-center">শীর্ষ ৩ গ্রুপ</h3>';
-  html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
-  top3.forEach((data, index) => {
-    const rankText = helpers.convertToBanglaRank(index + 1);
-    const score = helpers.convertToBanglaNumber(data.averageScore.toFixed(1));
-    const students = helpers.convertToBanglaNumber(data.studentCount);
-    html += `
-            <div class="p-4 rounded-lg shadow ${rankingColors[index]} ${
-      index === 1 ? 'text-gray-800' : 'text-white'
-    } transition-transform hover:scale-105">
-                <div class="flex justify-between items-baseline mb-2"><span class="text-2xl font-bold">${rankText}</span><span class="font-semibold truncate" title="${
-      data.groupName
-    }">${helpers.truncateText(data.groupName, 15)}</span></div>
-                <div class="text-center mt-3"><div class="text-3xl font-bold">${score}%</div><div class="text-xs opacity-90 mt-1">গড় স্কোর | ${students} শিক্ষার্থী</div></div>
-            </div>`;
-  });
-  html += '</div>';
-  elements.topGroupsContainer.innerHTML = html;
+  const cards = top3
+    .map((data, index) => {
+      const palette = _getScorePalette(data.averageScore);
+      const rankText = helpers.convertToBanglaRank(index + 1);
+      const score = helpers.convertToBanglaNumber(data.averageScore.toFixed(1));
+      const students = helpers.convertToBanglaNumber(data.studentCount);
+      const evaluated = helpers.convertToBanglaNumber(data.evaluatedMembers);
+      const tasks = helpers.convertToBanglaNumber(data.taskCount);
+      const participation = helpers.convertToBanglaNumber(Math.round(data.participationRate || 0));
+      const groupName = _formatLabel(data.groupName);
+      return `
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80">
+          <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-70"></div>
+          <div class="relative p-6 space-y-5">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-gray-800 shadow">
+                <i class="fas fa-crown text-amber-500"></i> ${rankText}
+              </span>
+              <span class="text-xs uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300">Elite Group</span>
+            </div>
+            <div class="space-y-2">
+              <h4 class="text-xl font-semibold text-gray-900 dark:text-white" title="${groupName}">${groupName}</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">মোট সদস্য: ${students} · মূল্যায়িত: ${evaluated} · টাস্ক: ${tasks}</p>
+            </div>
+            <div class="flex items-center gap-5">
+              ${_buildCircularMeter(data.averageScore, palette, 96)}
+              <div class="flex-1 space-y-3">
+                <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
+                    <i class="fas fa-chart-pie text-indigo-500"></i> গড় স্কোর: ${score}%
+                  </span>
+                  <span class="inline-flex items-center justify-end gap-2 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
+                    <i class="fas fa-user-check text-emerald-500"></i> অংশগ্রহণ: ${participation}%
+                  </span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div class="h-full rounded-full" style="width: ${Math.min(
+                    100,
+                    Math.round(data.averageScore)
+                  )}%; background: ${palette.solid}; box-shadow: 0 8px 12px ${palette.shadow};"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join('');
+
+  elements.topGroupsContainer.innerHTML = `
+    <div class="grid gap-6 md:grid-cols-${Math.min(3, top3.length)}">
+      ${cards}
+    </div>
+  `;
 }
 
 /** Renders academic group stats */
@@ -332,25 +561,47 @@ function _renderAcademicGroups(academicStats) {
     uiManager.displayEmptyMessage(elements.academicGroupStatsList, 'একাডেমিক গ্রুপের তথ্য নেই।');
     return;
   }
-  let html = '<h3 class="text-xl font-semibold mb-4 text-center">একাডেমিক গ্রুপ পারফরম্যান্স</h3>';
-  html += '<div class="space-y-2">';
-  sortedAG.forEach(([name, data]) => {
-    const avgScore = data.averageScore;
-    const progress = Math.round(avgScore);
-    const colorClass = helpers.getPerformanceBgClass(avgScore);
-    html += `
-        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md shadow-sm">
-            <div class="flex justify-between items-center mb-1 text-sm"><span class="font-medium text-gray-700 dark:text-gray-200">${name}</span><span class="font-semibold ${helpers.getPerformanceColorClass(
-      avgScore
-    )}">${helpers.convertToBanglaNumber(avgScore.toFixed(1))}%</span></div>
-            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2"><div class="${colorClass} h-2 rounded-full" style="width: ${progress}%"></div></div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${helpers.convertToBanglaNumber(
-              data.totalStudents
-            )} জন শিক্ষার্থী</div>
-        </div>`;
-  });
-  html += '</div>';
-  elements.academicGroupStatsList.innerHTML = html;
+  const cards = sortedAG
+    .map(([name, data]) => {
+      const avgScore = data.averageScore;
+      const palette = _getScorePalette(avgScore);
+      const progress = Math.min(100, Math.round(avgScore));
+      const avgText = helpers.convertToBanglaNumber(avgScore.toFixed(1));
+      const totalStudents = helpers.convertToBanglaNumber(data.totalStudents);
+      const groupCount = helpers.convertToBanglaNumber(data.groupCount);
+      const formattedName = _formatLabel(name);
+      return `
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-60"></div>
+          <div class="relative space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="text-base font-semibold text-gray-900 dark:text-white" title="${formattedName}">${formattedName}</h4>
+              <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200 shadow">
+                <i class="fas fa-signal"></i> গড়: ${avgText}%
+              </span>
+            </div>
+            <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+              <div class="h-full rounded-full" style="width: ${progress}%; background: ${palette.solid}; box-shadow: 0 6px 12px ${palette.shadow};"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600 dark:text-gray-300">
+              <span class="inline-flex items-center gap-2">
+                <i class="fas fa-users text-indigo-500"></i> শিক্ষার্থী: ${totalStudents}
+              </span>
+              <span class="inline-flex items-center gap-2 justify-end">
+                <i class="fas fa-layer-group text-emerald-500"></i> গ্রুপ: ${groupCount}
+              </span>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join('');
+
+  elements.academicGroupStatsList.innerHTML = `
+    <div class="space-y-4">
+      ${cards}
+    </div>
+  `;
 }
 
 /** Renders group ranking list */
@@ -359,12 +610,14 @@ function _renderGroupsRanking(groupData) {
   uiManager.clearContainer(elements.groupsRankingList);
   const evaluatedGroups = groupData.filter((g) => g.evalCount > 0);
   if (evaluatedGroups.length === 0) {
-    uiManager.displayEmptyMessage(elements.groupsRankingList, 'র‍্যাঙ্কিংয়ের জন্য ডেটা নেই।');
+    uiManager.displayEmptyMessage(elements.groupsRankingList, 'র‌্যাঙ্কিংয়ের জন্য ডেটা নেই।');
     return;
   }
-  let rank = 0,
-    lastScore = -1,
-    lastEvalCount = -1;
+
+  let rank = 0;
+  let lastScore = -1;
+  let lastEvalCount = -1;
+
   const html = evaluatedGroups
     .map((data, index) => {
       if (data.averageScore !== lastScore || data.evalCount !== lastEvalCount) {
@@ -373,21 +626,120 @@ function _renderGroupsRanking(groupData) {
         lastEvalCount = data.evalCount;
       }
       const rankText = helpers.convertToBanglaRank(rank);
-      const score = helpers.convertToBanglaNumber(data.averageScore.toFixed(1));
       const evals = helpers.convertToBanglaNumber(data.evalCount);
       const students = helpers.convertToBanglaNumber(data.studentCount);
-      const color = helpers.getPerformanceColorClass(data.averageScore);
+      const evaluatedMembers = helpers.convertToBanglaNumber(data.evaluatedMembers);
+      const tasks = helpers.convertToBanglaNumber(data.taskCount);
+      const palette = _getScorePalette(data.averageScore);
+      const groupName = _formatLabel(data.groupName);
       return `
-        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex items-center gap-3">
-            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full ${helpers.getPerformanceBgClass(
-              data.averageScore
-            )} text-white font-bold text-sm shadow">${rankText}</div>
-            <div class="flex-1 min-w-0"><h4 class="text-base font-semibold truncate" title="${data.groupName}">${
-        data.groupName
-      }</h4><p class="text-xs text-gray-500 dark:text-gray-400">${students} শিক্ষার্থী | ${evals} মূল্যায়ন</p></div>
-            <div class="flex-shrink-0 text-right"><div class="text-lg font-bold ${color}">${score}%</div><div class="text-xs text-gray-500 dark:text-gray-400">গড় স্কোর</div></div>
-        </div>`;
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="absolute inset-0 bg-gradient-to-r ${palette.gradient} opacity-60"></div>
+          <div class="relative grid gap-5 md:grid-cols-[auto,1fr,auto] items-center">
+            <div class="flex flex-col items-center justify-center gap-1 rounded-2xl bg-white/80 px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow dark:bg-white/10 dark:text-gray-200">
+              <span class="text-xl font-bold">${rankText}</span>
+              <span class="text-[10px] uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">Rank</span>
+            </div>
+            <div class="space-y-3 min-w-0">
+              <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <h4 class="text-base font-semibold text-gray-900 dark:text-white truncate" title="${groupName}">${groupName}</h4>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200 shadow">
+                  <i class="fas fa-diagram-project text-indigo-500"></i> টাস্ক: ${tasks}
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600 dark:text-gray-300">
+                <span class="inline-flex items-center gap-2">
+                  <i class="fas fa-users text-sky-500"></i> মোট সদস্য: ${students}
+                </span>
+                <span class="inline-flex items-center gap-2 justify-end">
+                  <i class="fas fa-user-check text-emerald-500"></i> মূল্যায়িত সদস্য: ${evaluatedMembers}
+                </span>
+                <span class="inline-flex items-center gap-2">
+                  <i class="fas fa-clipboard-check text-purple-500"></i> সম্পন্ন মূল্যায়ন: ${evals}
+                </span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <div class="h-full rounded-full" style="width: ${Math.min(100, Math.round(data.averageScore))}%; background: ${palette.solid}; box-shadow: 0 6px 12px ${palette.shadow};"></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              ${_buildCircularMeter(data.averageScore, palette, 88)}
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">গড় স্কোর</span>
+            </div>
+          </div>
+        </article>
+      `;
     })
     .join('');
+
   elements.groupsRankingList.innerHTML = html;
 }
+
+function _formatLabel(value) {
+  if (value === null || value === undefined) return '';
+  const text =
+    helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function'
+      ? helpers.ensureBengaliText(value)
+      : String(value);
+  return _escapeHtml(text.trim());
+}
+
+function _escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function _getScorePalette(score) {
+  const numeric = Number(score) || 0;
+  if (numeric >= 85) {
+    return {
+      solid: '#22c55e',
+      soft: 'rgba(34,197,94,0.18)',
+      gradient: 'from-emerald-500/15 via-emerald-400/10 to-transparent',
+      shadow: 'rgba(34,197,94,0.28)',
+    };
+  }
+  if (numeric >= 70) {
+    return {
+      solid: '#0ea5e9',
+      soft: 'rgba(14,165,233,0.18)',
+      gradient: 'from-sky-500/15 via-sky-400/10 to-transparent',
+      shadow: 'rgba(14,165,233,0.25)',
+    };
+  }
+  if (numeric >= 55) {
+    return {
+      solid: '#f59e0b',
+      soft: 'rgba(245,158,11,0.18)',
+      gradient: 'from-amber-500/15 via-amber-400/10 to-transparent',
+      shadow: 'rgba(245,158,11,0.25)',
+    };
+  }
+  return {
+    solid: '#f43f5e',
+    soft: 'rgba(244,63,94,0.18)',
+    gradient: 'from-rose-500/15 via-rose-400/10 to-transparent',
+    shadow: 'rgba(244,63,94,0.25)',
+  };
+}
+
+function _buildCircularMeter(score, palette, size = 96) {
+  const clamped = Math.max(0, Math.min(100, Number(score) || 0));
+  const diameter = typeof size === 'number' ? size : 96;
+  const displayValue = helpers.convertToBanglaNumber(Math.round(clamped).toString());
+  return `
+    <div class="relative flex items-center justify-center" style="width:${diameter}px;height:${diameter}px;">
+      <div class="absolute inset-0 rounded-full" style="background: conic-gradient(${palette.solid} ${clamped}%, ${
+    palette.soft
+  } ${clamped}% 100%);"></div>
+      <div class="absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-inner" style="box-shadow: 0 8px 18px ${palette.shadow};">
+        <span class="text-lg font-semibold text-gray-800 dark:text-gray-100">${displayValue}%</span>
+      </div>
+    </div>
+  `;
+}
+
