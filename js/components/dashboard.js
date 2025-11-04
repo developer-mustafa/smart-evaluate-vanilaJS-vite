@@ -236,37 +236,35 @@ function _getDashboardHTMLStructure() {
         </article>
       </section>
 
-      <div class="grid gap-8 xl:grid-cols-5">
-        <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 xl:col-span-3">
-          <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">শীর্ষ ৩ গ্রুপ</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">সর্বোচ্চ গড় স্কোরের ভিত্তিতে সাজানো</p>
-              </div>
-              <span class="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300">
-                <i class="fas fa-trophy"></i> লিডারবোর্ড
-              </span>
+      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Elite Group</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Top performing groups ranked by average evaluation score.</p>
             </div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300">
+              <i class="fas fa-trophy"></i> Elite Group
+            </span>
           </div>
-          <div id="topGroupsContainer" class="p-6"></div>
-        </section>
+        </div>
+        <div id="topGroupsContainer" class="p-6"></div>
+      </section>
 
-        <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 xl:col-span-2">
-          <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">একাডেমিক গ্রুপ পারফরম্যান্স</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">শাখাভিত্তিক গড় স্কোর ও অংশগ্রহণ</p>
-              </div>
-              <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300">
-                <i class="fas fa-chart-bar"></i> ট্রেন্ড
-              </span>
+      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">একাডেমিক গ্রুপ পারফরম্যান্স</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">শাখাভিত্তিক গ্রুপ স্কোর ও অংশগ্রহণের প্রবণতা</p>
             </div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300">
+              <i class="fas fa-chart-bar"></i> ট্রেন্ডস
+            </span>
           </div>
-          <div id="academicGroupStatsList" class="p-6 space-y-4"></div>
-        </section>
-      </div>
+        </div>
+        <div id="academicGroupStatsList" class="p-6"></div>
+      </section>
 
       <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
@@ -543,11 +541,33 @@ function _renderTopGroups(groupData) {
     })
     .join('');
 
+  const topGroupColumns = ['grid', 'grid-cols-1', 'gap-6'];
+  if (top3.length >= 2) topGroupColumns.push('sm:grid-cols-2');
+  if (top3.length >= 3) topGroupColumns.push('lg:grid-cols-3');
+
   elements.topGroupsContainer.innerHTML = `
-    <div class="grid gap-6 md:grid-cols-${Math.min(3, top3.length)}">
+    <div class="${topGroupColumns.join(' ')}">
       ${cards}
     </div>
   `;
+
+  const topGroupsSection = elements.topGroupsContainer.closest('section');
+  if (topGroupsSection) {
+    const headerTitle = topGroupsSection.querySelector('h3');
+    if (headerTitle) headerTitle.textContent = 'Elite Group';
+
+    const headerSubtitle = topGroupsSection.querySelector('p.text-xs');
+    if (headerSubtitle) {
+      headerSubtitle.textContent = 'Top performing groups ranked by average evaluation score.';
+    }
+
+    const headerBadge = topGroupsSection.querySelector('span.bg-indigo-500\\/10');
+    if (headerBadge) {
+      const icon = headerBadge.querySelector('i');
+      const iconHTML = icon ? icon.outerHTML : '';
+      headerBadge.innerHTML = `${iconHTML} Elite Group`;
+    }
+  }
 }
 
 /** Renders academic group stats */
@@ -561,7 +581,8 @@ function _renderAcademicGroups(academicStats) {
     uiManager.displayEmptyMessage(elements.academicGroupStatsList, 'একাডেমিক গ্রুপের তথ্য নেই।');
     return;
   }
-  const cards = sortedAG
+  const topThree = sortedAG.slice(0, 3);
+  const cards = topThree
     .map(([name, data]) => {
       const avgScore = data.averageScore;
       const palette = _getScorePalette(avgScore);
@@ -597,8 +618,12 @@ function _renderAcademicGroups(academicStats) {
     })
     .join('');
 
+  const academicColumns = ['grid', 'grid-cols-1', 'gap-6'];
+  if (topThree.length >= 2) academicColumns.push('sm:grid-cols-2');
+  if (topThree.length >= 3) academicColumns.push('lg:grid-cols-3');
+
   elements.academicGroupStatsList.innerHTML = `
-    <div class="space-y-4">
+    <div class="${academicColumns.join(' ')}">
       ${cards}
     </div>
   `;
@@ -742,4 +767,3 @@ function _buildCircularMeter(score, palette, size = 96) {
     </div>
   `;
 }
-
