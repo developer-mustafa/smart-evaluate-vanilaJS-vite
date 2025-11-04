@@ -371,3 +371,6 @@ body {
     text-align: center; padding: 2rem; color: #6b7280; font-style: italic;
 }
 .dark .placeholder-content { color: #9ca3af; }
+#allStudentsCards > .placeholder-content {
+    grid-column: 1 / -1;
+}
