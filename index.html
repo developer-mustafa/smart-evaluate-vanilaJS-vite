@@ -1,591 +1,1031 @@
 <!DOCTYPE html>
 <html lang="bn" class="h-full">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Group Evaluator</title>
 
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Tailwind, fonts/icons -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="main.css" />
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer" />
-
-    <link rel="stylesheet" href="main.css">
-
+    <!-- Firebase v8 (as you already use elsewhere) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- jsPDF + AutoTable (keep only one set) -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
+    <!-- Chart.js v4 + plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <!-- Other libs you use -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script> <script>
-        // Tailwind Config
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'bengali': ['Hind Siliguri', 'SolaimanLipi', 'Arial', 'sans-serif'],
-                    }
-                }
-            }
-        }
-        
-        // Register Chart.js plugins globally
-        // Wait for plugins to be loaded, then register
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof ChartDataLabels !== 'undefined') {
-                Chart.register(ChartDataLabels);
-            } else {
-                console.warn('ChartDataLabels plugin not loaded.');
-            }
-            if (typeof ChartZoom !== 'undefined') {
-                 Chart.register(ChartZoom);
-            } else {
-                 console.warn('ChartZoom plugin not loaded.');
-            }
-        });
+    <script>
+      // Tailwind config
+      tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: { fontFamily: { bengali: ['Hind Siliguri', 'SolaimanLipi', 'Arial', 'sans-serif'] } } },
+      };
+      // Chart plugins (v4) — register when DOM ready
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+        if (typeof ChartZoom !== 'undefined') Chart.register(ChartZoom);
+      });
     </script>
-</head>
+  </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-bengali h-full flex flex-col antialiased">
-    
-    <div id="loadingOverlay" class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 z-[9999] flex flex-col items-center justify-center hidden backdrop-blur-sm transition-opacity duration-300">
-        <div class="loading-spinner mb-4 border-t-blue-600"></div>
-        <p id="loadingMessage" class="text-lg text-gray-700 dark:text-gray-300">লোড হচ্ছে...</p>
+  <body
+    class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-bengali h-full flex flex-col antialiased"
+  >
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 z-[9999] flex flex-col items-center justify-center hidden backdrop-blur-sm transition-opacity duration-300"
+    >
+      <div class="loading-spinner mb-4 border-t-blue-600"></div>
+      <p id="loadingMessage" class="text-lg text-gray-700 dark:text-gray-300">লোড হচ্ছে...</p>
     </div>
 
     <div id="toast" class="toast hidden">
-        <div id="toastMessage" class="toast-message"></div>
+      <div id="toastMessage" class="toast-message"></div>
     </div>
 
-    <header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 h-[60px]
-        bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50
-        shadow-sm transition-colors duration-300">
+    <header
+      class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 h-[60px] bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm transition-colors duration-300"
+    >
+      <button
+        id="mobileMenuButton"
+        aria-label="Open menu"
+        class="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        <i class="fas fa-bars text-xl sm:text-2xl"></i>
+      </button>
 
-        <button id="mobileMenuButton" aria-label="Open menu" class="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <i class="fas fa-bars text-xl sm:text-2xl"></i>
+      <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+        <img src="./images/smart.png" alt="Smart Evaluator Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow" />
+        <h1
+          class="hidden md:flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent"
+        >
+          স্মার্ট ইভ্যালুয়েটর
+          <span
+            class="ml-2 text-xs font-semibold text-blue-800 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50 px-2 py-0.5 rounded-full shadow-sm"
+          >
+            v4.0
+          </span>
+        </h1>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-nowrap">
+        <button
+          id="openProfileModal"
+          aria-label="Show developer profile"
+          class="relative bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-md hover:shadow-lg flex items-center justify-center overflow-hidden flex-shrink-0 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/10 to-white/20 -skew-x-12 animate-shine"
+          ></div>
+          <div class="relative z-10 flex items-center space-x-1.5 sm:space-x-2">
+            <i class="fas fa-code text-sm sm:text-base animate-rotate" aria-hidden="true"></i>
+            <span class="font-semibold text-xs sm:text-sm md:text-base whitespace-nowrap">নির্মাতা</span>
+          </div>
         </button>
 
-        <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-            <img src="./images/smart.png" alt="Smart Evaluator Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow">
-            <h1 class="hidden md:flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                স্মার্ট ইভ্যালুয়েটর
-                <span class="ml-2 text-xs font-semibold text-blue-800 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50 px-2 py-0.5 rounded-full shadow-sm">v4.0</span>
-            </h1>
-        </div>
+        <button
+          id="themeToggle"
+          aria-label="Toggle theme"
+          class="p-2 sm:p-2.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <i class="fas fa-moon text-base sm:text-lg"></i>
+        </button>
 
-        <div class="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-nowrap">
-            <button id="openProfileModal" aria-label="Show developer profile" class="relative bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-md hover:shadow-lg flex items-center justify-center overflow-hidden flex-shrink-0 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/10 to-white/20 -skew-x-12 animate-shine"></div>
-                <div class="relative z-10 flex items-center space-x-1.5 sm:space-x-2">
-                    <i class="fas fa-code text-sm sm:text-base animate-rotate" aria-hidden="true"></i>
-                    <span class="font-semibold text-xs sm:text-sm md:text-base whitespace-nowrap">নির্মাতা</span>
-                </div>
-            </button>
-
-            <button id="themeToggle" aria-label="Toggle theme" class="p-2 sm:p-2.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <i class="fas fa-moon text-base sm:text-lg"></i>
-            </button>
-            
-            <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                <div id="userInfo" class="hidden text-right">
-                    <div class="text-[10px] sm:text-xs md:text-sm text-gray-500 dark:text-gray-400">Loading...</div>
-                </div>
-                <button id="headerLoginBtn" class="btn btn-primary text-xs sm:text-sm md:text-base">
-                    <i class="fas fa-sign-in-alt mr-1 sm:mr-2"></i><span class="hidden sm:inline">লগইন</span>
-                </button>
-                <button id="logoutBtn" class="hidden btn btn-danger text-xs sm:text-sm md:text-base">
-                    <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i><span class="hidden sm:inline">লগআউট</span>
-                </button>
-            </div>
+        <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+          <div id="userInfo" class="hidden text-right">
+            <div class="text-[10px] sm:text-xs md:text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
+          <button id="headerLoginBtn" class="btn btn-primary text-xs sm:text-sm md:text-base">
+            <i class="fas fa-sign-in-alt mr-1 sm:mr-2"></i>
+            <span class="hidden sm:inline">লগইন</span>
+          </button>
+          <button id="logoutBtn" class="hidden btn btn-danger text-xs sm:text-sm md:text-base">
+            <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i>
+            <span class="hidden sm:inline">লগআউট</span>
+          </button>
         </div>
+      </div>
     </header>
 
     <div class="flex flex-1 pt-[60px]">
-        <aside id="sidebar" class="fixed top-[60px] left-0 bottom-0 w-64 bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-lg z-30
-            transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
-            sidebar-scrollbar overflow-y-auto border-r border-gray-200/50 dark:border-gray-700/50">
-            <nav class="space-y-1 p-4">
-                <button data-page="dashboard" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400">
-                    <i class="fas fa-tachometer-alt w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">ড্যাশবোর্ড</span>
-                </button>
-                <button data-page="all-students" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-green-400">
-                    <i class="fas fa-user-graduate w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী কার্ড</span>
-                </button>
-                <button data-page="student-ranking" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-yellow-400">
-                    <i class="fas fa-trophy w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী র‌্যাঙ্কিং</span>
-                </button>
-                <button data-page="group-analysis" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-400">
-                    <i class="fas fa-chart-bar w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">ফলাফল সামারি</span>
-                </button>
-                 <button data-page="graph-analysis" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-pink-400">
-                    <i class="fas fa-chart-line w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন বিশ্লেষণ</span>
-                </button>
-                 <button data-page="statistics" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-400">
-                    <i class="fas fa-calculator w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">গ্রুপ পরিসংখ্যান</span>
-                </button>
+      <aside
+        id="sidebar"
+        class="fixed top-[60px] left-0 bottom-0 w-64 bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-lg z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out sidebar-scrollbar overflow-y-auto border-r border-gray-200/50 dark:border-gray-700/50"
+      >
+        <nav class="space-y-1 p-4">
+          <button
+            data-page="dashboard"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400"
+          >
+            <i class="fas fa-tachometer-alt w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">ড্যাশবোর্ড</span>
+          </button>
+          <button
+            data-page="all-students"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-green-400"
+          >
+            <i class="fas fa-user-graduate w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী কার্ড</span>
+          </button>
+          <button
+            data-page="student-ranking"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          >
+            <i class="fas fa-trophy w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী র‌্যাঙ্কিং</span>
+          </button>
+          <button
+            data-page="group-analysis"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-400"
+          >
+            <i class="fas fa-chart-bar w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">ফলাফল সামারি</span>
+          </button>
+          <button
+            data-page="graph-analysis"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-pink-400"
+          >
+            <i class="fas fa-chart-line w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন বিশ্লেষণ</span>
+          </button>
+          <button
+            data-page="statistics"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          >
+            <i class="fas fa-calculator w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">গ্রুপ পরিসংখ্যান</span>
+          </button>
 
-                 <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden">
+          <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden" />
 
-                <button data-page="groups" class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-red-400">
-                    <i class="fas fa-layer-group w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">গ্রুপ ব্যবস্থাপনা</span>
-                </button>
-                <button data-page="members" class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-indigo-400">
-                    <i class="fas fa-users w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী ব্যবস্থাপনা</span>
-                </button>
-                <button data-page="tasks" class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-orange-400">
-                    <i class="fas fa-tasks w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">টাস্ক ব্যবস্থাপনা</span>
-                </button>
-                <button data-page="evaluation" class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-teal-400">
-                    <i class="fas fa-clipboard-check w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন</span>
-                </button>
+          <button
+            data-page="groups"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-red-400"
+          >
+            <i class="fas fa-layer-group w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">গ্রুপ ব্যবস্থাপনা</span>
+          </button>
+          <button
+            data-page="members"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          >
+            <i class="fas fa-users w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী ব্যবস্থাপনা</span>
+          </button>
+          <button
+            data-page="tasks"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-orange-400"
+          >
+            <i class="fas fa-tasks w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">টাস্ক ব্যবস্থাপনা</span>
+          </button>
+          <button
+            data-page="evaluation"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-teal-400"
+          >
+            <i class="fas fa-clipboard-check w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন</span>
+          </button>
 
-                 <hr class="my-3 border-gray-300 dark:border-gray-600">
-                <button data-page="group-policy" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-fuchsia-400">
-                    <i class="fas fa-book w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">গ্রুপ পলিসি</span>
-                </button>
-                <button data-page="export" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-lime-100 dark:hover:bg-lime-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-lime-400">
-                    <i class="fas fa-file-export w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">এক্সপোর্ট</span>
-                </button>
+          <hr class="my-3 border-gray-300 dark:border-gray-600" />
+          <button
+            data-page="group-policy"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+          >
+            <i class="fas fa-book w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">গ্রুপ পলিসি</span>
+          </button>
+          <button
+            data-page="export"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-lime-100 dark:hover:bg-lime-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-lime-400"
+          >
+            <i class="fas fa-file-export w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">এক্সপোর্ট</span>
+          </button>
 
-                <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden">
-                <button data-page="admin-management" class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-rose-400">
-                    <i class="fas fa-user-shield w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">অ্যাডমিন ম্যানেজমেন্ট</span>
-                </button>
-            </nav>
-        </aside>
+          <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden" />
+          <button
+            data-page="admin-management"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-rose-400"
+          >
+            <i class="fas fa-user-shield w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">অ্যাডমিন ম্যানেজমেন্ট</span>
+          </button>
+        </nav>
+      </aside>
 
-        <div id="mobileMenuOverlay" aria-hidden="true" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
+      <div
+        id="mobileMenuOverlay"
+        aria-hidden="true"
+        class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"
+      ></div>
 
-        <main class="flex-1 lg:ml-64 page-content transition-margin duration-300 ease-in-out p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
-
-                <div id="page-dashboard" class="page space-y-6 hidden">
-                    <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> ড্যাশবোর্ড লোড হচ্ছে...</div>
-                </div>
-
-                <div id="page-all-students" class="page space-y-4 hidden">
-                    <h2 class="text-2xl font-bold mb-4">সকল শিক্ষার্থী (কার্ড ভিউ)</h2>
-                    <div class="card">
-                        <div class="card-body space-y-6">
-                            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                <div class="flex items-start gap-3">
-                                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-inner dark:bg-blue-500/20 dark:text-blue-200">
-                                        <i class="fas fa-user-group text-lg"></i>
-                                    </span>
-                                    <div class="space-y-1">
-                                        <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">শিক্ষার্থী ফিল্টার</h3>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">গ্রুপ, বিভাগ বা নাম দিয়ে দ্রুত শিক্ষার্থী খুঁজে নিন।</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                                    <i class="fas fa-bolt"></i>
-                                    <span>লাইভ আপডেট</span>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    <span>গ্রুপ নির্বাচন</span>
-                                    <div class="relative">
-                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300">
-                                            <i class="fas fa-layer-group"></i>
-                                        </span>
-                                        <select id="cardsFilterGroup" class="form-select pl-10" aria-label="Filter by group">
-                                            <option value="all">সকল গ্রুপ</option>
-                                        </select>
-                                    </div>
-                                </label>
-                                <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    <span>অ্যাকাডেমিক গ্রুপ</span>
-                                    <div class="relative">
-                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300">
-                                            <i class="fas fa-graduation-cap"></i>
-                                        </span>
-                                        <select id="cardsFilterAcademicGroup" class="form-select pl-10" aria-label="Filter by academic group">
-                                            <option value="all">সকল একাডেমিক গ্রুপ</option>
-                                        </select>
-                                    </div>
-                                </label>
-                                <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    <span>নাম বা রোল অনুসন্ধান</span>
-                                    <div class="relative">
-                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300">
-                                            <i class="fas fa-magnifying-glass"></i>
-                                        </span>
-                                        <input id="allStudentsSearchInput" type="search" placeholder="যেমন: রফিক, বিজ্ঞান, ১০১" class="form-input pl-10" aria-label="Search students">
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="allStudentsCards" class="">
-                         <div class="placeholder-content col-span-full"> <i class="fas fa-spinner fa-spin mr-2"></i> কার্ড লোড হচ্ছে...</div>
-                    </div>
-                </div>
-
-                <div id="page-student-ranking" class="page space-y-6 hidden">
-                    <div class="flex justify-between items-center my-4">
-                        <h2 class="text-2xl font-bold">শিক্ষার্থী র‌্যাঙ্কিং</h2>
-                        <button id="refreshRanking" class="btn btn-secondary text-sm"><i class="fas fa-sync-alt mr-2"></i> রিফ্রেশ</button>
-                    </div>
-                    <div id="studentRankingList" class="space-y-4">
-                        <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> র‍্যাঙ্কিং লোড হচ্ছে...</div>
-                    </div>
-                </div>
-
-                <div id="page-group-analysis" class="page space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">ফলাফল সামারি (গ্রুপ ভিত্তিক)</h2>
-                   
-                      <div class="card card-body">
-                         <label for="analysisGroupSelect" class="label">গ্রুপ নির্বাচন করুন:</label>
-                         <select id="analysisGroupSelect" class="form-select w-full md:w-1/2"></select>
-                     </div>
-                     <div id="groupAnalysisDetails" class="mt-4">
-                         <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> বিশ্লেষণ লোড হচ্ছে...</div>
-                     </div>
-                 </div>
-
-                <div id="page-graph-analysis" class="page hidden">
-                     <h2 class="text-2xl font-bold mb-4">গ্রাফ বিশ্লেষণ</h2>
-                     <div id="graphAnalysisContent">
-                         <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> গ্রাফ লোড হচ্ছে...</div>
-                     </div>
-                 </div>
-
-                <div id="page-statistics" class="page space-y-6 hidden">
-                    <h2 class="text-2xl font-bold mb-4">মূল্যায়ন পরিসংখ্যান</h2>
-                    <div id="statsFilterContainer">
-                        <div class="placeholder-content"> <i class="fas fa-filter mr-2"></i> ফিল্টার লোড হচ্ছে...</div>
-                    </div>
-                    <div id="statsContentContainer">
-                        <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> পরিসংখ্যান লোড হচ্ছে...</div>
-                    </div>
-                </div>
-
-                <div id="page-groups" class="page private-tab-content space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">গ্রুপ ব্যবস্থাপনা</h2>
-                     <div class="card card-body">
-                         <div class="flex flex-col sm:flex-row gap-2">
-                             <input id="groupNameInput" type="text" placeholder="নতুন গ্রুপের নাম" class="form-input flex-grow" maxlength="50" aria-label="New group name"/>
-                             <button id="addGroupBtn" class="btn btn-primary flex-shrink-0">গ্রুপ যোগ করুন</button>
-                         </div>
-                     </div>
-                      <div class="card">
-                         <div class="card-header">বিদ্যমান গ্রুপ তালিকা</div>
-                         <div id="groupsList" class="card-body space-y-3">
-                              <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> গ্রুপ তালিকা লোড হচ্ছে...</div>
-                         </div>
-                     </div>
-                </div>
-
-                <div id="page-members" class="page private-tab-content space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">শিক্ষার্থী ব্যবস্থাপনা</h2>
-                     <div class="card">
-                         <div class="card-header">CSV থেকে ইমপোর্ট</div>
-                         <div class="card-body space-y-4">
-                             <div><label class="label" for="csvFileInput">CSV ফাইল (UTF-8)</label><input type="file" id="csvFileInput" accept=".csv" class="form-input"><p id="csvFileName" class="text-sm text-gray-500 mt-2"></p></div>
-                             <div class="flex gap-3"><button id="downloadTemplateBtn" class="btn btn-success"><i class="fas fa-download mr-2"></i>টেমপ্লেট</button><button id="processImportBtn" class="btn btn-primary"><i class="fas fa-upload mr-2"></i>ইমপোর্ট</button></div>
-                         </div>
-                     </div>
-                     <div class="card">
-                          <div class="card-header">নতুন শিক্ষার্থী</div>
-                          <div class="card-body">
-                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                                <div><label class="label" for="studentNameInput">নাম*</label><input id="studentNameInput" type="text" class="form-input" aria-required="true"></div>
-                                <div><label class="label" for="studentRollInput">রোল*</label><input id="studentRollInput" type="text" class="form-input" aria-required="true"></div>
-                                <div><label class="label" for="studentGenderInput">লিঙ্গ*</label><select id="studentGenderInput" class="form-select" aria-required="true"><option value="ছেলে">ছেলে</option><option value="মেয়ে">মেয়ে</option></select></div>
-                                <div><label class="label" for="studentGroupInput">গ্রুপ</label><select id="studentGroupInput" class="form-select"><option value="">নির্বাচন করুন</option></select></div>
-                                <div><label class="label" for="studentContactInput">যোগাযোগ</label><input id="studentContactInput" type="tel" class="form-input"></div>
-                                <div><label class="label" for="studentAcademicGroupInput">একাডেমিক গ্রুপ*</label><input id="studentAcademicGroupInput" type="text" class="form-input" aria-required="true"></div>
-                                <div><label class="label" for="studentSessionInput">সেশন*</label><input id="studentSessionInput" type="text" class="form-input" aria-required="true"></div>
-                                <div><label class="label" for="studentRoleInput">দায়িত্ব</label><select id="studentRoleInput" class="form-select"><option value="">কোনোটি না</option><option value="team-leader">টিম লিডার</option><option value="time-keeper">টাইম কিপার</option><option value="reporter">রিপোর্টার</option><option value="resource-manager">রিসোর্স ম্যানেজার</option><option value="peace-maker">পিস মেকার</option></select></div>
-                             </div>
-                             <button id="addStudentBtn" class="btn btn-primary">শিক্ষার্থী যোগ করুন</button>
-                         </div>
-                     </div>
-                     <div class="card">
-                         <div class="card-header">শিক্ষার্থী ফিল্টার</div>
-                         <div class="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <select id="membersFilterGroup" class="form-select" aria-label="Filter members by group"><option value="all">সকল গ্রুপ</option></select>
-                            <select id="membersFilterAcademicGroup" class="form-select" aria-label="Filter members by academic group"><option value="all">সকল একাডেমিক গ্রুপ</option></select>
-                            <input id="studentSearchInput" type="search" placeholder="নাম/রোল/গ্রুপ..." class="form-input" aria-label="Search members">
-                         </div>
-                     </div>
-                     <div class="card">
-                         <div class="card-header">শিক্ষার্থী তালিকা</div>
-                         <div id="studentsList" class="card-body space-y-3">
-                            <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> শিক্ষার্থী তালিকা লোড হচ্ছে...</div>
-                         </div>
-                     </div>
-                 </div>
-
-                <div id="page-tasks" class="page private-tab-content space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">টাস্ক ব্যবস্থাপনা</h2>
-                     <div class="card">
-                         <div class="card-header">নতুন টাস্ক যোগ করুন</div>
-                         <div class="card-body space-y-4">
-                            <div><label class="label" for="taskNameInput">টাস্কের নাম*</label><input id="taskNameInput" type="text" class="form-input" aria-required="true" placeholder="টাস্কের নাম লিখুন"></div>
-                            
-                            <fieldset class="border p-4 rounded-lg dark:border-gray-600">
-                                <legend class="text-sm font-medium px-1 text-gray-700 dark:text-gray-300">সর্বোচ্চ স্কোর ব্রেকডাউন* (স্লাইড + MCQ)</legend>
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                                    <div><label for="maxTaskScoreInput" class="label text-xs">এসাইনমেন্ট/টাস্ক</label><input id="maxTaskScoreInput" type="number" min="0" value="20" class="form-input breakdown-input"></div>
-                                    <div><label for="maxTeamScoreInput" class="label text-xs">টিম স্কোর</label><input id="maxTeamScoreInput" type="number" min="0" value="15" class="form-input breakdown-input"></div>
-                                    <div><label for="maxAdditionalScoreInput" class="label text-xs">অতিরিক্ত</label><input id="maxAdditionalScoreInput" type="number" min="0" value="25" class="form-input breakdown-input"></div>
-                                    <div><label for="maxMcqScoreInput" class="label text-xs">MCQ</label><input id="maxMcqScoreInput" type="number" min="0" value="40" class="form-input breakdown-input"></div>
-                                </div>
-                                <p class="text-sm mt-3 text-gray-600 dark:text-gray-400">
-                                    মোট সর্বোচ্চ স্কোর: <strong id="totalMaxScoreDisplay" class="text-lg text-gray-900 dark:text-white">100</strong>
-                                </p>
-                            </fieldset>
-                            
-                            <div><label class="label" for="taskDescriptionInput">বিবরণ (ঐচ্ছিক)</label><textarea id="taskDescriptionInput" class="form-input" rows="3" placeholder="টাস্কের বিবরণ লিখুন"></textarea></div>
-                            <div><label class="label" for="taskDateInput">তারিখ*</label><input id="taskDateInput" type="date" class="form-input" aria-required="true"></div>
-                            <button id="addTaskBtn" class="btn btn-success">টাস্ক যোগ করুন</button>
-                         </div>
-                     </div>
-                     <div class="card">
-                         <div class="card-header">বিদ্যমান টাস্ক তালিকা</div>
-                         <div id="tasksList" class="card-body space-y-4">
-                             <div class="placeholder-content"> <i class="fas fa-spinner fa-spin mr-2"></i> টাস্ক তালিকা লোড হচ্ছে...</div>
-                         </div>
-                     </div>
-                 </div>
-
-                <div id="page-evaluation" class="page private-tab-content space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">মূল্যায়ন</h2>
-                     <div class="card">
-                         <div class="card-header">মূল্যায়ন সেটআপ</div>
-                         <div class="card-body space-y-4">
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="label">টাস্ক নির্বাচন করুন*</label><select id="evaluationTaskSelect" class="form-select" aria-required="true"><option value="">লোড হচ্ছে...</option></select></div>
-                                <div><label class="label">গ্রুপ নির্বাচন করুন*</label><select id="evaluationGroupSelect" class="form-select" aria-required="true"><option value="">লোড হচ্ছে...</option></select></div>
-                             </div>
-                             <button id="startEvaluationBtn" class="btn btn-primary">মূল্যায়ন শুরু / সম্পাদনা করুন</button>
-                         </div>
-                     </div>
-                     <div id="evaluationForm" class="mt-6">
-                        </div>
-                     <div class="card">
-                         <div class="card-header">পূর্ববর্তী মূল্যায়ন তালিকা</div>
-                         <div class="card-body overflow-x-auto">
-                            <table class="w-full border-collapse min-w-[600px]">
-                                <thead><tr class="bg-gray-100 dark:bg-gray-700"><th class="th">টাস্ক</th><th class="th">গ্রুপ</th><th class="th">তারিখ</th><th class="th">গড় স্কোর (%)</th><th class="th">কার্যক্রম</th></tr></thead>
-                                <tbody id="evaluationListTable">
-                                    <tr><td colspan="5" class="placeholder-content p-4"><i class="fas fa-spinner fa-spin mr-2"></i> তালিকা লোড হচ্ছে...</td></tr>
-                                </tbody>
-                            </table>
-                         </div>
-                     </div>
-                 </div>
-
-                <div id="page-group-policy" class="page space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">গ্রুপ পলিসি</h2>
-                     <div id="policySections" class="space-y-4">
-                         <div class="placeholder-content card card-body"> <i class="fas fa-spinner fa-spin mr-2"></i> পলিসি লোড হচ্ছে...</div>
-                     </div>
-                 </div>
-
-                <div id="page-export" class="page space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">ডেটা এক্সপোর্ট</h2>
-                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                         <div class="card">
-                            <div class="card-header"><i class="fas fa-file-csv mr-2 text-blue-500"></i> CSV এক্সপোর্ট</div>
-                            <div class="card-body space-y-2">
-                                <button id="exportStudentsCSVBtn" class="btn btn-success w-full"><i class="fas fa-user-graduate mr-2"></i>শিক্ষার্থী CSV</button>
-                                <button id="exportGroupsCSVBtn" class="btn btn-primary w-full"><i class="fas fa-users mr-2"></i>গ্রুপ CSV</button>
-                                <button id="exportEvaluationsCSVBtn" class="btn btn-secondary w-full"><i class="fas fa-chart-bar mr-2"></i>মূল্যায়ন CSV</button>
-                            </div>
-                         </div>
-                         <div class="card">
-                            <div class="card-header"><i class="fas fa-file-archive mr-2 text-purple-500"></i>এডভান্সড এক্সপোর্ট</div>
-                            <div class="card-body space-y-2">
-                                <button id="exportAllDataJSONBtn" class="btn btn-dark w-full"><i class="fas fa-database mr-2"></i>সমস্ত ডেটা (JSON)</button>
-                                <button id="exportAllDataZipBtn" class="btn btn-warning w-full"><i class="fas fa-file-archive mr-2"></i>সমস্ত ডেটা (ZIP)</button>
-                            </div>
-                         </div>
-                          <div class="card">
-                            <div class="card-header"><i class="fas fa-file-pdf mr-2 text-red-500"></i>রিপোর্ট এক্সপোর্ট</div>
-                            <div class="card-body space-y-2">
-                                <button id="exportAnalysisPDFBtn" class="btn btn-danger w-full"><i class="fas fa-chart-pie mr-2"></i>বিশ্লেষণ রিপোর্ট (PDF)</button>
-                                <button id="exportGroupAnalysisPDFBtn" class="btn btn-info w-full"><i class="fas fa-file-pdf mr-2"></i>গ্রুপ বিশ্লেষণ (PDF)</button>
-                                <button id="printReportBtn" class="btn btn-light w-full"><i class="fas fa-print mr-2"></i>প্রিন্ট রিপোর্ট</button>
-                            </div>
-                         </div>
-                     </div>
-                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                        <div class="stat-card"><div id="totalStudentsCount" class="text-blue-600 dark:text-blue-400">0</div><div>মোট শিক্ষার্থী</div></div>
-                        <div class="stat-card"><div id="totalGroupsCount" class="text-green-600 dark:text-green-400">0</div><div>মোট গ্রুপ</div></div>
-                        <div class="stat-card"><div id="totalEvaluationsCount" class="text-purple-600 dark:text-purple-400">0</div><div>মোট মূল্যায়ন</div></div>
-                        <div class="stat-card"><div id="lastExportTime" class="text-orange-600 dark:text-orange-400">-</div><div>সর্বশেষ এক্সপোর্ট</div></div>
-                     </div>
-                 </div>
-
-                <div id="page-admin-management" class="page private-tab-content space-y-6 hidden">
-                     <h2 class="text-2xl font-bold mb-4">অ্যাডমিন ম্যানেজমেন্ট</h2>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                          <div class="stat-card"><div id="totalUsers" class="text-blue-600 dark:text-blue-400">0</div><div>মোট ব্যবহারকারী</div></div>
-                          <div class="stat-card"><div id="superAdminCount" class="text-purple-600 dark:text-purple-400">0</div><div>সুপার অ্যাডমিন</div></div>
-                          <div class="stat-card"><div id="adminCount" class="text-indigo-600 dark:text-indigo-400">0</div><div>অ্যাডমিন</div></div>
-                          <div class="stat-card"><div id="userCount" class="text-green-600 dark:text-green-400">0</div><div>ব্যবহারকারী</div></div>
-                      </div>
-                     <div class="card card-body mb-6">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div class="flex-1">
-                                <label for="adminSearchInput" class="sr-only">Search Admins</label>
-                                <input type="search" id="adminSearchInput" placeholder="ইমেইল বা টাইপ দ্বারা সার্চ..." class="form-input w-full">
-                            </div>
-                            <div><button id="addAdminBtn" class="btn btn-primary w-full md:w-auto"><i class="fas fa-plus mr-2"></i>নতুন যোগ করুন</button></div>
-                        </div>
-                     </div>
-                     <div id="adminManagementContent" class="card overflow-hidden">
-                         <div class="placeholder-content p-6"> <i class="fas fa-spinner fa-spin mr-2"></i> অ্যাডমিন তালিকা লোড হচ্ছে...</div>
-                     </div>
-                 </div>
-
-            </div> </main>
-    </div> <div id="authModal" class="modal hidden" aria-modal="true" role="dialog" aria-labelledby="authModalTitle">
-        <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl relative">
-             <button id="closeAuthModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white" aria-label="Close Modal"><i class="fas fa-times text-xl"></i></button>
-            <div class="p-6">
-                <h3 id="authModalTitle" class="text-xl font-bold text-center mb-6 text-gray-800 dark:text-white">অ্যাকাউন্টে প্রবেশ করুন</h3>
-                <form id="loginForm" class="space-y-4">
-                    <div><label for="loginEmail" class="label">ইমেইল</label><input id="loginEmail" type="email" class="form-input" required autocomplete="email"></div>
-                    <div><label for="loginPassword" class="label">পাসওয়ার্ড</label><input id="loginPassword" type="password" class="form-input" required autocomplete="current-password"></div>
-                    <button id="loginBtn" type="button" class="btn btn-primary w-full py-2.5">লগইন</button>
-                </form>
-                <form id="registerForm" class="space-y-4 hidden">
-                     <div><label for="registerEmail" class="label">ইমেইল</label><input id="registerEmail" type="email" class="form-input" required autocomplete="email"></div>
-                     <div><label for="registerPassword" class="label">পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="registerPassword" type="password" class="form-input" required minlength="6" autocomplete="new-password"></div>
-                     <div><label for="adminType" class="label">অ্যাকাউন্ট টাইপ</label><select id="adminType" class="form-select"><option value="user">সাধারণ ব্যবহারকারী</option><option value="admin">অ্যাডমিন</option></select></div>
-                     <button id="registerBtn" type="button" class="btn btn-success w-full py-2.5">রেজিস্ট্রেশন</button>
-                </form>
-                <div class="mt-4 text-center text-sm">
-                    <button id="showRegister" class="text-blue-500 hover:underline">নতুন অ্যাকাউন্ট তৈরি করুন</button>
-                    <button id="showLogin" class="text-blue-500 hover:underline hidden">লগইন করুন</button>
-                </div>
-                 <div class="my-6 flex items-center"><hr class="flex-grow border-gray-300 dark:border-gray-600"/><span class="mx-4 text-gray-500 text-sm">অথবা</span><hr class="flex-grow border-gray-300 dark:border-gray-600"/></div>
-                <button id="googleSignInBtn" type="button" class="btn w-full bg-red-500 hover:bg-red-600 text-white py-2.5"><i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন</button>
+      <main
+        class="flex-1 lg:ml-64 page-content transition-margin duration-300 ease-in-out p-4 sm:p-6 lg:p-8 overflow-y-auto"
+      >
+        <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
+          <div id="page-dashboard" class="page space-y-6 hidden">
+            <div class="placeholder-content">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              ড্যাশবোর্ড লোড হচ্ছে...
             </div>
+          </div>
+
+          <div id="page-all-students" class="page space-y-4 hidden">
+            <h2 class="text-2xl font-bold mb-4">সকল শিক্ষার্থী (কার্ড ভিউ)</h2>
+            <div class="card">
+              <div class="card-body space-y-6">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div class="flex items-start gap-3">
+                    <span
+                      class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-inner dark:bg-blue-500/20 dark:text-blue-200"
+                    >
+                      <i class="fas fa-user-group text-lg"></i>
+                    </span>
+                    <div class="space-y-1">
+                      <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">শিক্ষার্থী ফিল্টার</h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                        গ্রুপ, বিভাগ বা নাম দিয়ে দ্রুত শিক্ষার্থী খুঁজে নিন।
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"
+                  >
+                    <i class="fas fa-bolt"></i>
+                    <span>লাইভ আপডেট</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span>গ্রুপ নির্বাচন</span>
+                    <div class="relative">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
+                      >
+                        <i class="fas fa-layer-group"></i>
+                      </span>
+                      <select id="cardsFilterGroup" class="form-select pl-10" aria-label="Filter by group">
+                        <option value="all">সকল গ্রুপ</option>
+                      </select>
+                    </div>
+                  </label>
+                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span>অ্যাকাডেমিক গ্রুপ</span>
+                    <div class="relative">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
+                      >
+                        <i class="fas fa-graduation-cap"></i>
+                      </span>
+                      <select
+                        id="cardsFilterAcademicGroup"
+                        class="form-select pl-10"
+                        aria-label="Filter by academic group"
+                      >
+                        <option value="all">সকল একাডেমিক গ্রুপ</option>
+                      </select>
+                    </div>
+                  </label>
+                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <span>নাম বা রোল অনুসন্ধান</span>
+                    <div class="relative">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
+                      >
+                        <i class="fas fa-magnifying-glass"></i>
+                      </span>
+                      <input
+                        id="allStudentsSearchInput"
+                        type="search"
+                        placeholder="যেমন: রফিক, বিজ্ঞান, ১০১"
+                        class="form-input pl-10"
+                        aria-label="Search students"
+                      />
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div id="allStudentsCards" class="">
+              <div class="placeholder-content col-span-full">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                কার্ড লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-student-ranking" class="page space-y-6 hidden">
+            <div class="flex justify-between items-center my-4">
+              <h2 class="text-2xl font-bold">শিক্ষার্থী র‌্যাঙ্কিং</h2>
+              <button id="refreshRanking" class="btn btn-secondary text-sm">
+                <i class="fas fa-sync-alt mr-2"></i>
+                রিফ্রেশ
+              </button>
+            </div>
+            <div id="studentRankingList" class="space-y-4">
+              <div class="placeholder-content">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                র‍্যাঙ্কিং লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-group-analysis" class="page space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">ফলাফল সামারি (গ্রুপ ভিত্তিক)</h2>
+
+            <div class="card card-body">
+              <label for="analysisGroupSelect" class="label">গ্রুপ নির্বাচন করুন:</label>
+              <select id="analysisGroupSelect" class="form-select w-full md:w-1/2"></select>
+            </div>
+            <div id="groupAnalysisDetails" class="mt-4">
+              <div class="placeholder-content">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                বিশ্লেষণ লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-graph-analysis" class="page hidden">
+            <h2 class="text-2xl font-bold mb-4">গ্রাফ বিশ্লেষণ</h2>
+            <div id="graphAnalysisContent">
+              <div class="placeholder-content">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                গ্রাফ লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-statistics" class="page space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">মূল্যায়ন পরিসংখ্যান</h2>
+            <div id="statsFilterContainer">
+              <div class="placeholder-content">
+                <i class="fas fa-filter mr-2"></i>
+                ফিল্টার লোড হচ্ছে...
+              </div>
+            </div>
+            <div id="statsContentContainer">
+              <div class="placeholder-content">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                পরিসংখ্যান লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-groups" class="page private-tab-content space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">গ্রুপ ব্যবস্থাপনা</h2>
+            <div class="card card-body">
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input
+                  id="groupNameInput"
+                  type="text"
+                  placeholder="নতুন গ্রুপের নাম"
+                  class="form-input flex-grow"
+                  maxlength="50"
+                  aria-label="New group name"
+                />
+                <button id="addGroupBtn" class="btn btn-primary flex-shrink-0">গ্রুপ যোগ করুন</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">বিদ্যমান গ্রুপ তালিকা</div>
+              <div id="groupsList" class="card-body space-y-3">
+                <div class="placeholder-content">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>
+                  গ্রুপ তালিকা লোড হচ্ছে...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="page-members" class="page private-tab-content space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">শিক্ষার্থী ব্যবস্থাপনা</h2>
+            <div class="card">
+              <div class="card-header">CSV থেকে ইমপোর্ট</div>
+              <div class="card-body space-y-4">
+                <div>
+                  <label class="label" for="csvFileInput">CSV ফাইল (UTF-8)</label>
+                  <input type="file" id="csvFileInput" accept=".csv" class="form-input" />
+                  <p id="csvFileName" class="text-sm text-gray-500 mt-2"></p>
+                </div>
+                <div class="flex gap-3">
+                  <button id="downloadTemplateBtn" class="btn btn-success">
+                    <i class="fas fa-download mr-2"></i>
+                    টেমপ্লেট
+                  </button>
+                  <button id="processImportBtn" class="btn btn-primary">
+                    <i class="fas fa-upload mr-2"></i>
+                    ইমপোর্ট
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">নতুন শিক্ষার্থী</div>
+              <div class="card-body">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label class="label" for="studentNameInput">নাম*</label>
+                    <input id="studentNameInput" type="text" class="form-input" aria-required="true" />
+                  </div>
+                  <div>
+                    <label class="label" for="studentRollInput">রোল*</label>
+                    <input id="studentRollInput" type="text" class="form-input" aria-required="true" />
+                  </div>
+                  <div>
+                    <label class="label" for="studentGenderInput">লিঙ্গ*</label>
+                    <select id="studentGenderInput" class="form-select" aria-required="true">
+                      <option value="ছেলে">ছেলে</option>
+                      <option value="মেয়ে">মেয়ে</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label" for="studentGroupInput">গ্রুপ</label>
+                    <select id="studentGroupInput" class="form-select">
+                      <option value="">নির্বাচন করুন</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label" for="studentContactInput">যোগাযোগ</label>
+                    <input id="studentContactInput" type="tel" class="form-input" />
+                  </div>
+                  <div>
+                    <label class="label" for="studentAcademicGroupInput">একাডেমিক গ্রুপ*</label>
+                    <input id="studentAcademicGroupInput" type="text" class="form-input" aria-required="true" />
+                  </div>
+                  <div>
+                    <label class="label" for="studentSessionInput">সেশন*</label>
+                    <input id="studentSessionInput" type="text" class="form-input" aria-required="true" />
+                  </div>
+                  <div>
+                    <label class="label" for="studentRoleInput">দায়িত্ব</label>
+                    <select id="studentRoleInput" class="form-select">
+                      <option value="">কোনোটি না</option>
+                      <option value="team-leader">টিম লিডার</option>
+                      <option value="time-keeper">টাইম কিপার</option>
+                      <option value="reporter">রিপোর্টার</option>
+                      <option value="resource-manager">রিসোর্স ম্যানেজার</option>
+                      <option value="peace-maker">পিস মেকার</option>
+                    </select>
+                  </div>
+                </div>
+                <button id="addStudentBtn" class="btn btn-primary">শিক্ষার্থী যোগ করুন</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">শিক্ষার্থী ফিল্টার</div>
+              <div class="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select id="membersFilterGroup" class="form-select" aria-label="Filter members by group">
+                  <option value="all">সকল গ্রুপ</option>
+                </select>
+                <select
+                  id="membersFilterAcademicGroup"
+                  class="form-select"
+                  aria-label="Filter members by academic group"
+                >
+                  <option value="all">সকল একাডেমিক গ্রুপ</option>
+                </select>
+                <input
+                  id="studentSearchInput"
+                  type="search"
+                  placeholder="নাম/রোল/গ্রুপ..."
+                  class="form-input"
+                  aria-label="Search members"
+                />
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">শিক্ষার্থী তালিকা</div>
+              <div id="studentsList" class="card-body space-y-3">
+                <div class="placeholder-content">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>
+                  শিক্ষার্থী তালিকা লোড হচ্ছে...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="page-tasks" class="page private-tab-content space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">টাস্ক ব্যবস্থাপনা</h2>
+            <div class="card">
+              <div class="card-header">নতুন টাস্ক যোগ করুন</div>
+              <div class="card-body space-y-4">
+                <div>
+                  <label class="label" for="taskNameInput">টাস্কের নাম*</label>
+                  <input
+                    id="taskNameInput"
+                    type="text"
+                    class="form-input"
+                    aria-required="true"
+                    placeholder="টাস্কের নাম লিখুন"
+                  />
+                </div>
+
+                <fieldset class="border p-4 rounded-lg dark:border-gray-600">
+                  <legend class="text-sm font-medium px-1 text-gray-700 dark:text-gray-300">
+                    সর্বোচ্চ স্কোর ব্রেকডাউন* (স্লাইড + MCQ)
+                  </legend>
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                    <div>
+                      <label for="maxTaskScoreInput" class="label text-xs">এসাইনমেন্ট/টাস্ক</label>
+                      <input
+                        id="maxTaskScoreInput"
+                        type="number"
+                        min="0"
+                        value="20"
+                        class="form-input breakdown-input"
+                      />
+                    </div>
+                    <div>
+                      <label for="maxTeamScoreInput" class="label text-xs">টিম স্কোর</label>
+                      <input
+                        id="maxTeamScoreInput"
+                        type="number"
+                        min="0"
+                        value="15"
+                        class="form-input breakdown-input"
+                      />
+                    </div>
+                    <div>
+                      <label for="maxAdditionalScoreInput" class="label text-xs">অতিরিক্ত</label>
+                      <input
+                        id="maxAdditionalScoreInput"
+                        type="number"
+                        min="0"
+                        value="25"
+                        class="form-input breakdown-input"
+                      />
+                    </div>
+                    <div>
+                      <label for="maxMcqScoreInput" class="label text-xs">MCQ</label>
+                      <input
+                        id="maxMcqScoreInput"
+                        type="number"
+                        min="0"
+                        value="40"
+                        class="form-input breakdown-input"
+                      />
+                    </div>
+                  </div>
+                  <p class="text-sm mt-3 text-gray-600 dark:text-gray-400">
+                    মোট সর্বোচ্চ স্কোর:
+                    <strong id="totalMaxScoreDisplay" class="text-lg text-gray-900 dark:text-white">100</strong>
+                  </p>
+                </fieldset>
+
+                <div>
+                  <label class="label" for="taskDescriptionInput">বিবরণ (ঐচ্ছিক)</label>
+                  <textarea
+                    id="taskDescriptionInput"
+                    class="form-input"
+                    rows="3"
+                    placeholder="টাস্কের বিবরণ লিখুন"
+                  ></textarea>
+                </div>
+                <div>
+                  <label class="label" for="taskDateInput">তারিখ*</label>
+                  <input id="taskDateInput" type="date" class="form-input" aria-required="true" />
+                </div>
+                <button id="addTaskBtn" class="btn btn-success">টাস্ক যোগ করুন</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">বিদ্যমান টাস্ক তালিকা</div>
+              <div id="tasksList" class="card-body space-y-4">
+                <div class="placeholder-content">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>
+                  টাস্ক তালিকা লোড হচ্ছে...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="page-evaluation" class="page private-tab-content space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">মূল্যায়ন</h2>
+            <div class="card">
+              <div class="card-header">মূল্যায়ন সেটআপ</div>
+              <div class="card-body space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="label">টাস্ক নির্বাচন করুন*</label>
+                    <select id="evaluationTaskSelect" class="form-select" aria-required="true">
+                      <option value="">লোড হচ্ছে...</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">গ্রুপ নির্বাচন করুন*</label>
+                    <select id="evaluationGroupSelect" class="form-select" aria-required="true">
+                      <option value="">লোড হচ্ছে...</option>
+                    </select>
+                  </div>
+                </div>
+                <button id="startEvaluationBtn" class="btn btn-primary">মূল্যায়ন শুরু / সম্পাদনা করুন</button>
+              </div>
+            </div>
+            <div id="evaluationForm" class="mt-6"></div>
+            <div class="card">
+              <div class="card-header">পূর্ববর্তী মূল্যায়ন তালিকা</div>
+              <div class="card-body overflow-x-auto">
+                <table class="w-full border-collapse min-w-[600px]">
+                  <thead>
+                    <tr class="bg-gray-100 dark:bg-gray-700">
+                      <th class="th">টাস্ক</th>
+                      <th class="th">গ্রুপ</th>
+                      <th class="th">তারিখ</th>
+                      <th class="th">গড় স্কোর (%)</th>
+                      <th class="th">কার্যক্রম</th>
+                    </tr>
+                  </thead>
+                  <tbody id="evaluationListTable">
+                    <tr>
+                      <td colspan="5" class="placeholder-content p-4">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        তালিকা লোড হচ্ছে...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="page-group-policy" class="page space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">গ্রুপ পলিসি</h2>
+            <div id="policySections" class="space-y-4">
+              <div class="placeholder-content card card-body">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                পলিসি লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-export" class="page space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">ডেটা এক্সপোর্ট</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div class="card">
+                <div class="card-header">
+                  <i class="fas fa-file-csv mr-2 text-blue-500"></i>
+                  CSV এক্সপোর্ট
+                </div>
+                <div class="card-body space-y-2">
+                  <button id="exportStudentsCSVBtn" class="btn btn-success w-full">
+                    <i class="fas fa-user-graduate mr-2"></i>
+                    শিক্ষার্থী CSV
+                  </button>
+                  <button id="exportGroupsCSVBtn" class="btn btn-primary w-full">
+                    <i class="fas fa-users mr-2"></i>
+                    গ্রুপ CSV
+                  </button>
+                  <button id="exportEvaluationsCSVBtn" class="btn btn-secondary w-full">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    মূল্যায়ন CSV
+                  </button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <i class="fas fa-file-archive mr-2 text-purple-500"></i>
+                  এডভান্সড এক্সপোর্ট
+                </div>
+                <div class="card-body space-y-2">
+                  <button id="exportAllDataJSONBtn" class="btn btn-dark w-full">
+                    <i class="fas fa-database mr-2"></i>
+                    সমস্ত ডেটা (JSON)
+                  </button>
+                  <button id="exportAllDataZipBtn" class="btn btn-warning w-full">
+                    <i class="fas fa-file-archive mr-2"></i>
+                    সমস্ত ডেটা (ZIP)
+                  </button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <i class="fas fa-file-pdf mr-2 text-red-500"></i>
+                  রিপোর্ট এক্সপোর্ট
+                </div>
+                <div class="card-body space-y-2">
+                  <button id="exportAnalysisPDFBtn" class="btn btn-danger w-full">
+                    <i class="fas fa-chart-pie mr-2"></i>
+                    বিশ্লেষণ রিপোর্ট (PDF)
+                  </button>
+                  <button id="exportGroupAnalysisPDFBtn" class="btn btn-info w-full">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    গ্রুপ বিশ্লেষণ (PDF)
+                  </button>
+                  <button id="printReportBtn" class="btn btn-light w-full">
+                    <i class="fas fa-print mr-2"></i>
+                    প্রিন্ট রিপোর্ট
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div class="stat-card">
+                <div id="totalStudentsCount" class="text-blue-600 dark:text-blue-400">0</div>
+                <div>মোট শিক্ষার্থী</div>
+              </div>
+              <div class="stat-card">
+                <div id="totalGroupsCount" class="text-green-600 dark:text-green-400">0</div>
+                <div>মোট গ্রুপ</div>
+              </div>
+              <div class="stat-card">
+                <div id="totalEvaluationsCount" class="text-purple-600 dark:text-purple-400">0</div>
+                <div>মোট মূল্যায়ন</div>
+              </div>
+              <div class="stat-card">
+                <div id="lastExportTime" class="text-orange-600 dark:text-orange-400">-</div>
+                <div>সর্বশেষ এক্সপোর্ট</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="page-admin-management" class="page private-tab-content space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">অ্যাডমিন ম্যানেজমেন্ট</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div class="stat-card">
+                <div id="totalUsers" class="text-blue-600 dark:text-blue-400">0</div>
+                <div>মোট ব্যবহারকারী</div>
+              </div>
+              <div class="stat-card">
+                <div id="superAdminCount" class="text-purple-600 dark:text-purple-400">0</div>
+                <div>সুপার অ্যাডমিন</div>
+              </div>
+              <div class="stat-card">
+                <div id="adminCount" class="text-indigo-600 dark:text-indigo-400">0</div>
+                <div>অ্যাডমিন</div>
+              </div>
+              <div class="stat-card">
+                <div id="userCount" class="text-green-600 dark:text-green-400">0</div>
+                <div>ব্যবহারকারী</div>
+              </div>
+            </div>
+            <div class="card card-body mb-6">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1">
+                  <label for="adminSearchInput" class="sr-only">Search Admins</label>
+                  <input
+                    type="search"
+                    id="adminSearchInput"
+                    placeholder="ইমেইল বা টাইপ দ্বারা সার্চ..."
+                    class="form-input w-full"
+                  />
+                </div>
+                <div>
+                  <button id="addAdminBtn" class="btn btn-primary w-full md:w-auto">
+                    <i class="fas fa-plus mr-2"></i>
+                    নতুন যোগ করুন
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="adminManagementContent" class="card overflow-hidden">
+              <div class="placeholder-content p-6">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                অ্যাডমিন তালিকা লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
         </div>
+      </main>
+    </div>
+    <div id="authModal" class="modal hidden" aria-modal="true" role="dialog" aria-labelledby="authModalTitle">
+      <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl relative">
+        <button
+          id="closeAuthModal"
+          class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white"
+          aria-label="Close Modal"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
+        <div class="p-6">
+          <h3 id="authModalTitle" class="text-xl font-bold text-center mb-6 text-gray-800 dark:text-white">
+            অ্যাকাউন্টে প্রবেশ করুন
+          </h3>
+          <form id="loginForm" class="space-y-4">
+            <div>
+              <label for="loginEmail" class="label">ইমেইল</label>
+              <input id="loginEmail" type="email" class="form-input" required autocomplete="email" />
+            </div>
+            <div>
+              <label for="loginPassword" class="label">পাসওয়ার্ড</label>
+              <input id="loginPassword" type="password" class="form-input" required autocomplete="current-password" />
+            </div>
+            <button id="loginBtn" type="button" class="btn btn-primary w-full py-2.5">লগইন</button>
+          </form>
+          <form id="registerForm" class="space-y-4 hidden">
+            <div>
+              <label for="registerEmail" class="label">ইমেইল</label>
+              <input id="registerEmail" type="email" class="form-input" required autocomplete="email" />
+            </div>
+            <div>
+              <label for="registerPassword" class="label">পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label>
+              <input
+                id="registerPassword"
+                type="password"
+                class="form-input"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              />
+            </div>
+            <div>
+              <label for="adminType" class="label">অ্যাকাউন্ট টাইপ</label>
+              <select id="adminType" class="form-select">
+                <option value="user">সাধারণ ব্যবহারকারী</option>
+                <option value="admin">অ্যাডমিন</option>
+              </select>
+            </div>
+            <button id="registerBtn" type="button" class="btn btn-success w-full py-2.5">রেজিস্ট্রেশন</button>
+          </form>
+          <div class="mt-4 text-center text-sm">
+            <button id="showRegister" class="text-blue-500 hover:underline">নতুন অ্যাকাউন্ট তৈরি করুন</button>
+            <button id="showLogin" class="text-blue-500 hover:underline hidden">লগইন করুন</button>
+          </div>
+          <div class="my-6 flex items-center">
+            <hr class="flex-grow border-gray-300 dark:border-gray-600" />
+            <span class="mx-4 text-gray-500 text-sm">অথবা</span>
+            <hr class="flex-grow border-gray-300 dark:border-gray-600" />
+          </div>
+          <button id="googleSignInBtn" type="button" class="btn w-full bg-red-500 hover:bg-red-600 text-white py-2.5">
+            <i class="fab fa-google mr-2"></i>
+            Google দিয়ে লগইন করুন
+          </button>
+        </div>
+      </div>
     </div>
 
     <div id="logoutModal" class="modal hidden" aria-modal="true" role="alertdialog">
-        <div class="modal-content max-w-sm w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
-            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">লগআউট নিশ্চিতকরণ</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">আপনি কি লগআউট করতে চান?</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancelLogout" class="btn btn-light">বাতিল</button>
-                <button id="confirmLogout" class="btn btn-danger">লগআউট</button>
-            </div>
+      <div class="modal-content max-w-sm w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">লগআউট নিশ্চিতকরণ</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">আপনি কি লগআউট করতে চান?</p>
+        <div class="flex justify-end space-x-3">
+          <button id="cancelLogout" class="btn btn-light">বাতিল</button>
+          <button id="confirmLogout" class="btn btn-danger">লগআউট</button>
         </div>
+      </div>
     </div>
 
     <div id="deleteModal" class="modal hidden" aria-modal="true" role="alertdialog">
-         <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
-            <h3 id="deleteModalTitle" class="text-lg font-semibold mb-4 text-red-600 dark:text-red-400">ডিলিট নিশ্চিতকরণ</h3>
-            <p id="deleteModalText" class="text-gray-600 dark:text-gray-400 mb-6">...</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancelDelete" class="btn btn-light">বাতিল</button>
-                <button id="confirmDelete" class="btn btn-danger">ডিলিট করুন</button>
-            </div>
+      <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
+        <h3 id="deleteModalTitle" class="text-lg font-semibold mb-4 text-red-600 dark:text-red-400">
+          ডিলিট নিশ্চিতকরণ
+        </h3>
+        <p id="deleteModalText" class="text-gray-600 dark:text-gray-400 mb-6">...</p>
+        <div class="flex justify-end space-x-3">
+          <button id="cancelDelete" class="btn btn-light">বাতিল</button>
+          <button id="confirmDelete" class="btn btn-danger">ডিলিট করুন</button>
         </div>
+      </div>
     </div>
 
     <div id="editModal" class="modal hidden" aria-modal="true" role="dialog" aria-labelledby="editModalTitle">
-         <div class="modal-content max-w-2xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-             <div class="flex justify-between items-center p-4 border-b dark:border-gray-600">
-                <h3 id="editModalTitle" class="text-xl font-bold text-gray-800 dark:text-white">সম্পাদনা</h3>
-                <button id="cancelEdit" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white" aria-label="Close edit modal"><i class="fas fa-times text-xl"></i></button>
-             </div>
-            <div id="editModalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                 <div class="placeholder-content"><i class="fas fa-spinner fa-spin mr-2"></i> কন্টেন্ট লোড হচ্ছে...</div>
-            </div>
-            <div class="flex justify-end space-x-3 p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
-                <button id="saveEdit" class="btn btn-primary">সেভ করুন</button>
-            </div>
+      <div class="modal-content max-w-2xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+        <div class="flex justify-between items-center p-4 border-b dark:border-gray-600">
+          <h3 id="editModalTitle" class="text-xl font-bold text-gray-800 dark:text-white">সম্পাদনা</h3>
+          <button
+            id="cancelEdit"
+            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white"
+            aria-label="Close edit modal"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
         </div>
+        <div id="editModalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div class="placeholder-content">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            কন্টেন্ট লোড হচ্ছে...
+          </div>
+        </div>
+        <div
+          class="flex justify-end space-x-3 p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg"
+        >
+          <button id="saveEdit" class="btn btn-primary">সেভ করুন</button>
+        </div>
+      </div>
     </div>
 
     <div id="adminModal" class="modal hidden" aria-modal="true" role="dialog" aria-labelledby="adminModalTitle">
-         <div class="modal-content max-w-xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-            <div class="flex justify-between items-center p-4 border-b dark:border-gray-600">
-                <h3 id="adminModalTitle" class="text-xl font-bold text-gray-800 dark:text-white">অ্যাডমিন ম্যানেজমেন্ট</h3>
-                <button id="cancelAdmin" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white" aria-label="Close admin modal"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div id="adminModalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                 <div>
-                    <label class="label" for="adminEmail">ইমেইল*</label>
-                    <input type="email" id="adminEmail" class="form-input" required>
-                </div>
-                <div>
-                    <label class="label" for="adminPassword">পাসওয়ার্ড</label>
-                    <input type="password" id="adminPassword" class="form-input" placeholder="নতুন পাসওয়ার্ড (এডিটের সময় খালি রাখা যাবে)">
-                </div>
-                 <div>
-                    <label class="label" for="adminTypeSelect">অ্যাডমিন টাইপ*</label>
-                    <select id="adminTypeSelect" class="form-select" required>
-                        <option value="user">সাধারণ ব্যবহারকারী</option>
-                        <option value="admin">অ্যাডমিন</option>
-                        <option value="super-admin">সুপার অ্যাডমিন</option>
-                    </select>
-                </div>
-                <div id="permissionsSection" class="hidden space-y-2 pt-4 border-t dark:border-gray-600">
-                    <label class="label font-semibold">পারমিশন (শুধুমাত্র 'অ্যাডমিন' টাইপের জন্য)</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="flex items-center space-x-2"><input type="checkbox" id="permissionRead" class="form-checkbox"><span class="text-sm">রিড</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" id="permissionWrite" class="form-checkbox"><span class="text-sm">রাইট</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" id="permissionEdit" class="form-checkbox"><span class="text-sm">এডিট</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" id="permissionDelete" class="form-checkbox"><span class="text-sm">ডিলিট</span></label>
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
-                <button id="saveAdmin" class="btn btn-primary">সেভ করুন</button>
-            </div>
+      <div class="modal-content max-w-xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+        <div class="flex justify-between items-center p-4 border-b dark:border-gray-600">
+          <h3 id="adminModalTitle" class="text-xl font-bold text-gray-800 dark:text-white">অ্যাডমিন ম্যানেজমেন্ট</h3>
+          <button
+            id="cancelAdmin"
+            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white"
+            aria-label="Close admin modal"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
         </div>
+        <div id="adminModalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div>
+            <label class="label" for="adminEmail">ইমেইল*</label>
+            <input type="email" id="adminEmail" class="form-input" required />
+          </div>
+          <div>
+            <label class="label" for="adminPassword">পাসওয়ার্ড</label>
+            <input
+              type="password"
+              id="adminPassword"
+              class="form-input"
+              placeholder="নতুন পাসওয়ার্ড (এডিটের সময় খালি রাখা যাবে)"
+            />
+          </div>
+          <div>
+            <label class="label" for="adminTypeSelect">অ্যাডমিন টাইপ*</label>
+            <select id="adminTypeSelect" class="form-select" required>
+              <option value="user">সাধারণ ব্যবহারকারী</option>
+              <option value="admin">অ্যাডমিন</option>
+              <option value="super-admin">সুপার অ্যাডমিন</option>
+            </select>
+          </div>
+          <div id="permissionsSection" class="hidden space-y-2 pt-4 border-t dark:border-gray-600">
+            <label class="label font-semibold">পারমিশন (শুধুমাত্র 'অ্যাডমিন' টাইপের জন্য)</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="permissionRead" class="form-checkbox" />
+                <span class="text-sm">রিড</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="permissionWrite" class="form-checkbox" />
+                <span class="text-sm">রাইট</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="permissionEdit" class="form-checkbox" />
+                <span class="text-sm">এডিট</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="permissionDelete" class="form-checkbox" />
+                <span class="text-sm">ডিলিট</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex justify-end space-x-3 p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg"
+        >
+          <button id="saveAdmin" class="btn btn-primary">সেভ করুন</button>
+        </div>
+      </div>
     </div>
 
     <div id="profileModal" class="modal hidden p-4" aria-modal="true" role="dialog" aria-labelledby="profileModalTitle">
-      <div class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative p-0">
-           <button id="closeProfileModal" class="absolute top-4 right-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white z-20" aria-label="Close profile"><i class="fas fa-times text-xl"></i></button>
-           <div class="gradient-bg rounded-t-2xl p-6 relative text-white text-center">
-               <img class="w-24 h-24 object-cover rounded-full mx-auto mb-4 ring-4 ring-white/50" src="./images/mustafasir.png" alt="মোঃ মোস্তফা রহমান">
-               <h2 id="profileModalTitle" class="text-2xl font-bold mb-1">মোঃ মোস্তফা রহমান</h2>
-               <p class="opacity-90 text-sm">ফুল-স্ট্যাক সফটওয়্যার ইঞ্জিনিয়ার</p>
-           </div>
-           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-                <div class="space-y-4">
-                     <h3 class="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2 flex items-center"><i class="fas fa-user-circle text-blue-500 mr-2"></i> ব্যক্তিগত তথ্য</h3>
-                     <p>মিরসরাই, চট্টগ্রাম</p>
-                 </div>
-                 <div class="space-y-4">
-                     <h3 class="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2 flex items-center"><i class="fas fa-briefcase text-yellow-500 mr-2"></i> পেশাগত তথ্য</h3>
-                     <p>সফটওয়্যার ইঞ্জিনিয়ার, ICT লেকচারার...</p>
-                 </div>
-                 </div>
+      <div
+        class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative p-0"
+      >
+        <button
+          id="closeProfileModal"
+          class="absolute top-4 right-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white z-20"
+          aria-label="Close profile"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
+        <div class="gradient-bg rounded-t-2xl p-6 relative text-white text-center">
+          <img
+            class="w-24 h-24 object-cover rounded-full mx-auto mb-4 ring-4 ring-white/50"
+            src="./images/mustafasir.png"
+            alt="মোঃ মোস্তফা রহমান"
+          />
+          <h2 id="profileModalTitle" class="text-2xl font-bold mb-1">মোঃ মোস্তফা রহমান</h2>
+          <p class="opacity-90 text-sm">ফুল-স্ট্যাক সফটওয়্যার ইঞ্জিনিয়ার</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2 flex items-center">
+              <i class="fas fa-user-circle text-blue-500 mr-2"></i>
+              ব্যক্তিগত তথ্য
+            </h3>
+            <p>মিরসরাই, চট্টগ্রাম</p>
+          </div>
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2 flex items-center">
+              <i class="fas fa-briefcase text-yellow-500 mr-2"></i>
+              পেশাগত তথ্য
+            </h3>
+            <p>সফটওয়্যার ইঞ্জিনিয়ার, ICT লেকচারার...</p>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="js/app.js"></script>
@@ -594,20 +1034,41 @@
     <!-- Student Detail Modal (scrollable, with table/chart toggle) -->
     <div id="studentDetailModal" class="fixed inset-0 z-[9998] hidden">
       <div class="absolute inset-0 bg-black/40" data-modal-close></div>
-      <div class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between">
+      <div
+        class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between"
+        >
           <h3 id="sdmTitle" class="text-lg font-semibold">শিক্ষার্থীর ফলাফল</h3>
           <div class="flex items-center gap-2">
-            <button id="sdmDownloadCsv" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">CSV</button>
-            <button id="sdmDownloadPdf" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700">PDF</button>
-            <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-modal-close aria-label="Close"><i class="fa fa-times"></i></button>
+            <button
+              id="sdmDownloadCsv"
+              class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              CSV
+            </button>
+            <button
+              id="sdmDownloadPdf"
+              class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              PDF
+            </button>
+            <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-modal-close aria-label="Close">
+              <i class="fa fa-times"></i>
+            </button>
           </div>
         </div>
         <div class="p-5 space-y-5">
           <!-- Profile / Summary -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div class="flex items-center gap-3 lg:col-span-2">
-              <img id="sdmAvatar" src="images/smart.png" alt="avatar" class="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-gray-700">
+              <img
+                id="sdmAvatar"
+                src="images/smart.png"
+                alt="avatar"
+                class="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+              />
               <div class="text-sm">
                 <div id="sdmName" class="text-lg font-bold"></div>
                 <div id="sdmRoll" class="text-gray-600 dark:text-gray-300"></div>
@@ -669,7 +1130,10 @@
           </div>
 
           <!-- Chart view -->
-          <div id="sdmChartWrap" class="hidden h-[200px] sm:h-[240px] md:h-[280px] lg:h-[300px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 p-2">
+          <div
+            id="sdmChartWrap"
+            class="hidden h-[200px] sm:h-[240px] md:h-[280px] lg:h-[300px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 p-2"
+          >
             <canvas id="sdmChart" class="w-full h-full"></canvas>
           </div>
 
@@ -678,11 +1142,6 @@
       </div>
     </div>
 
-<script type="module" src="/js/components/student-result-details.js"></script>
-    </body>
+    <script src="/js/components/student-result-details.js" defer></script>
+  </body>
 </html>
-
-
-
-
-
