@@ -658,7 +658,7 @@ function _renderGroupsRanking(groupData) {
       const palette = _getScorePalette(data.averageScore);
       const groupName = _formatLabel(data.groupName);
       return `
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0">
           <div class="absolute inset-0 bg-gradient-to-r ${palette.gradient} opacity-60"></div>
           <div class="relative grid gap-5 md:grid-cols-[auto,1fr,auto] items-center">
             <div class="flex flex-col items-center justify-center gap-1 rounded-2xl bg-white/80 px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow dark:bg-white/10 dark:text-gray-200">
@@ -698,6 +698,17 @@ function _renderGroupsRanking(groupData) {
     .join('');
 
   elements.groupsRankingList.innerHTML = html;
+  // Open group detail modal on click
+  if (elements.groupsRankingList && window && typeof window.openGroupModalById === 'function') {
+    uiManager.addListener(elements.groupsRankingList, 'click', (e) => {
+      const card = e.target.closest('[data-group-id]');
+      if (!card) return;
+      const gid = card.getAttribute('data-group-id');
+      if (gid) {
+        try { window.openGroupModalById(gid); } catch (err) { console.warn('Group modal open failed:', err); }
+      }
+    });
+  }
 }
 
 function _formatLabel(value) {

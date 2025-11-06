@@ -59,8 +59,83 @@
     >
       <div class="loading-spinner mb-4 border-t-blue-600"></div>
       <p id="loadingMessage" class="text-lg text-gray-700 dark:text-gray-300">লোড হচ্ছে...</p>
-    </div>
+  </div>
 
+  <!-- Group Detail Modal -->
+  <div id="groupDetailModal" class="fixed inset-0 z-[9998] hidden">
+    <div class="absolute inset-0 bg-black/40" data-group-modal-close></div>
+    <div class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between">
+        <h3 id="gdmTitle" class="text-lg font-semibold">গ্রুপের বিস্তারিত ফলাফল</h3>
+        <div class="flex items-center gap-2">
+          <button id="gdmBtnMembers" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700">Members</button>
+          <button id="gdmBtnEvals" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700">Evaluations</button>
+          <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-group-modal-close aria-label="Close">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <div class="text-xs text-gray-500">Group</div>
+            <div id="gdmGroupName" class="font-semibold"></div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Average %</div>
+            <div id="gdmGroupAvg" class="font-semibold"></div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Rank</div>
+            <div id="gdmGroupRank" class="font-semibold"></div>
+          </div>
+        </div>
+
+        <!-- Members view -->
+        <div id="gdmMembersWrap">
+          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-900/30">
+                <tr class="text-left text-gray-600 dark:text-gray-300">
+                  <th class="px-3 py-2">Roll</th>
+                  <th class="px-3 py-2">Role</th>
+                  <th class="px-3 py-2">Name</th>
+                  <th class="px-3 py-2">Academic Group</th>
+                  <th class="px-3 py-2">Task</th>
+                  <th class="px-3 py-2">Team</th>
+                  <th class="px-3 py-2">Additional</th>
+                  <th class="px-3 py-2">MCQ</th>
+                  <th class="px-3 py-2">Total</th>
+                  <th class="px-3 py-2">%</th>
+                  <th class="px-3 py-2">Rank</th>
+                </tr>
+              </thead>
+              <tbody id="gdmMembersBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Evaluations view -->
+        <div id="gdmEvalsWrap" class="hidden">
+          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-900/30">
+                <tr class="text-left text-gray-600 dark:text-gray-300">
+                  <th class="px-3 py-2">Assignment</th>
+                  <th class="px-3 py-2">Date</th>
+                  <th class="px-3 py-2">Evaluated</th>
+                  <th class="px-3 py-2">Group Avg %</th>
+                  <th class="px-3 py-2">Top Student</th>
+                </tr>
+              </thead>
+              <tbody id="gdmEvalsBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
     <div id="toast" class="toast hidden">
       <div id="toastMessage" class="toast-message"></div>
     </div>
@@ -1030,6 +1105,7 @@
     </div>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="js/components/student-result-details.js"></script>
+    <script type="module" src="js/components/group-result-details.js"></script>
 
     <!-- Student Detail Modal (scrollable, with table/chart toggle) -->
     <div id="studentDetailModal" class="fixed inset-0 z-[9998] hidden">
