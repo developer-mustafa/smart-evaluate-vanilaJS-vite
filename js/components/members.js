@@ -1,4 +1,4 @@
-// js/components/members.js
+﻿// js/components/members.js
 
 // নির্ভরতা (Dependencies)
 let stateManager, uiManager, dataService, helpers, app;
@@ -34,7 +34,7 @@ const elements = {
 let membersSearchDebouncer;
 let cardsSearchDebouncer;
 
-const BADGE_BASE_CLASS = 'inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border';
+const BADGE_BASE_CLASS = 'inline-flex items-center px-2 py-2 text-xs font-semibold rounded-full border';
 
 const ROLE_BADGE_META = {
   'team-leader': {
@@ -673,63 +673,83 @@ function _renderStudentCardsList() {
         : '';
       const groupMemberCount = groupStudentCountMap.get(student.groupId || '__ungrouped') || 0;
 
-      return `
-        <article class="group relative flex h-full min-h-[260px] flex-col overflow-hidden rounded-2xl border ${
-          palette.panelBorder || 'border-gray-200 dark:border-gray-700'
-        } bg-white dark:bg-gray-900/80 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-          <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
-            palette.headerBg || 'from-indigo-500 to-blue-500'
-          }"></div>
-          <div class="relative flex h-full flex-col gap-5 p-6">
-            <div class="flex items-start justify-between gap-3">
-              <div class="space-y-2 min-w-0">
-                <h4 class="text-lg font-semibold leading-snug text-gray-900 dark:text-white break-words" title="${name}">${name}</h4>
-                <div class="flex flex-wrap gap-2">
-                  ${_renderAcademicBadge(student.academicGroup)}
-                  ${_renderStudentRoleBadge(student.role)}
-                  <span class="${BADGE_BASE_CLASS} ${
-        palette.chipBg ||
-        'bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
-      }">গ্রুপ: ${groupName}</span>
-                </div>
-              </div>
-              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-700 shadow-inner dark:bg-gray-800 dark:text-gray-200">${
-                rollDisplay ? `রোল ${rollDisplay}` : 'N/A'
-              }
-              </span>
-            </div>
-            <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600 dark:text-gray-300">
-              <span class="inline-flex items-center gap-2"><i class="fas fa-calendar text-indigo-500"></i> সেশন: ${session}</span>
-              <span class="inline-flex items-center gap-2 justify-end"><i class="fas fa-venus-mars text-pink-500"></i> লিঙ্গ: ${gender}</span>
-              <span class="inline-flex items-center gap-2"><i class="fas fa-university text-sky-500"></i> একাডেমিক: ${academicGroup}</span>
-              <span class="inline-flex items-center gap-2 justify-end"><i class="fas fa-users text-emerald-500"></i> মোট সদস্য: ${formatNumber(
-                groupMemberCount
-              )}</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              <span class="inline-flex items-center gap-2 rounded-full bg-gray-100/80 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm dark:bg-gray-800/70 dark:text-gray-200">
-                <i class="fas fa-user-tag text-indigo-500"></i> দায়িত্ব: ${_formatLabel(
-                  _getRoleText(student.role) || 'দায়িত্বহীন'
-                )}
-              </span>
-              <span class="inline-flex items-center gap-2 rounded-full bg-gray-100/80 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm dark:bg-gray-800/70 dark:text-gray-200">
-                <i class="fas fa-address-book text-emerald-500"></i> যোগাযোগ: ${contactText ? 'উপলব্ধ' : 'অনুপস্থিত'}
-              </span>
-            </div>
-            ${contactBlock}
-          </div>
-        </article>
-      `;
+   return `
+  <article
+    class="relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
+      palette.panelBorder || 'border-gray-200 dark:border-gray-700'
+    } bg-white dark:bg-gray-900/80 shadow-sm hover:shadow-lg transition duration-200"
+  >
+    <!-- Top gradient bar -->
+    <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
+      palette.headerBg || 'from-indigo-500 to-blue-500'
+    } rounded-t-2xl"></div>
+
+    <!-- Body (kept compact) -->
+    <div class="relative px-4 pt-8 pb-4 flex flex-col items-center gap-3">
+
+      <!-- Roll: top-center -->
+      <span
+        class="absolute -top-4 left-1/2 -translate-x-1/2 inline-flex h-10 min-w-[72px] px-3 items-center justify-center rounded-xl
+               bg-gray-100 text-[13px] font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-200 shadow-inner
+               ring-1 ring-gray-300 dark:ring-gray-700"
+      >
+        ${rollDisplay ? `রোল ${rollDisplay}` : 'N/A'}
+      </span>
+
+      <!-- Name (below roll) -->
+      <h4
+        class="mt-1 text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white
+               text-center whitespace-normal break-words hyphens-auto"
+        title="\${name}"
+      >
+        ${name}
+      </h4>
+
+      <!-- Badges (tight wrap) -->
+      <div class="flex flex-wrap justify-center gap-1.5">
+        ${_renderAcademicBadge(student.academicGroup)}
+        ${_renderStudentRoleBadge(student.role)}
+        <span class="\${BADGE_BASE_CLASS} ${
+          palette.chipBg ||
+          'bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
+        }">গ্রুপ: ${groupName}</span>
+      </div>
+
+      <!-- Info grid (compact, non-overlapping) -->
+      <section
+        class="w-full grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))] text-[13px] font-medium"
+        aria-label="Student details"
+      >
+        <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
+          <i class="fas fa-calendar text-indigo-500"></i>
+          <span class="text-gray-600 dark:text-gray-300">সেশন:</span>
+          <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${session}</span>
+        </div>
+
+        <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
+          <i class="fas fa-venus-mars text-pink-500"></i>
+          <span class="text-gray-600 dark:text-gray-300">লিঙ্গ:</span>
+          <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${gender}</span>
+        </div>
+
+
+
+       
+      </section>
+    </div>
+  </article>
+`;
+
     })
     .join('');
 
   elements.allStudentsCardsContainer.innerHTML = `
-    <div class="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8">
-      ${summary}
+   
+  
       <div class="grid items-stretch gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         ${cards}
       </div>
-    </div>
+   
   `;
 }
 

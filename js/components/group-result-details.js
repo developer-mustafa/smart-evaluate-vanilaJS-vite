@@ -42,6 +42,28 @@
     }[String(role || '').trim()] || 'bg-gray-50 text-gray-700 border-gray-200')
   );
 
+  // Academic group badge palette (deterministic by name)
+  const ACAD_PALETTE = [
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-700/40',
+    'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-700/40',
+    'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-700/40',
+    'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-700/40',
+    'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-700/40',
+    'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-300 dark:border-fuchsia-700/40',
+    'bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-500/10 dark:text-lime-300 dark:border-lime-700/40',
+    'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-700/40',
+    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-700/40',
+    'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-700/40',
+  ];
+
+  const acadBadgeClass = (label) => {
+    const s = String(label || '').trim();
+    if (!s) return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700/60';
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+    return ACAD_PALETTE[h % ACAD_PALETTE.length];
+  };
+
   const pctBadgeClass = (p) => {
     const v = Number(p) || 0;
     if (v >= 85) return 'bg-emerald-50 text-emerald-700';
@@ -192,10 +214,15 @@
 
                 const comment = typeof sc?.comments === 'string' ? sc.comments.trim() : '';
 
+                const agName = s.academicGroup || s.academic_group || s.academic || '';
+                const agClass = acadBadgeClass(agName);
+
                 return {
                   roll: s.roll || s.studentRoll || s.classRoll || s.rollNumber || null,
                   badge,
                   name: s.name || s.id,
+                  agName,
+                  agClass,
                   taskScore, teamScore, additional, mcq, total, pct, comment
                 };
               })
@@ -211,7 +238,10 @@
               tr.innerHTML = `
                 <td class="px-3 py-2 whitespace-nowrap">${bn(r.roll ?? '-')}</td>
                 <td class="px-3 py-2 whitespace-nowrap">${r.badge}</td>
-                <td class="px-3 py-2 whitespace-nowrap">${escHtml(r.name)}</td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  <span class="font-medium">${escHtml(r.name)}</span>
+                  ${r.agName ? `<span class="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${r.agClass}"><i class="fas fa-graduation-cap"></i>${escHtml(r.agName)}</span>` : ''}
+                </td>
                 <td class="px-3 py-2 text-right">${r.taskScore.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right">${r.teamScore.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right">${r.additional.toFixed(2)}</td>
