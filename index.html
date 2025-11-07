@@ -77,21 +77,33 @@
       </div>
       <div class="p-5 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div>
-            <div class="text-xs text-gray-500">Group</div>
-            <div id="gdmGroupName" class="font-semibold"></div>
+          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><i class="fa-solid fa-layer-group"></i></span>
+            <div class="min-w-0">
+              <div class="text-xs text-gray-500 dark:text-gray-400">Group</div>
+              <div id="gdmGroupName" class="text-sm font-semibold truncate"></div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500">Average %</div>
-            <div id="gdmGroupAvg" class="font-semibold"></div>
+          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"><i class="fa-solid fa-chart-line"></i></span>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Average %</div>
+              <div id="gdmGroupAvg" class="text-sm font-semibold"></div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500">Rank</div>
-            <div id="gdmGroupRank" class="font-semibold"></div>
+          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300"><i class="fa-solid fa-crown"></i></span>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Rank</div>
+              <div id="gdmGroupRank" class="text-sm font-semibold"></div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500">Assignment Avg %</div>
-            <div id="gdmAssignAvg" class="font-semibold">-</div>
+          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300"><i class="fa-solid fa-percent"></i></span>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Assignment Avg %</div>
+              <div id="gdmAssignAvg" class="text-sm font-semibold">-</div>
+            </div>
           </div>
         </div>
 
@@ -99,12 +111,17 @@
         <div id="gdmMembersWrap">
           <!-- Assignment-wise details inside Members tab -->
           <div id="gdmAssignSection" class="mt-6 space-y-3">
-            <div class="flex items-center justify-between gap-3 flex-wrap">
-              <h4 id="gdmAssignTitle" class="text-sm font-semibold">Assignment-wise Details</h4>
-              <div class="flex items-center gap-3">
-                <span id="gdmAssignMeta" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300"></span>
+            <div class="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
+              <div class="space-y-0.5">
+                <div id="gdmAssignName" class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100"></div>
+                <h4 id="gdmAssignTitle" class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Assignment-wise Details</h4>
+              </div>
+              <div class="flex items-center justify-start md:justify-end gap-3">
                 <label for="gdmAssignSelect" class="text-xs text-gray-500">Assignment</label>
                 <select id="gdmAssignSelect" class="text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700"></select>
+              </div>
+              <div class="md:col-span-2">
+                <span id="gdmAssignMeta" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300"></span>
               </div>
             </div>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -336,6 +353,118 @@
       >
         <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
           <div id="page-dashboard" class="page space-y-6 hidden">
+
+            <!-- Elite Group (Top 3) -->
+            <section id="elite-groups" aria-label="Elite Groups">
+              <!-- Header -->
+              <div
+                class="relative overflow-hidden rounded-3xl border border-yellow-300/40 dark:border-yellow-500/30 bg-gradient-to-r from-amber-50 via-amber-100 to-amber-50 dark:from-yellow-900/20 dark:via-amber-900/10 dark:to-yellow-900/20 p-6 shadow-xl"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white shadow-lg ring-2 ring-yellow-300/60"
+                  >
+                    <i class="fa-solid fa-crown text-2xl"></i>
+                  </span>
+                  <div>
+                    <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-amber-700 dark:text-amber-300">
+                      Elite Group
+                    </h2>
+                    <p class="text-sm md:text-base text-amber-700/80 dark:text-amber-200/70">
+                      শীর্ষ ৩ গ্রুপকে রাজকীয় ডিজাইনে প্রদর্শন
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Podium Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6">
+                <!-- 2nd Place -->
+                <article
+                  class="relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-1 md:order-1"
+                  aria-label="২য় স্থান"
+                >
+                  <div class="flex items-start justify-between">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-medal text-slate-600 dark:text-slate-200"></i>
+                        <span class="text-2xl md:text-3xl font-extrabold">২য় স্থান</span>
+                      </div>
+                      <div data-elite-second-name class="text-lg md:text-xl font-semibold">
+                        গ্রুপের নাম
+                      </div>
+                      <div class="text-sm md:text-base text-gray-700/80 dark:text-gray-200/80">
+                        <span>স্কোর:</span>
+                        <span data-elite-second-score>—</span>
+                        <span class="mx-1">•</span>
+                        <span>সদস্য:</span>
+                        <span data-elite-second-members>—</span>
+                      </div>
+                    </div>
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20">
+                      <i class="fa-solid fa-trophy text-slate-600 dark:text-slate-200"></i>
+                    </span>
+                  </div>
+                </article>
+
+                <!-- 1st Place (highlighted, centered on md+) -->
+                <article
+                  class="relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-6 md:p-7 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-3 md:order-2"
+                  aria-label="১ম স্থান"
+                >
+                  <div class="flex items-start justify-between">
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-crown text-white drop-shadow"></i>
+                        <span class="text-3xl md:text-4xl font-extrabold tracking-wide">১ম স্থান</span>
+                      </div>
+                      <div data-elite-first-name class="text-xl md:text-2xl font-semibold">
+                        গ্রুপের নাম
+                      </div>
+                      <div class="text-white/90 text-sm md:text-base">
+                        <span>স্কোর:</span>
+                        <span data-elite-first-score>—</span>
+                        <span class="mx-1">•</span>
+                        <span>সদস্য:</span>
+                        <span data-elite-first-members>—</span>
+                      </div>
+                    </div>
+                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30">
+                      <i class="fa-solid fa-trophy text-xl"></i>
+                    </span>
+                  </div>
+                </article>
+
+                <!-- 3rd Place -->
+                <article
+                  class="relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-2 md:order-3"
+                  aria-label="৩য় স্থান"
+                >
+                  <div class="flex items-start justify-between">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-award text-amber-800 dark:text-amber-100"></i>
+                        <span class="text-2xl md:text-3xl font-extrabold">৩য় স্থান</span>
+                      </div>
+                      <div data-elite-third-name class="text-lg md:text-xl font-semibold">
+                        গ্রুপের নাম
+                      </div>
+                      <div class="text-gray-800/80 dark:text-white/80 text-sm md:text-base">
+                        <span>স্কোর:</span>
+                        <span data-elite-third-score>—</span>
+                        <span class="mx-1">•</span>
+                        <span>সদস্য:</span>
+                        <span data-elite-third-members>—</span>
+                      </div>
+                    </div>
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/70 dark:bg-black/20 shadow ring-1 ring-white/50 dark:ring-black/20">
+                      <i class="fa-solid fa-trophy text-amber-800 dark:text-amber-100"></i>
+                    </span>
+                  </div>
+                </article>
+              </div>
+            </section>
+
             <div class="placeholder-content">
               <i class="fas fa-spinner fa-spin mr-2"></i>
               ড্যাশবোর্ড লোড হচ্ছে...

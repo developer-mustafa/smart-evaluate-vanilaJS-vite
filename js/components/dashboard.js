@@ -551,6 +551,60 @@ function _renderTopGroups(groupData) {
     </div>
   `;
 
+  // Override with royal podium layout for Top 3
+  try {
+    const labels = ['১ম স্থান', '২য় স্থান', '৩য় স্থান'];
+    const classes = [
+      'relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-6 md:p-7 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-3 md:order-2',
+      'relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-1 md:order-1',
+      'relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-2 md:order-3',
+    ];
+    const getCardHTML = (data, index) => {
+      if (!data) return '';
+      const isFirst = index === 0;
+      const name = _formatLabel(data.groupName);
+      const score = helpers.convertToBanglaNumber((data.averageScore || 0).toFixed(1));
+      const members = helpers.convertToBanglaNumber(data.studentCount || 0);
+      const trophyIcon = isFirst ? '<i class="fa-solid fa-crown text-white drop-shadow"></i>' : '<i class="fa-solid fa-trophy"></i>';
+      const placeText = labels[index];
+      const articleClass = isFirst ? classes[0] : index === 1 ? classes[1] : classes[2];
+      const badge = isFirst
+        ? '<span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30">\n            <i class="fa-solid fa-trophy text-xl"></i>\n          </span>'
+        : '<span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20">\n            <i class="fa-solid fa-trophy"></i>\n          </span>';
+      return `
+        <article class="${articleClass} cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
+          <div class="flex items-start justify-between">
+            <div class="${isFirst ? 'space-y-2' : 'space-y-1'}">
+              <div class="flex items-center gap-2">
+                ${trophyIcon}
+                <span class="${isFirst ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'} font-extrabold tracking-wide">${placeText}</span>
+              </div>
+              <div class="${isFirst ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'} font-semibold" title="${name}">${name}</div>
+              <div class="${isFirst ? 'text-white/90' : 'text-gray-800/80 dark:text-white/80'} text-sm md:text-base">
+                <span>স্কোর:</span>
+                <span>${score}</span>
+                <span class="mx-1">•</span>
+                <span>সদস্য:</span>
+                <span>${members}</span>
+              </div>
+            </div>
+            ${badge}
+          </div>
+        </article>
+      `;
+    };
+    const podium = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        ${top3[1] ? getCardHTML(top3[1], 1) : ''}
+        ${top3[0] ? getCardHTML(top3[0], 0) : ''}
+        ${top3[2] ? getCardHTML(top3[2], 2) : ''}
+      </div>
+    `;
+    elements.topGroupsContainer.innerHTML = podium;
+  } catch (e) {
+    console.warn('Elite podium render fallback:', e);
+  }
+
   // Make elite group cards open the same group detail modal
   if (elements.topGroupsContainer && typeof window !== 'undefined' && typeof window.openGroupModalById === 'function') {
     uiManager.addListener(elements.topGroupsContainer, 'click', (e) => {

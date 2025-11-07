@@ -156,7 +156,7 @@
             if (!e) {
               tbody.innerHTML = '';
               const elAA = byId('gdmAssignAvg'); if (elAA) elAA.textContent = '-';
-              if (meta) meta.textContent = 'Task: - | Date: -';
+              if (meta) meta.textContent = 'Task: - | Date: -'; const elAN = byId('gdmAssignName'); if (elAN) elAN.textContent = ''; const elAT = byId('gdmAssignTitle'); if (elAT) elAT.textContent = 'Assignment-wise Details';
               return;
             }
 
@@ -164,6 +164,8 @@
               const dstr = e.ts ? new Date(e.ts).toISOString().slice(0, 10) : '-';
               const nm = e.task?.name || `Assignment-${idx + 1}`;
               if (meta) meta.textContent = 'Task: ' + nm + ' | Date: ' + dstr;
+              const elAN = byId('gdmAssignName'); if (elAN) elAN.textContent = nm;
+              const elAT = byId('gdmAssignTitle'); if (elAT) elAT.textContent = 'Assignment-wise Details';
             } catch {}
 
             const elAA = byId('gdmAssignAvg');
@@ -313,4 +315,7 @@
     init();
   }
 })();
+
+
+
 
