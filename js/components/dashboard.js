@@ -723,6 +723,16 @@ function _renderGroupsRanking(groupData) {
       const tasks = helpers.convertToBanglaNumber(data.taskCount);
       const palette = _getScorePalette(data.averageScore);
       const groupName = _formatLabel(data.groupName);
+      const progressPercentage = Math.min(100, Math.round(data.averageScore));
+      const progressBar = `
+        <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          <div class="h-full rounded-full" style="width: ${progressPercentage}%; background: ${palette.solid}; box-shadow: 0 6px 12px ${palette.shadow};"></div>
+        </div>
+      `;
+      const circleIndicatorContent = `
+        ${_buildCircularMeter(data.averageScore, palette, 88)}
+        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">গড় স্কোর</span>
+      `;
       return `
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0">
           <div class="absolute inset-0 bg-gradient-to-r ${palette.gradient} opacity-60"></div>
@@ -749,13 +759,18 @@ function _renderGroupsRanking(groupData) {
                   <i class="fas fa-clipboard-check text-purple-500"></i> সম্পন্ন মূল্যায়ন: ${evals}
                 </span>
               </div>
-              <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                <div class="h-full rounded-full" style="width: ${Math.min(100, Math.round(data.averageScore))}%; background: ${palette.solid}; box-shadow: 0 6px 12px ${palette.shadow};"></div>
+              <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center md:hidden">
+                ${progressBar}
+                <div class="flex flex-col items-center gap-2">
+                  ${circleIndicatorContent}
+                </div>
+              </div>
+              <div class="hidden md:block">
+                ${progressBar}
               </div>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              ${_buildCircularMeter(data.averageScore, palette, 88)}
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">গড় স্কোর</span>
+            <div class="hidden md:flex flex-col items-center gap-2">
+              ${circleIndicatorContent}
             </div>
           </div>
         </article>
