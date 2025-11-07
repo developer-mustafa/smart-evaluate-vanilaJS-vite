@@ -1,4 +1,4 @@
-// js/components/tasks.js
+﻿// js/components/tasks.js
 
 // Dependencies
 let stateManager, uiManager, dataService, helpers, app;
@@ -14,6 +14,26 @@ const DEFAULT_SCORE_BREAKDOWN = {
   mcq: 40,
 };
 const DEFAULT_TOTAL_SCORE = 100; // 20 + 15 + 25 + 40
+const TASK_STATUS_OPTIONS = [
+  { value: 'upcoming', label: 'আপকামিং এসাইনমেন্ট' },
+  { value: 'ongoing', label: 'চলমান এসাইনমেন্ট' },
+  { value: 'completed', label: 'কমপ্লিট এসাইনমেন্ট' },
+];
+const TASK_STATUS_META = {
+  upcoming: {
+    label: 'আপকামিং',
+    badge: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200',
+  },
+  ongoing: {
+    label: 'চলমান',
+    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
+  },
+  completed: {
+    label: 'কমপ্লিট',
+    badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+  },
+};
+const TASK_STATUS_VALUES = TASK_STATUS_OPTIONS.map((opt) => opt.value);
 
 /**
  * Initializes the Tasks component.
@@ -71,11 +91,15 @@ function _cacheDOMElements() {
 
   elements.taskDescriptionInput = elements.page.querySelector('#taskDescriptionInput');
   elements.taskDateInput = elements.page.querySelector('#taskDateInput');
+  elements.taskStatusInput = elements.page.querySelector('#taskStatusInput');
   elements.addTaskBtn = elements.page.querySelector('#addTaskBtn');
   elements.tasksListContainer = elements.page.querySelector('#tasksList');
 
   if (!elements.maxTaskScoreInput || !elements.totalMaxScoreDisplay) {
     console.warn('Tasks: One or more score breakdown elements are missing in the HTML.');
+  }
+  if (elements.taskStatusInput && !elements.taskStatusInput.value) {
+    elements.taskStatusInput.value = 'upcoming';
   }
 }
 
@@ -105,6 +129,14 @@ function _setupEventListeners() {
     const deleteBtn = e.target.closest('.delete-task-btn');
     if (editBtn) _handleEditTask(editBtn.dataset.id);
     else if (deleteBtn) _handleDeleteTask(deleteBtn.dataset.id);
+  });
+
+  uiManager.addListener(elements.tasksListContainer, 'change', (e) => {
+    const select = e.target.closest('.task-status-select');
+    if (select) {
+      e.stopPropagation();
+      _handleInlineStatusChange(select);
+    }
   });
 }
 
@@ -169,75 +201,91 @@ function _renderTasksList(tasks) {
   if (!elements.tasksListContainer) return;
   uiManager.clearContainer(elements.tasksListContainer);
   if (!tasks || tasks.length === 0) {
-    uiManager.displayEmptyMessage(elements.tasksListContainer, 'কোনো টাস্ক যোগ করা হয়নি।');
+    uiManager.displayEmptyMessage(elements.tasksListContainer, '???? ????? ??? ??? ?????');
     return;
   }
 
-  // --- FIXED SORTING ---
   const sortedTasks = [...tasks].sort((a, b) => {
     const dateStrA = _getComparableDateString(a.date);
     const dateStrB = _getComparableDateString(b.date);
-    return dateStrB.localeCompare(dateStrA); // Descending (newest first)
+    return dateStrB.localeCompare(dateStrA);
   });
-  // --- END FIX ---
 
   const html = sortedTasks
     .map((task) => {
-      const formattedDate = helpers.formatTimestamp(task.date) || 'তারিখ নেই';
-
-      // Calculate total max score from breakdown OR use stored maxScore
-      // This ensures old tasks (without breakdown) still show a score
+      const formattedDate = helpers.formatTimestamp(task.date) || '????? ???';
       const totalMaxScore = task.maxScoreBreakdown
         ? (parseFloat(task.maxScoreBreakdown.task) || 0) +
           (parseFloat(task.maxScoreBreakdown.team) || 0) +
           (parseFloat(task.maxScoreBreakdown.additional) || 0) +
           (parseFloat(task.maxScoreBreakdown.mcq) || 0)
-        : parseFloat(task.maxScore) || DEFAULT_TOTAL_SCORE; // Fallback to task's maxScore or default
+        : parseFloat(task.maxScore) || DEFAULT_TOTAL_SCORE;
 
       const maxScoreText = helpers.convertToBanglaNumber(totalMaxScore);
       const description = task.description
         ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${helpers.truncateText(task.description, 100)}</p>`
         : '';
 
-      const breakdown = task.maxScoreBreakdown || {}; // Use empty obj if no breakdown
+      const breakdown = task.maxScoreBreakdown || {};
       const breakdownTitle =
-        `ব্রেকডাউন: টাস্ক-${helpers.convertToBanglaNumber(breakdown.task ?? 'N/A')}, ` +
-        `টিম-${helpers.convertToBanglaNumber(breakdown.team ?? 'N/A')}, ` +
-        `অতিরিক্ত-${helpers.convertToBanglaNumber(breakdown.additional ?? 'N/A')}, ` +
+        `?????????: ?????-${helpers.convertToBanglaNumber(breakdown.task ?? 'N/A')}, ` +
+        `???-${helpers.convertToBanglaNumber(breakdown.team ?? 'N/A')}, ` +
+        `????????-${helpers.convertToBanglaNumber(breakdown.additional ?? 'N/A')}, ` +
         `MCQ-${helpers.convertToBanglaNumber(breakdown.mcq ?? 'N/A')}`;
 
+      const statusValue = _getTaskStatus(task);
+      const statusMeta = TASK_STATUS_META[statusValue] || TASK_STATUS_META.upcoming;
+      const statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusMeta.badge}">
+        <i class="fas fa-circle text-[6px]"></i>${statusMeta.label}
+      </span>`;
+
       return `
-        <div class="card p-4">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div class="mb-2 sm:mb-0 flex-grow" title="${breakdownTitle}">
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">${helpers.ensureBengaliText(
-                      task.name
-                    )}</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        তারিখ: ${formattedDate} | মোট সর্বোচ্চ স্কোর: ${maxScoreText}
-                    </p>
-                    ${description}
-                </div>
-                <div class="flex space-x-2 flex-shrink-0 mt-2 sm:mt-0 self-end sm:self-center">
-                    <button data-id="${
-                      task.id
-                    }" class="edit-task-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা"><i class="fas fa-edit pointer-events-none"></i></button>
-                    <button data-id="${
-                      task.id
-                    }" class="delete-task-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট"><i class="fas fa-trash pointer-events-none"></i></button>
-                </div>
+        <div class="card p-4 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div class="flex-grow" title="${breakdownTitle}">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">${helpers.ensureBengaliText(task.name)}</h4>
+                ${statusBadge}
+              </div>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                ?????: ${formattedDate} | ??? ???????? ?????: ${maxScoreText}
+              </p>
+              ${description}
             </div>
+            <div class="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-end gap-2">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">স্টেটাস আপডেট</label>
+              <select
+                class="task-status-select form-input text-sm font-medium"
+                data-id="${task.id}"
+                data-current-status="${statusValue}"
+                aria-label="টাস্ক স্টেটাস পরিবর্তন"
+              >
+                ${_buildStatusOptions(statusValue)}
+              </select>
+              <div class="flex space-x-2 justify-end">
+                <button data-id="${task.id}" class="edit-task-btn btn btn-light btn-sm py-1 px-2" aria-label="????????">
+                  <i class="fas fa-edit pointer-events-none"></i>
+                </button>
+                <button data-id="${task.id}" class="delete-task-btn btn btn-danger btn-sm py-1 px-2" aria-label="?????">
+                  <i class="fas fa-trash pointer-events-none"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>`;
     })
     .join('');
   elements.tasksListContainer.innerHTML = html;
 }
 
+
 /** Handles adding a new task */
 async function _handleAddTask() {
   const name = elements.taskNameInput?.value.trim();
   const description = elements.taskDescriptionInput?.value.trim();
   const date = elements.taskDateInput?.value;
+  const statusInput = _validateStatusInput(elements.taskStatusInput?.value);
+  const status = statusInput || _deriveStatusFromDate(date);
 
   const maxScores = {
     task: parseFloat(elements.maxTaskScoreInput?.value) || 0,
@@ -280,6 +328,7 @@ async function _handleAddTask() {
     date,
     maxScore: totalMaxScore,
     maxScoreBreakdown: maxScores,
+    status,
     nameLower: name.toLowerCase(),
   };
 
@@ -291,12 +340,55 @@ async function _handleAddTask() {
     _setBreakdownInputs(DEFAULT_SCORE_BREAKDOWN, ''); // Reset breakdown inputs
     if (elements.taskDescriptionInput) elements.taskDescriptionInput.value = '';
     if (elements.taskDateInput) elements.taskDateInput.value = '';
+    if (elements.taskStatusInput) elements.taskStatusInput.value = 'upcoming';
     uiManager.showToast('টাস্ক সফলভাবে যোগ করা হয়েছে।', 'success');
   } catch (error) {
     uiManager.showToast(`টাস্ক যোগ করতে সমস্যা: ${error.message}`, 'error');
   } finally {
     uiManager.hideLoading();
   }
+}
+
+function _getTaskStatus(task) {
+  return _normalizeStatus(task?.status, task?.date);
+}
+
+function _normalizeStatus(value, dateInput) {
+  if (TASK_STATUS_VALUES.includes(value)) return value;
+  return _deriveStatusFromDate(dateInput);
+}
+
+function _validateStatusInput(value) {
+  return TASK_STATUS_VALUES.includes(value) ? value : null;
+}
+
+function _deriveStatusFromDate(dateInput) {
+  const dateObj = _parseDateInput(dateInput);
+  if (!dateObj) return 'upcoming';
+  const today = new Date();
+  const cmpTask = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+  const cmpToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (cmpTask.getTime() === cmpToday.getTime()) return 'ongoing';
+  if (cmpTask > cmpToday) return 'upcoming';
+  return 'completed';
+}
+
+function _parseDateInput(dateInput) {
+  if (!dateInput) return null;
+  try {
+    if (typeof dateInput.toDate === 'function') return dateInput.toDate();
+    if (typeof dateInput === 'number') return new Date(dateInput);
+    return new Date(dateInput);
+  } catch {
+    return null;
+  }
+}
+
+function _buildStatusOptions(selected) {
+  return TASK_STATUS_OPTIONS.map(
+    (option) =>
+      `<option value="${option.value}" ${option.value === selected ? 'selected' : ''}>${option.label}</option>`
+  ).join('');
 }
 
 /** Handles editing a task */
@@ -317,6 +409,7 @@ function _handleEditTask(taskId) {
       (parseFloat(currentBreakdown.mcq) || 0)
     : task.maxScore || DEFAULT_TOTAL_SCORE;
   const dateValue = _getComparableDateString(task.date) || '';
+  const currentStatus = _getTaskStatus(task);
 
   const contentHTML = `
         <div class="space-y-4">
@@ -346,7 +439,10 @@ function _handleEditTask(taskId) {
             <div><label for="editTaskDescription" class="label">বিবরণ</label><textarea id="editTaskDescription" class="form-input" rows="3">${
               task.description || ''
             }</textarea></div>
-            <div><label for="editTaskDate" class="label">তারিখ*</label><input id="editTaskDate" type="date" value="${dateValue}" class="form-input"></div>
+            <div><label for="editTaskDate" class="label">?????*</label><input id="editTaskDate" type="date" value="${dateValue}" class="form-input"></div>
+            <div><label for="editTaskStatus" class="label">স্টেটাস</label><select id="editTaskStatus" class="form-input">
+              ${_buildStatusOptions(currentStatus)}
+            </select></div>
         </div>`;
 
   uiManager.showEditModal('টাস্ক সম্পাদনা', contentHTML, async () => {
@@ -354,6 +450,8 @@ function _handleEditTask(taskId) {
     const updatedName = document.getElementById('editTaskName')?.value.trim();
     const updatedDescription = document.getElementById('editTaskDescription')?.value.trim();
     const updatedDate = document.getElementById('editTaskDate')?.value;
+    const updatedStatus =
+      _validateStatusInput(document.getElementById('editTaskStatus')?.value) || _deriveStatusFromDate(updatedDate);
     const updatedMaxScores = {
       task: parseFloat(document.getElementById('editmaxTaskScoreInput')?.value) || 0,
       team: parseFloat(document.getElementById('editmaxTeamScoreInput')?.value) || 0,
@@ -393,6 +491,7 @@ function _handleEditTask(taskId) {
       date: updatedDate,
       maxScore: updatedTotalMaxScore,
       maxScoreBreakdown: updatedMaxScores,
+      status: updatedStatus,
       nameLower: updatedName.toLowerCase(),
     };
 
@@ -451,6 +550,28 @@ async function _handleDeleteTask(taskId) {
   });
 }
 
+async function _handleInlineStatusChange(selectEl) {
+  const taskId = selectEl?.dataset.id;
+  const nextValue = _validateStatusInput(selectEl?.value);
+  const previousValue = selectEl?.dataset.currentStatus || _validateStatusInput(selectEl?.value);
+
+  if (!taskId || !nextValue || nextValue === previousValue) return;
+
+  selectEl.disabled = true;
+  uiManager.showLoading('স্টেটাস আপডেট হচ্ছে...');
+  try {
+    await dataService.updateTask(taskId, { status: nextValue });
+    selectEl.dataset.currentStatus = nextValue;
+    await app.refreshAllData();
+    uiManager.showToast('স্টেটাস আপডেট হয়েছে', 'success');
+  } catch (error) {
+    uiManager.showToast(`স্টেটাস আপডেট ব্যর্থ: ${error.message}`, 'error');
+    if (previousValue) selectEl.value = previousValue;
+  } finally {
+    selectEl.disabled = false;
+    uiManager.hideLoading();
+  }
+}
 /** Populates select dropdowns with task options */
 function populateTaskSelects(selectElementIds, defaultOptionText = 'টাস্ক নির্বাচন করুন') {
   const tasks = stateManager.get('tasks');
@@ -479,3 +600,4 @@ function populateTaskSelects(selectElementIds, defaultOptionText = 'টাস্
     }
   });
 }
+

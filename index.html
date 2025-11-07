@@ -59,114 +59,163 @@
     >
       <div class="loading-spinner mb-4 border-t-blue-600"></div>
       <p id="loadingMessage" class="text-lg text-gray-700 dark:text-gray-300">লোড হচ্ছে...</p>
-  </div>
+    </div>
 
-  <!-- Group Detail Modal -->
-  <div id="groupDetailModal" class="fixed inset-0 z-[9998] hidden">
-    <div class="absolute inset-0 bg-black/40" data-group-modal-close></div>
-    <div class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-      <div class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between">
-        <h3 id="gdmTitle" class="text-lg font-semibold">গ্রুপের বিস্তারিত ফলাফল</h3>
-        <div class="flex items-center gap-2">
-          <button id="gdmBtnMembers" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700">Members</button>
-          <button id="gdmBtnEvals" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700">Evaluations</button>
-          <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-group-modal-close aria-label="Close">
-            <i class="fa fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div class="p-5 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><i class="fa-solid fa-layer-group"></i></span>
-            <div class="min-w-0">
-              <div class="text-xs text-gray-500 dark:text-gray-400">Group</div>
-              <div id="gdmGroupName" class="text-sm font-semibold truncate"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"><i class="fa-solid fa-chart-line"></i></span>
-            <div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Average %</div>
-              <div id="gdmGroupAvg" class="text-sm font-semibold"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300"><i class="fa-solid fa-crown"></i></span>
-            <div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Rank</div>
-              <div id="gdmGroupRank" class="text-sm font-semibold"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300"><i class="fa-solid fa-percent"></i></span>
-            <div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Assignment Avg %</div>
-              <div id="gdmAssignAvg" class="text-sm font-semibold">-</div>
-            </div>
+    <!-- Group Detail Modal -->
+    <div id="groupDetailModal" class="fixed inset-0 z-[9998] hidden">
+      <div class="absolute inset-0 bg-black/40" data-group-modal-close></div>
+      <div
+        class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between"
+        >
+          <h3 id="gdmTitle" class="text-lg font-semibold">গ্রুপের বিস্তারিত ফলাফল</h3>
+          <div class="flex items-center gap-2">
+            <button
+              id="gdmBtnMembers"
+              class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700"
+            >
+              Members
+            </button>
+            <button
+              id="gdmBtnEvals"
+              class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700"
+            >
+              Evaluations
+            </button>
+            <button
+              class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              data-group-modal-close
+              aria-label="Close"
+            >
+              <i class="fa fa-times"></i>
+            </button>
           </div>
         </div>
-
-        <!-- Members view -->
-        <div id="gdmMembersWrap">
-          <!-- Assignment-wise details inside Members tab -->
-          <div id="gdmAssignSection" class="mt-6 space-y-3">
-            <div class="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
-              <div class="space-y-0.5">
-                <div id="gdmAssignName" class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100"></div>
-                <h4 id="gdmAssignTitle" class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Assignment-wise Details</h4>
-              </div>
-              <div class="flex items-center justify-start md:justify-end gap-3">
-                <label for="gdmAssignSelect" class="text-xs text-gray-500">Assignment</label>
-                <select id="gdmAssignSelect" class="text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700"></select>
-              </div>
-              <div class="md:col-span-2">
-                <span id="gdmAssignMeta" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300"></span>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm"
+            >
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+              >
+                <i class="fa-solid fa-layer-group"></i>
+              </span>
+              <div class="min-w-0">
+                <div class="text-xs text-gray-500 dark:text-gray-400">Group</div>
+                <div id="gdmGroupName" class="text-sm font-semibold truncate"></div>
               </div>
             </div>
+            <div
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm"
+            >
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+              >
+                <i class="fa-solid fa-chart-line"></i>
+              </span>
+              <div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">Average %</div>
+                <div id="gdmGroupAvg" class="text-sm font-semibold"></div>
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm"
+            >
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300"
+              >
+                <i class="fa-solid fa-crown"></i>
+              </span>
+              <div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">Rank</div>
+                <div id="gdmGroupRank" class="text-sm font-semibold"></div>
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm"
+            >
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300"
+              >
+                <i class="fa-solid fa-percent"></i>
+              </span>
+              <div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">Assignment Avg %</div>
+                <div id="gdmAssignAvg" class="text-sm font-semibold">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Members view -->
+          <div id="gdmMembersWrap">
+            <!-- Assignment-wise details inside Members tab -->
+            <div id="gdmAssignSection" class="mt-6 space-y-3">
+              <div class="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
+                <div class="space-y-0.5">
+                  <div
+                    id="gdmAssignName"
+                    class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100"
+                  ></div>
+                  <h4 id="gdmAssignTitle" class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Assignment-wise Details
+                  </h4>
+                </div>
+                <div class="flex items-center justify-start md:justify-end gap-3">
+                  <label for="gdmAssignSelect" class="text-xs text-gray-500">Assignment</label>
+                  <select
+                    id="gdmAssignSelect"
+                    class="text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700"
+                  ></select>
+                </div>
+                <div class="md:col-span-2">
+                  <span id="gdmAssignMeta" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300"></span>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table class="min-w-full text-sm">
+                  <thead class="bg-gray-50 dark:bg-gray-900/30">
+                    <tr class="text-left text-gray-600 dark:text-gray-300">
+                      <th class="px-3 py-2">Roll</th>
+                      <th class="px-3 py-2">Role</th>
+                      <th class="px-3 py-2">Name</th>
+                      <th class="px-3 py-2">Task</th>
+                      <th class="px-3 py-2">Team</th>
+                      <th class="px-3 py-2">Additional</th>
+                      <th class="px-3 py-2">MCQ</th>
+                      <th class="px-3 py-2">Total</th>
+                      <th class="px-3 py-2">%</th>
+                      <th class="px-3 py-2">Comments</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gdmAssignBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evaluations view -->
+          <div id="gdmEvalsWrap" class="hidden">
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
               <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 dark:bg-gray-900/30">
                   <tr class="text-left text-gray-600 dark:text-gray-300">
-                    <th class="px-3 py-2">Roll</th>
-                    <th class="px-3 py-2">Role</th>
-                    <th class="px-3 py-2">Name</th>
-                    <th class="px-3 py-2">Task</th>
-                    <th class="px-3 py-2">Team</th>
-                    <th class="px-3 py-2">Additional</th>
-                    <th class="px-3 py-2">MCQ</th>
-                    <th class="px-3 py-2">Total</th>
-                    <th class="px-3 py-2">%</th>
-                    <th class="px-3 py-2">Comments</th>
+                    <th class="px-3 py-2">Assignment</th>
+                    <th class="px-3 py-2">Date</th>
+                    <th class="px-3 py-2">Evaluated</th>
+                    <th class="px-3 py-2">Group Avg %</th>
+                    <th class="px-3 py-2">Top Student</th>
                   </tr>
                 </thead>
-                <tbody id="gdmAssignBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                <tbody id="gdmEvalsBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
               </table>
             </div>
           </div>
         </div>
-
-        <!-- Evaluations view -->
-        <div id="gdmEvalsWrap" class="hidden">
-          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="min-w-full text-sm">
-              <thead class="bg-gray-50 dark:bg-gray-900/30">
-                <tr class="text-left text-gray-600 dark:text-gray-300">
-                  <th class="px-3 py-2">Assignment</th>
-                  <th class="px-3 py-2">Date</th>
-                  <th class="px-3 py-2">Evaluated</th>
-                  <th class="px-3 py-2">Group Avg %</th>
-                  <th class="px-3 py-2">Top Student</th>
-                </tr>
-              </thead>
-              <tbody id="gdmEvalsBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
     </div>
-  </div>
     <div id="toast" class="toast hidden">
       <div id="toastMessage" class="toast-message"></div>
     </div>
@@ -248,6 +297,15 @@
             <i class="fas fa-tachometer-alt w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">ড্যাশবোর্ড</span>
           </button>
+
+          <button
+            data-page="upcoming-assignments"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-sky-400"
+          >
+            <i class="fas fa-calendar-week w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">আপকামিং এসাইনমেন্ট</span>
+          </button>
+
           <button
             data-page="all-students"
             class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-green-400"
@@ -283,6 +341,20 @@
             <i class="fas fa-calculator w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">গ্রুপ পরিসংখ্যান</span>
           </button>
+          <button
+            data-page="group-policy"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+          >
+            <i class="fas fa-book w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">গ্রুপ পলিসি</span>
+          </button>
+          <button
+            data-page="export"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-lime-100 dark:hover:bg-lime-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-lime-400"
+          >
+            <i class="fas fa-file-export w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">এক্সপোর্ট</span>
+          </button>
 
           <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden" />
 
@@ -307,6 +379,7 @@
             <i class="fas fa-tasks w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">টাস্ক ব্যবস্থাপনা</span>
           </button>
+
           <button
             data-page="evaluation"
             class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-teal-400"
@@ -315,23 +388,6 @@
             <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন</span>
           </button>
 
-          <hr class="my-3 border-gray-300 dark:border-gray-600" />
-          <button
-            data-page="group-policy"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
-          >
-            <i class="fas fa-book w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-            <span class="flex-1 text-left text-sm font-medium">গ্রুপ পলিসি</span>
-          </button>
-          <button
-            data-page="export"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-lime-100 dark:hover:bg-lime-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-lime-400"
-          >
-            <i class="fas fa-file-export w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-            <span class="flex-1 text-left text-sm font-medium">এক্সপোর্ট</span>
-          </button>
-
-          <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden" />
           <button
             data-page="admin-management"
             class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-rose-400"
@@ -353,7 +409,6 @@
       >
         <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
           <div id="page-dashboard" class="page space-y-6 hidden">
-
             <!-- Elite Group (Top 3) -->
             <section id="elite-groups" aria-label="Elite Groups">
               <!-- Header -->
@@ -390,9 +445,7 @@
                         <i class="fa-solid fa-medal text-slate-600 dark:text-slate-200"></i>
                         <span class="text-2xl md:text-3xl font-extrabold">২য় স্থান</span>
                       </div>
-                      <div data-elite-second-name class="text-lg md:text-xl font-semibold">
-                        গ্রুপের নাম
-                      </div>
+                      <div data-elite-second-name class="text-lg md:text-xl font-semibold">গ্রুপের নাম</div>
                       <div class="text-sm md:text-base text-gray-700/80 dark:text-gray-200/80">
                         <span>স্কোর:</span>
                         <span data-elite-second-score>—</span>
@@ -401,7 +454,9 @@
                         <span data-elite-second-members>—</span>
                       </div>
                     </div>
-                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20">
+                    <span
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20"
+                    >
                       <i class="fa-solid fa-trophy text-slate-600 dark:text-slate-200"></i>
                     </span>
                   </div>
@@ -418,9 +473,7 @@
                         <i class="fa-solid fa-crown text-white drop-shadow"></i>
                         <span class="text-3xl md:text-4xl font-extrabold tracking-wide">১ম স্থান</span>
                       </div>
-                      <div data-elite-first-name class="text-xl md:text-2xl font-semibold">
-                        গ্রুপের নাম
-                      </div>
+                      <div data-elite-first-name class="text-xl md:text-2xl font-semibold">গ্রুপের নাম</div>
                       <div class="text-white/90 text-sm md:text-base">
                         <span>স্কোর:</span>
                         <span data-elite-first-score>—</span>
@@ -429,7 +482,9 @@
                         <span data-elite-first-members>—</span>
                       </div>
                     </div>
-                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30">
+                    <span
+                      class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30"
+                    >
                       <i class="fa-solid fa-trophy text-xl"></i>
                     </span>
                   </div>
@@ -446,9 +501,7 @@
                         <i class="fa-solid fa-award text-amber-800 dark:text-amber-100"></i>
                         <span class="text-2xl md:text-3xl font-extrabold">৩য় স্থান</span>
                       </div>
-                      <div data-elite-third-name class="text-lg md:text-xl font-semibold">
-                        গ্রুপের নাম
-                      </div>
+                      <div data-elite-third-name class="text-lg md:text-xl font-semibold">গ্রুপের নাম</div>
                       <div class="text-gray-800/80 dark:text-white/80 text-sm md:text-base">
                         <span>স্কোর:</span>
                         <span data-elite-third-score>—</span>
@@ -457,7 +510,9 @@
                         <span data-elite-third-members>—</span>
                       </div>
                     </div>
-                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/70 dark:bg-black/20 shadow ring-1 ring-white/50 dark:ring-black/20">
+                    <span
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/70 dark:bg-black/20 shadow ring-1 ring-white/50 dark:ring-black/20"
+                    >
                       <i class="fa-solid fa-trophy text-amber-800 dark:text-amber-100"></i>
                     </span>
                   </div>
@@ -826,6 +881,14 @@
                   <label class="label" for="taskDateInput">তারিখ*</label>
                   <input id="taskDateInput" type="date" class="form-input" aria-required="true" />
                 </div>
+                <div>
+                  <label class="label" for="taskStatusInput">স্টেটাস</label>
+                  <select id="taskStatusInput" class="form-input">
+                    <option value="upcoming">আপকামিং এসাইনমেন্ট</option>
+                    <option value="ongoing">চলমান এসাইনমেন্ট</option>
+                    <option value="completed">কমপ্লিট এসাইনমেন্ট</option>
+                  </select>
+                </div>
                 <button id="addTaskBtn" class="btn btn-success">টাস্ক যোগ করুন</button>
               </div>
             </div>
@@ -886,6 +949,51 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+          <div id="page-upcoming-assignments" class="page hidden space-y-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">আপকামিং এসাইনমেন্ট</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-300 max-w-2xl">
+               সামনে কোন এসাইনমেন্ট নির্ধারিত, কোনটি বর্তমানে চলমান এবং কোনটি সম্পন্ন হয়েছে — সব এক নজরে দেখে নাও। যথাযথ প্রস্তুতির জন্য প্রতিটি এসাইনমেন্টের আগে সংশ্লিষ্ট প্রি-রিকোয়ারমেন্ট নোট ভালোভাবে পড়ে বুঝে নাও।
+                </p>
+              </div>
+              <div class="">
+                <label for="assignmentStatusFilter" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                 স্ট্যাটাস ফিল্টার করুন:
+                </label>
+                <select id="assignmentStatusFilter" class="form-input min-w-[220px]">
+                  <option value="all">সব স্টেটাস</option>
+                  <option value="upcoming">আপকামিং এসাইনমেন্ট</option>
+                  <option value="ongoing">চলমান এসাইনমেন্ট</option>
+                  <option value="completed">কমপ্লিট এসাইনমেন্ট</option>
+                </select>
+              </div>
+            </div>
+            <section
+              id="upcomingAssignmentSummary"
+              class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+              aria-label="Assignment summary cards"
+            ></section>
+            <div class="card">
+              <div class="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h3 class="text-lg font-semibold">এসাইনমেন্ট তালিকা</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    নাম, স্টেটাস, অংশগ্রহণকারী ও প্রি-রিকোয়ারমেন্ট এক জায়গায় দেখুন।
+                  </p>
+                </div>
+                <span
+                  class="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-100 px-3 py-1 text-xs font-semibold"
+                >
+                  <i class="fas fa-info-circle"></i>
+                  তথ্য স্বয়ংক্রিয়ভাবে টাস্ক ব্যবস্থাপনা থেকে আপডেট হয়।
+                </span>
+              </div>
+              <div id="upcomingAssignmentsList" class="card-body space-y-4"></div>
             </div>
           </div>
 
@@ -1360,7 +1468,5 @@
         </div>
       </div>
     </div>
-
-    
   </body>
 </html>

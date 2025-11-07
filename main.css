@@ -130,6 +130,7 @@ body {
     cursor: not-allowed;
     pointer-events: none; /* Prevent clicks */
     background-color: transparent !important; /* Override hover effects */
+    display: hidden;
 }
 .dark .disabled-nav {
      opacity: 0.4;
@@ -373,4 +374,68 @@ body {
 .dark .placeholder-content { color: #9ca3af; }
 #allStudentsCards > .placeholder-content {
     grid-column: 1 / -1;
+}
+
+
+/* --- প্রি-রিকোয়ারমেন্টস টগল অ্যানিমেশন --- */
+
+/* টগলের মূল বাটন (summary) স্টাইল */
+.prereq-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.75rem; /* 12px */
+  border-radius: 0.5rem; /* 8px */
+  background-color: rgba(243, 244, 246, 0.7); /* gray-100/70 */
+  color: #1f2937; /* gray-800 */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  list-style: none; /* ডিফল্ট তীর (arrow) চিহ্ন হাইড করে */
+}
+
+/* ডার্ক মোড স্টাইল */
+.dark .prereq-summary {
+  background-color: rgba(55, 65, 81, 0.7); /* dark:bg-gray-700/70 */
+  color: #f9fafb; /* dark:text-gray-50 */
+}
+
+/* হোভার ইফেক্ট */
+.prereq-summary:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+.dark .prereq-summary:hover {
+  background-color: #374151; /* dark:bg-gray-700 */
+}
+
+/* বাটনের আইকন স্টাইল */
+.prereq-summary-icon {
+  transition: transform 0.3s ease;
+  font-size: 0.75rem; /* 12px */
+}
+
+/* টগল কন্টেন্ট (বর্ণনা) হাইড/শো করার অ্যানিমেশন */
+.prereq-content {
+  /* max-height ট্রিক ব্যবহার করে স্মুথ স্লাইড অ্যানিমেশন */
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ভেতরের কন্টেন্টের জন্য প্যাডিং */
+  padding-top: 0;
+}
+
+/* --- টগল ওপেন (open) হলে যা ঘটবে --- */
+
+/* ওপেন হলে আইকন ঘুরবে */
+details[open] .prereq-summary-icon {
+  transform: rotate(180deg);
+}
+
+/* ওপেন হলে কন্টেন্ট দেখানোর জন্য max-height বাড়ানো */
+details[open] .prereq-content {
+  max-height: 1000px; /* কন্টেন্টের উচ্চতার চেয়ে বড় একটি মান */
+  padding-top: 0.75rem; /* 12px */
 }

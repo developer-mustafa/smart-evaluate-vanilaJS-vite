@@ -1,6 +1,4 @@
 // js/services/dataService.js
-
-// FIXED: Remove 'firebase' from this import, it's not used directly
 import { db, serverTimestamp } from '../config/firebase.js';
 import cacheManager from '../managers/cacheManager.js';
 
@@ -122,8 +120,13 @@ export const deleteStudent = (id) => deleteDocument('students', id, CACHE_KEYS.S
 export const loadTasks = () => loadData('tasks', CACHE_KEYS.TASKS, { orderByField: 'date', orderByDirection: 'desc' });
 export const addTask = (data) =>
   addDocument('tasks', { ...data, nameLower: data.name.toLowerCase() }, CACHE_KEYS.TASKS); // Add nameLower
-export const updateTask = (id, data) =>
-  updateDocument('tasks', id, { ...data, nameLower: data.name.toLowerCase() }, CACHE_KEYS.TASKS); // Update nameLower
+export const updateTask = (id, data = {}) => {
+  const payload = { ...data };
+  if (typeof data.name === 'string') {
+    payload.nameLower = data.name.toLowerCase();
+  }
+  return updateDocument('tasks', id, payload, CACHE_KEYS.TASKS);
+};
 export const deleteTask = (id) => deleteDocument('tasks', id, CACHE_KEYS.TASKS);
 
 // Evaluations

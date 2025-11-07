@@ -23,6 +23,7 @@ import * as analysis from './components/analysis.js';
 import * as admin from './components/admin.js';
 import * as exportModule from './components/export.js';
 import * as policy from './components/policy.js';
+import * as upcomingAssignments from './components/upcoming-assignments.js';
 import * as statistics from './components/statistics.js';
 
 /**
@@ -41,6 +42,7 @@ class SmartGroupEvaluator {
 
     this.publicPages = [
       'dashboard',
+      'upcoming-assignments',
       'all-students',
       'group-policy',
       'export',
@@ -107,6 +109,7 @@ class SmartGroupEvaluator {
       this.components.admin = admin.init(dependencies);
       this.components.exportModule = exportModule.init(dependencies);
       this.components.policy = policy.init(dependencies);
+      this.components.upcomingAssignments = upcomingAssignments.init(dependencies);
       this.components.statistics = statistics.init(dependencies);
 
       console.log('👍 All components initialized.');
@@ -278,6 +281,8 @@ class SmartGroupEvaluator {
         return 'admin';
       case 'group-policy':
         return 'policy';
+      case 'upcoming-assignments':
+        return 'upcomingAssignments';
       // ---------------------
       default:
         return pageId; // Assumes 'dashboard', 'groups', 'members', 'tasks', 'evaluation', 'statistics' match keys

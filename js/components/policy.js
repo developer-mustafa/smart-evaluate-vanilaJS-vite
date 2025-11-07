@@ -5,15 +5,20 @@ let helpers;
 
 const elements = {};
 
+/**
+ * PDF থেকে ভেরিফাই করা নতুন ডিফল্ট সেকশন
+ * উৎস: স্মার্ট ইভালুয়্যেট মডেল উইথ মোস্তফা স্যার (7).pdf
+ */
 const DEFAULT_SECTIONS = [
   {
     title: 'টিম গঠন',
     icon: 'fas fa-users',
     tone: 'indigo',
     rules: [
-      'প্রতি দলে ৪-৫ জন সদস্য থাকবে এবং সবার ভূমিকা স্পষ্টভাবে নির্ধারিত হবে।',
-      'নতুন সদস্য যুক্ত করার আগে আগের দলের অগ্রগতি যাচাই করা হবে।',
-      'টিম লিডারই কাজ বণ্টন ও সময়সূচি পরিচালনা করবে।',
+      'প্রতি গ্রুপে ৪-৬ জন শিক্ষার্থী থাকবে (স্ট্যান্ডার্ড ৫ জন)।',
+      'ছেলে ও মেয়েদের জন্য আলাদা আলাদা গ্রুপ গঠন করা হবে।',
+      'প্রতিটি শিক্ষার্থীর একটি নির্দিষ্ট গ্রুপভিত্তিক দায়িত্ব থাকবে।',
+      'সহজে গ্রুপ স্টাডি করার জন্য একই বেঞ্চে বসার চেষ্টা করতে হবে।',
     ],
   },
   {
@@ -21,9 +26,9 @@ const DEFAULT_SECTIONS = [
     icon: 'fas fa-sitemap',
     tone: 'emerald',
     rules: [
-      'Leadership, Time Keeper, Reporter, Resource Manager ও Peace Maker—এই পাঁচটি ভূমিকাই বাধ্যতামূলক।',
-      'প্রতিটি ভূমিকার দৈনিক রিপোর্ট কাগজে অথবা অ্যাপে জমা দিতে হবে।',
-      'ভূমিকা পরিবর্তন করতে চাইলে পুরো দল ও সমন্বয়কারীর সম্মতি লাগবে।',
+      'গ্রুপের ৫টি প্রধান দায়িত্ব: টিম লিডার, টাইম কিপার, রিসোর্স ম্যানেজার, রিপোর্টার, ও পিস মেকার।',
+      'সদস্যদের দায়িত্ব পর্যবেক্ষণ ও আপডেট বিষয় ভিত্তিক শিক্ষককে জানাতে হবে (বিশেষত টিম লিডার)।',
+      'যোগ্যতা অনুযায়ী, প্রতি ৪টি এসাইনমেন্ট পর টিম লিডার পরিবর্তন করা হবে।',
     ],
   },
   {
@@ -31,19 +36,23 @@ const DEFAULT_SECTIONS = [
     icon: 'fas fa-clipboard-check',
     tone: 'amber',
     rules: [
-      'টাস্ক, টিমওয়ার্ক, অতিরিক্ত কাজ এবং MCQ—এই ৪ প্যারামিটারে নম্বর দেওয়া হবে।',
-      'ভালোভাবে শিখেছি +10, শুধু বুঝেছি +5, এখনো পারিনা টপিক -5 পয়েন্ট কাটা হবে',
-      'দেরিতে কাজ জমা দিলে মোট নম্বরের ১০% পর্যন্ত কাটা যেতে পারে।',
+      'প্রতিটি মূল্যায়ন মোট ৬০ নম্বরে , MCQ = 40 নম্বর,ওভারঅল = 100 নম্বর।',
+      'মূল্যায়ন ৩টি অংশে বিভক্ত: এসাইনমেন্ট/টাস্ক (২০ নম্বর), টিম (১৫ নম্বর), এবং অতিরিক্ত (২৫ নম্বর)।',
+      'অতিরিক্ত ২৫ নম্বর ৫টি ক্রাইটেরিয়ার উপর নির্ভরশীল।',
+      // --- [এই লাইনটি আপনার অনুরোধে বাদ দেওয়া হয়েছে] ---
+      // 'টপিক: ভালো করে শিখেছি (+১০), শুধু বুঝেছি (+৫), এখনো পারিনা (-৫)।',
+      'অ্যাক্টিভিটি: প্রতিদিন বাড়ির কাজ (+৫), নিয়মিত উপস্থিতি (+১০)।',
     ],
   },
   {
-    title: 'র্যাঙ্কিং ও পুরস্কার',
+    title: 'রেঙ্ক ও পুরস্কার',
     icon: 'fas fa-trophy',
     tone: 'purple',
     rules: [
-      'সাপ্তাহিক র্যাঙ্ক বোর্ডে শীর্ষ ৩ দলকে বিশেষ ব্যাজ দেওয়া হবে।',
-      'ধারাবাহিকভাবে পিছিয়ে থাকা দলকে মেন্টরিং সেশন দেওয়া হবে।',
-      'চূড়ান্ত পুরস্কার পেতে হলে ৮০% সেশন উপস্থিত থাকা বাধ্যতামূলক।',
+      'প্রতি ৪টি এসাইনমেন্ট (বা ১ মাস) পর ফলাফল রেঙ্কনির্ধারণ করা হবে।',
+      'সেরা ৩টি গ্রুপকে এবং সেরা টপ ১০ জন শিক্ষার্থীকে পুরষ্কৃত করা হবে।',
+      'রেঙ্কবোর্ডে অন্তর্ভুক্তির জন্য গ্রুপকে কমপক্ষে ২টি এসাইনমেন্টে অংশগ্রহণ করতে হবে।',
+      'প্রতিটি এসাইনমেন্টের ফলাফল পরবর্তী র্যাঙ্কিংয়ে প্রভাব ফেলবে।',
     ],
   },
 ];
@@ -173,7 +182,9 @@ function _renderSectionCard(section, index) {
   const step = helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(String(index + 1)) : index + 1;
 
   return `
-    <article class="rounded-2xl border ${toneStyle.border} bg-white dark:bg-gray-900/80 p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
+    <article class="rounded-2xl border ${
+      toneStyle.border
+    } bg-white dark:bg-gray-900/80 p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center gap-4">
         <span class="flex h-12 w-12 items-center justify-center rounded-2xl ${toneStyle.icon}">
           <i class="${icon} text-lg"></i>
@@ -189,9 +200,7 @@ function _renderSectionCard(section, index) {
 }
 
 function _normalizeSection(section = {}) {
-  const rules = Array.isArray(section.rules)
-    ? section.rules.map((rule) => _formatText(rule)).filter(Boolean)
-    : [];
+  const rules = Array.isArray(section.rules) ? section.rules.map((rule) => _formatText(rule)).filter(Boolean) : [];
   return {
     title: _formatText(section.title) || 'শিরোনামহীন নিয়ম',
     icon: section.icon || 'fas fa-book-open',
