@@ -1128,10 +1128,11 @@ function _buildAnalysisData(filters) {
         homework: 0,
       };
 
+      const taskSequence = (groupSummary.evaluationDetails?.length || 0) + 1;
       const detail = {
         evaluationId: evaluation.id,
         taskId: evaluation.taskId,
-        taskName: _formatText(task?.name || evaluation.taskName || 'অজানা মূল্যায়ন'),
+        taskName: _resolveTaskName(task, evaluation, taskSequence),
         type: evaluationType,
         dateMs: _extractTimestamp(evaluation.taskDate || evaluation.updatedAt || evaluation.evaluationDate),
         dateLabel: '',
@@ -2271,11 +2272,24 @@ function _renderGroupTable(groupMetrics, filters) {
           }">${_formatNumber(metric.improvementCount)}</td>
           <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">${metric.fullCriteriaEvaluations
             .map((name, index) => {
-              const assignmentLabel = _formatText(`এসাইনমেন্ট · ${_formatNumber(index + 1)}`);
-              const tooltip = _escapeAttribute(name);
-              return `<span class="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-100 rounded-full mr-1 mb-1 whitespace-nowrap" title="${tooltip}">${assignmentLabel}</span>`;
+              const rawName =
+                typeof name === 'string' && name.trim().length
+                  ? name.trim()
+                  : typeof name === 'number'
+                  ? String(name)
+                  : '';
+              const formatted = _formatText(rawName);
+              const cleanName = formatted && formatted.length ? formatted : rawName;
+              const badgeLabel =
+                cleanName && cleanName.length
+                  ? cleanName.length > 32
+                    ? `${cleanName.slice(0, 30)}…`
+                    : cleanName
+                  : `এসাইনমেন্ট ${_formatNumber(index + 1)}`;
+              const tooltip = _escapeAttribute(cleanName || badgeLabel);
+              return `<span class="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-100 rounded-full mr-1 mb-1 whitespace-nowrap" title="${tooltip}">${badgeLabel}</span>`;
             })
-            .join('')}</td>
+            .join('') || '<span class="text-gray-500 dark:text-gray-400">—</span>'}</td>
         </tr>
       `;
     })
@@ -2621,6 +2635,15 @@ function _formatText(value) {
   }
   if (typeof value === 'string') return value.trim();
   return String(value);
+}
+
+function _resolveTaskName(task, evaluation, fallbackIndex = 1) {
+  const primary = _formatText(task?.name || evaluation?.taskName || '');
+  if (primary) return primary;
+  const secondary = _formatText(task?.code || evaluation?.taskCode || '');
+  if (secondary) return secondary;
+  const suffix = Number.isFinite(fallbackIndex) ? _formatNumber(fallbackIndex) : '';
+  return suffix ? `এসাইনমেন্ট ${suffix}` : 'এসাইনমেন্ট';
 }
 
 function _escapeAttribute(value) {
