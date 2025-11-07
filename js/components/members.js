@@ -1,4 +1,4 @@
-﻿// js/components/members.js
+﻿﻿// js/components/members.js
 
 // নির্ভরতা (Dependencies)
 let stateManager, uiManager, dataService, helpers, app;
@@ -428,7 +428,7 @@ function _renderStudentsList() {
               </div>
               <div class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
                 <p><span class="font-medium text-gray-700 dark:text-gray-200">সেশন:</span> ${session || 'N/A'}</p>
-                <p><span class="font-medium text-gray-700 dark:text-gray-200">লিঙ্গ:</span> ${gender || 'N/A'}</p>
+                <p><span class="font-medium text-gray-700 dark:text-gray-200"> </span> ${gender || 'N/A'}</p>
                 <p><span class="font-medium text-gray-700 dark:text-gray-200">একাডেমিক গ্রুপ:</span> ${
                   academicGroupText || 'N/A'
                 }</p>
@@ -673,7 +673,7 @@ function _renderStudentCardsList() {
         : '';
       const groupMemberCount = groupStudentCountMap.get(student.groupId || '__ungrouped') || 0;
 
-   return `
+      return `
   <article
     class="relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
       palette.panelBorder || 'border-gray-200 dark:border-gray-700'
@@ -728,7 +728,7 @@ function _renderStudentCardsList() {
 
         <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
           <i class="fas fa-venus-mars text-pink-500"></i>
-          <span class="text-gray-600 dark:text-gray-300">লিঙ্গ:</span>
+          <span class="text-gray-600 dark:text-gray-300"></span>
           <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${gender}</span>
         </div>
 
@@ -739,7 +739,6 @@ function _renderStudentCardsList() {
     </div>
   </article>
 `;
-
     })
     .join('');
 
