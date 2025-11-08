@@ -1,5 +1,4 @@
 // js/components/dashboard.js
-
 // নির্ভরতা (Dependencies)
 let stateManager, uiManager, helpers, app;
 
@@ -108,7 +107,7 @@ function _getDashboardHTMLStructure() {
         </div>
       </section>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
@@ -363,6 +362,22 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
 
 function _calculateGroupPerformance(groups, students, evaluations, tasks) {
   const taskMap = new Map(tasks.map((task) => [task.id, task]));
+  const normalizeTimestamp = (value) => {
+    if (!value) return 0;
+    if (typeof value === 'object') {
+      if (typeof value.seconds === 'number') return value.seconds * 1000;
+      if (typeof value.toDate === 'function') {
+        try {
+          return value.toDate().getTime();
+        } catch {
+          return 0;
+        }
+      }
+    }
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
   return groups
     .map((group) => {
       const groupStudents = students.filter((s) => s.groupId === group.id);
@@ -371,12 +386,16 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
       let validEvalsCount = 0;
       const evaluatedMemberIds = new Set();
       const taskIds = new Set();
+      let latestEvalMeta = { ts: 0, avgPct: null, participants: null, participationRate: null };
       groupEvals.forEach((evaluation) => {
+        const participantCount = evaluation?.scores ? Object.keys(evaluation.scores).length : 0;
+        let evalAvgPct = null;
         // Use the average percentage score stored in the evaluation document
         const avgEvalScorePercent = parseFloat(evaluation.groupAverageScore);
         if (!isNaN(avgEvalScorePercent)) {
           totalPercentageScore += avgEvalScorePercent;
           validEvalsCount++;
+          evalAvgPct = avgEvalScorePercent;
         }
         // Fallback (if groupAverageScore not present, though it should be)
         else if (evaluation.scores) {
@@ -391,8 +410,10 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
               if (scoreData.studentId) evaluatedMemberIds.add(scoreData.studentId);
             });
             if (studentCountInEval > 0) {
-              totalPercentageScore += (evalScoreSum / studentCountInEval / maxScore) * 100;
+              const derivedPct = (evalScoreSum / studentCountInEval / maxScore) * 100;
+              totalPercentageScore += derivedPct;
               validEvalsCount++;
+              evalAvgPct = derivedPct;
             }
           }
         }
@@ -402,6 +423,21 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
           });
         }
         if (evaluation?.taskId) taskIds.add(evaluation.taskId);
+
+        const evalTs =
+          normalizeTimestamp(evaluation.taskDate) ||
+          normalizeTimestamp(evaluation.updatedAt) ||
+          normalizeTimestamp(evaluation.createdAt);
+        if (evalTs && evalTs >= (latestEvalMeta.ts || 0)) {
+          const partRate =
+            groupStudents.length > 0 ? Math.min(100, (participantCount / groupStudents.length) * 100) : 0;
+          latestEvalMeta = {
+            ts: evalTs,
+            avgPct: evalAvgPct ?? latestEvalMeta.avgPct,
+            participants: participantCount,
+            participationRate: partRate,
+          };
+        }
       });
       const averageScore = validEvalsCount > 0 ? totalPercentageScore / validEvalsCount : 0;
       const evaluatedMembers = evaluatedMemberIds.size;
@@ -417,6 +453,9 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
         evaluatedMembers,
         taskCount,
         participationRate,
+        latestAverageScore: latestEvalMeta.avgPct,
+        latestParticipantCount: latestEvalMeta.participants,
+        latestParticipationRate: latestEvalMeta.participationRate,
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
@@ -492,6 +531,78 @@ function _renderTopGroups(groupData) {
     uiManager.displayEmptyMessage(elements.topGroupsContainer, 'শীর্ষ গ্রুপ গণনা করার ডেটা নেই।');
     return;
   }
+  const formatLatestStats = (data = {}) => {
+    const avgValue =
+      typeof data.latestAverageScore === 'number' && !Number.isNaN(data.latestAverageScore)
+        ? helpers.convertToBanglaNumber(data.latestAverageScore.toFixed(1))
+        : '-';
+    const participantValue =
+      typeof data.latestParticipantCount === 'number' && data.latestParticipantCount !== null
+        ? helpers.convertToBanglaNumber(String(data.latestParticipantCount))
+        : '-';
+    const participationValue =
+      typeof data.latestParticipationRate === 'number' && !Number.isNaN(data.latestParticipationRate)
+        ? helpers.convertToBanglaNumber(String(Math.round(data.latestParticipationRate)))
+        : '-';
+
+    return {
+      avg: avgValue === '-' ? '-' : `${avgValue}%`,
+      participants: participantValue === '-' ? '-' : `${participantValue} জন`,
+      rate: participationValue === '-' ? '-' : `${participationValue}%`,
+    };
+  };
+
+  const buildLatestMetricsSection = (stats) => `
+    <div class="elite-latest-metrics">
+      <div class="elite-metrics-title">
+        <span class="elite-metrics-icon">
+          <i class="fas fa-chart-line"></i>
+        </span>
+        <p class="elite-metrics-headline">সর্বশেষ এসাইনমেন্ট ফলাফল তথ্য</p>
+      </div>
+      <div class="elite-metrics-chips">
+        <div class="elite-metric-chip">
+          <span class="elite-metric-label">ফলাফল</span>
+          <span class="elite-metric-value">${stats.avg}</span>
+        </div>
+        <div class="elite-metric-chip">
+          <span class="elite-metric-label">অংশগ্রহণ</span>
+          <span class="elite-metric-value">${stats.participants}</span>
+        </div>
+        <div class="elite-metric-chip">
+          <span class="elite-metric-label">অংশগ্রহনের হার</span>
+          <span class="elite-metric-value">${stats.rate}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const nameFontConfig = [
+    { max: 34, min: 18 },
+    { max: 30, min: 16 },
+    { max: 28, min: 15 },
+  ];
+
+  const fitEliteNames = () => {
+    if (!elements.topGroupsContainer || typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
+    window.requestAnimationFrame(() => {
+      const names = elements.topGroupsContainer.querySelectorAll('.elite-card-name');
+      names.forEach((el) => {
+        const computed = window.getComputedStyle(el);
+        const maxFont = parseFloat(el.dataset.maxFont || '') || parseFloat(computed.fontSize) || 22;
+        const minFont = parseFloat(el.dataset.minFont || '') || Math.max(12, maxFont * 0.65);
+        let currentSize = maxFont;
+        el.style.fontSize = `${currentSize}px`;
+        let safety = 0;
+        while (currentSize > minFont && el.scrollWidth > el.clientWidth && safety < 25) {
+          currentSize -= 0.5;
+          el.style.fontSize = `${Math.max(currentSize, minFont)}px`;
+          safety += 1;
+        }
+      });
+    });
+  };
+
   const cards = top3
     .map((data, index) => {
       const palette = _getScorePalette(data.averageScore);
@@ -501,9 +612,14 @@ function _renderTopGroups(groupData) {
       const evaluated = helpers.convertToBanglaNumber(data.evaluatedMembers);
       const tasks = helpers.convertToBanglaNumber(data.taskCount);
       const participation = helpers.convertToBanglaNumber(Math.round(data.participationRate || 0));
+      const latestStats = formatLatestStats(data);
+      const metricsMarkup = buildLatestMetricsSection(latestStats);
       const groupName = _formatLabel(data.groupName);
+      const fontConfig = nameFontConfig[index] || nameFontConfig[nameFontConfig.length - 1];
+      const nameClass =
+        index === 0 ? 'elite-card-name elite-name-xl font-semibold text-gray-900 dark:text-white' : 'elite-card-name elite-name-lg font-semibold text-gray-900 dark:text-white';
       return `
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
+        <article class="elite-podium-card relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
           <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-70"></div>
           <div class="relative p-6 space-y-5">
             <div class="flex items-center justify-between">
@@ -513,7 +629,7 @@ function _renderTopGroups(groupData) {
               <span class="text-xs uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300">Elite Group</span>
             </div>
             <div class="space-y-2">
-              <h4 class="text-xl font-semibold text-gray-900 dark:text-white" title="${groupName}">${groupName}</h4>
+              <h4 class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min}">${groupName}</h4>
               <p class="text-xs text-gray-500 dark:text-gray-400">মোট সদস্য: ${students} · মূল্যায়িত: ${evaluated} · টাস্ক: ${tasks}</p>
             </div>
             <div class="flex items-center gap-5">
@@ -535,6 +651,7 @@ function _renderTopGroups(groupData) {
                 </div>
               </div>
             </div>
+            ${metricsMarkup}
           </div>
         </article>
       `;
@@ -543,64 +660,73 @@ function _renderTopGroups(groupData) {
 
   const topGroupColumns = ['grid', 'grid-cols-1', 'gap-6'];
   if (top3.length >= 2) topGroupColumns.push('sm:grid-cols-2');
-  if (top3.length >= 3) topGroupColumns.push('lg:grid-cols-3');
+  if (top3.length >= 3) topGroupColumns.push('md:grid-cols-3');
 
   elements.topGroupsContainer.innerHTML = `
     <div class="${topGroupColumns.join(' ')}">
       ${cards}
     </div>
   `;
+  fitEliteNames();
 
   // Override with royal podium layout for Top 3
   try {
     const labels = ['১ম স্থান', '২য় স্থান', '৩য় স্থান'];
     const classes = [
-      'relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-6 md:p-7 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-3 md:order-2',
-      'relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-1 md:order-1',
-      'relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-2 md:order-3',
+      'relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-2  shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-1 md:order-2 elite-podium-card',
+      'relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-2 md:order-1 elite-podium-card',
+      'relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-3 md:order-3 elite-podium-card',
     ];
     const getCardHTML = (data, index) => {
       if (!data) return '';
       const isFirst = index === 0;
       const name = _formatLabel(data.groupName);
-      const score = helpers.convertToBanglaNumber((data.averageScore || 0).toFixed(1));
+      const scoreValue = helpers.convertToBanglaNumber((data.averageScore || 0).toFixed(1));
       const members = helpers.convertToBanglaNumber(data.studentCount || 0);
-      const trophyIcon = isFirst ? '<i class="fa-solid fa-crown text-white drop-shadow"></i>' : '<i class="fa-solid fa-trophy"></i>';
+      const latestStats = formatLatestStats(data);
+      const metricsMarkup = buildLatestMetricsSection(latestStats);
+      const trophyIcon = isFirst
+        ? '<i class="fa-solid fa-crown text-white"></i>'
+        : '<i class="fa-solid fa-trophy text-amber-700 dark:text-amber-200"></i>';
       const placeText = labels[index];
       const articleClass = isFirst ? classes[0] : index === 1 ? classes[1] : classes[2];
-      const badge = isFirst
-        ? '<span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30">\n            <i class="fa-solid fa-trophy text-xl"></i>\n          </span>'
-        : '<span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20">\n            <i class="fa-solid fa-trophy"></i>\n          </span>';
+      const memberLineClass = isFirst ? 'text-white/80' : 'text-gray-800/80 dark:text-white/80';
+      const fontConfig = nameFontConfig[index] || nameFontConfig[nameFontConfig.length - 1];
+      const nameClass = isFirst
+        ? 'elite-card-name elite-name-xl font-semibold text-white'
+        : 'elite-card-name elite-name-lg font-semibold text-gray-900 dark:text-white';
       return `
-        <article class="${articleClass} cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
-          <div class="flex items-start justify-between">
-            <div class="${isFirst ? 'space-y-2' : 'space-y-1'}">
-              <div class="flex items-center gap-2">
-                ${trophyIcon}
-                <span class="${isFirst ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'} font-extrabold tracking-wide">${placeText}</span>
-              </div>
-              <div class="${isFirst ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'} font-semibold" title="${name}">${name}</div>
-              <div class="${isFirst ? 'text-white/90' : 'text-gray-800/80 dark:text-white/80'} text-sm md:text-base">
-                <span>স্কোর:</span>
-                <span>${score}</span>
-                <span class="mx-1">•</span>
+        <article class="${articleClass} cursor-pointer min-h-[200px]" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
+          <span class="elite-rank-chip">
+            <span class="elite-rank-icon">${trophyIcon}</span>
+            <span class="elite-rank-title">${placeText}</span>
+          </span>
+          <div class="elite-card-inner">
+            <div class="elite-score-stack">
+              <span class="elite-score-value">${scoreValue}%</span>
+              <span class="elite-score-label">মোট গড় স্কোর</span>
+            </div>
+            <div class="elite-card-body ${isFirst ? 'space-y-1.5' : 'space-y-1'}">
+              <div class="${nameClass}" title="${name}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min}">${name}</div>
+              <div class="${memberLineClass} text-xs sm:text-sm font-medium">
                 <span>সদস্য:</span>
                 <span>${members}</span>
               </div>
             </div>
-            ${badge}
+            ${metricsMarkup}
           </div>
         </article>
       `;
     };
     const podium = `
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        ${top3[1] ? getCardHTML(top3[1], 1) : ''}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
         ${top3[0] ? getCardHTML(top3[0], 0) : ''}
+        ${top3[1] ? getCardHTML(top3[1], 1) : ''}
         ${top3[2] ? getCardHTML(top3[2], 2) : ''}
       </div>
     `;
     elements.topGroupsContainer.innerHTML = podium;
+    fitEliteNames();
   } catch (e) {
     console.warn('Elite podium render fallback:', e);
   }

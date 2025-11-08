@@ -436,89 +436,146 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6">
                 <!-- 2nd Place -->
                 <article
-                  class="relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-1 md:order-1"
+                  class="elite-podium-card relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-1 md:order-1"
                   aria-label="২য় স্থান"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-medal text-slate-600 dark:text-slate-200"></i>
-                        <span class="text-2xl md:text-3xl font-extrabold">২য় স্থান</span>
-                      </div>
-                      <div data-elite-second-name class="text-lg md:text-xl font-semibold">গ্রুপের নাম</div>
+                  <span class="elite-rank-chip">
+                    <span class="elite-rank-icon">
+                      <i class="fa-solid fa-medal text-slate-600 dark:text-slate-200"></i>
+                    </span>
+                    <span class="elite-rank-title">২য় স্থান</span>
+                  </span>
+                  <div class="elite-card-inner">
+                    <div class="elite-score-stack">
+                      <span class="elite-score-value"><span data-elite-second-score>-</span>%</span>
+                      <span class="elite-score-label">মোট গড় স্কোর</span>
+                    </div>
+                    <div class="elite-card-body space-y-1">
+                      <div data-elite-second-name class="elite-card-name elite-name-lg font-semibold" data-max-font="24" data-min-font="13">গ্রুপ নাম</div>
                       <div class="text-sm md:text-base text-gray-700/80 dark:text-gray-200/80">
-                        <span>স্কোর:</span>
-                        <span data-elite-second-score>—</span>
-                        <span class="mx-1">•</span>
                         <span>সদস্য:</span>
-                        <span data-elite-second-members>—</span>
+                        <span data-elite-second-members>-</span>
                       </div>
                     </div>
-                    <span
-                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 dark:bg-black/20 shadow ring-1 ring-white/60 dark:ring-black/20"
-                    >
-                      <i class="fa-solid fa-trophy text-slate-600 dark:text-slate-200"></i>
-                    </span>
+                    <div class="elite-latest-metrics">
+                      <div class="elite-metrics-title">
+                        <span class="elite-metrics-icon">
+                          <i class="fas fa-chart-line"></i>
+                        </span>
+                        <p class="elite-metrics-headline">সর্বশেষ এসাইনমেন্ট ফলাফল তথ্য</p>
+                      </div>
+                      <div class="elite-metrics-chips">
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">ফলাফল</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহণ</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহনের হার</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </article>
-
-                <!-- 1st Place (highlighted, centered on md+) -->
+<!-- 1st Place (highlighted, centered on md+) -->
                 <article
-                  class="relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-6 md:p-7 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-3 md:order-2"
+                  class="elite-podium-card relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-2 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-3 md:order-2"
                   aria-label="১ম স্থান"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="space-y-2">
-                      <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-crown text-white drop-shadow"></i>
-                        <span class="text-3xl md:text-4xl font-extrabold tracking-wide">১ম স্থান</span>
-                      </div>
-                      <div data-elite-first-name class="text-xl md:text-2xl font-semibold">গ্রুপের নাম</div>
+                  <span class="elite-rank-chip">
+                    <span class="elite-rank-icon">
+                      <i class="fa-solid fa-crown text-white drop-shadow"></i>
+                    </span>
+                    <span class="elite-rank-title">১ম স্থান</span>
+                  </span>
+                  <div class="elite-card-inner">
+                    <div class="elite-score-stack">
+                      <span class="elite-score-value"><span data-elite-first-score>-</span>%</span>
+                      <span class="elite-score-label">মোট গড় স্কোর</span>
+                    </div>
+                    <div class="elite-card-body space-y-2">
+                      <div data-elite-first-name class="elite-card-name elite-name-xl font-semibold" data-max-font="24" data-min-font="13">গ্রুপ নাম</div>
                       <div class="text-white/90 text-sm md:text-base">
-                        <span>স্কোর:</span>
-                        <span data-elite-first-score>—</span>
-                        <span class="mx-1">•</span>
                         <span>সদস্য:</span>
-                        <span data-elite-first-members>—</span>
+                        <span data-elite-first-members>-</span>
                       </div>
                     </div>
-                    <span
-                      class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner ring-2 ring-white/30"
-                    >
-                      <i class="fa-solid fa-trophy text-xl"></i>
-                    </span>
+                    <div class="elite-latest-metrics">
+                      <div class="elite-metrics-title">
+                        <span class="elite-metrics-icon">
+                          <i class="fas fa-chart-line"></i>
+                        </span>
+                        <p class="elite-metrics-headline">সর্বশেষ এসাইনমেন্ট ফলাফল তথ্য</p>
+                      </div>
+                      <div class="elite-metrics-chips">
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">ফলাফল</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহণ</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহনের হার</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </article>
-
-                <!-- 3rd Place -->
+<!-- 3rd Place -->
                 <article
-                  class="relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-2 md:order-3"
+                  class="elite-podium-card relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-2 md:order-3"
                   aria-label="৩য় স্থান"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-award text-amber-800 dark:text-amber-100"></i>
-                        <span class="text-2xl md:text-3xl font-extrabold">৩য় স্থান</span>
-                      </div>
-                      <div data-elite-third-name class="text-lg md:text-xl font-semibold">গ্রুপের নাম</div>
+                  <span class="elite-rank-chip">
+                    <span class="elite-rank-icon">
+                      <i class="fa-solid fa-award text-amber-800 dark:text-amber-100"></i>
+                    </span>
+                    <span class="elite-rank-title">৩য় স্থান</span>
+                  </span>
+                  <div class="elite-card-inner">
+                    <div class="elite-score-stack">
+                      <span class="elite-score-value"><span data-elite-third-score>-</span>%</span>
+                      <span class="elite-score-label">মোট গড় স্কোর</span>
+                    </div>
+                    <div class="elite-card-body space-y-1">
+                      <div data-elite-third-name class="elite-card-name elite-name-lg font-semibold" data-max-font="24" data-min-font="13">গ্রুপ নাম</div>
                       <div class="text-gray-800/80 dark:text-white/80 text-sm md:text-base">
-                        <span>স্কোর:</span>
-                        <span data-elite-third-score>—</span>
-                        <span class="mx-1">•</span>
                         <span>সদস্য:</span>
-                        <span data-elite-third-members>—</span>
+                        <span data-elite-third-members>-</span>
                       </div>
                     </div>
-                    <span
-                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/70 dark:bg-black/20 shadow ring-1 ring-white/50 dark:ring-black/20"
-                    >
-                      <i class="fa-solid fa-trophy text-amber-800 dark:text-amber-100"></i>
-                    </span>
+                    <div class="elite-latest-metrics">
+                      <div class="elite-metrics-title">
+                        <span class="elite-metrics-icon">
+                          <i class="fas fa-chart-line"></i>
+                        </span>
+                        <p class="elite-metrics-headline">সর্বশেষ এসাইনমেন্ট ফলাফল তথ্য</p>
+                      </div>
+                      <div class="elite-metrics-chips">
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">ফলাফল</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহণ</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                        <div class="elite-metric-chip">
+                          <span class="elite-metric-label">অংশগ্রহনের হার</span>
+                          <span class="elite-metric-value">-</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </article>
-              </div>
-            </section>
+</section>
 
             <div class="placeholder-content">
               <i class="fas fa-spinner fa-spin mr-2"></i>
