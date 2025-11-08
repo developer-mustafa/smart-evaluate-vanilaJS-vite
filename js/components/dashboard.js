@@ -577,6 +577,18 @@ function _renderTopGroups(groupData) {
     </div>
   `;
 
+  const podiumLabels = ['১ম স্থান', '২য় স্থান', '৩য় স্থান'];
+  const podiumClasses = [
+    'elite-podium-card relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-5 md:p-6 shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-1 md:order-2 cursor-pointer',
+    'elite-podium-card relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-2 md:order-1 cursor-pointer',
+    'elite-podium-card relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-3 md:order-3 cursor-pointer',
+  ];
+  const rankIcons = [
+    '<i class="fa-solid fa-crown text-white"></i>',
+    '<i class="fa-solid fa-medal text-slate-700 dark:text-slate-200"></i>',
+    '<i class="fa-solid fa-award text-amber-700 dark:text-amber-200"></i>',
+  ];
+
   const nameFontConfig = [
     { max: 34, min: 18 },
     { max: 30, min: 16 },
@@ -603,60 +615,50 @@ function _renderTopGroups(groupData) {
     });
   };
 
-  const cards = top3
-    .map((data, index) => {
-      const palette = _getScorePalette(data.averageScore);
-      const rankText = helpers.convertToBanglaRank(index + 1);
-      const score = helpers.convertToBanglaNumber(data.averageScore.toFixed(1));
-      const students = helpers.convertToBanglaNumber(data.studentCount);
-      const evaluated = helpers.convertToBanglaNumber(data.evaluatedMembers);
-      const tasks = helpers.convertToBanglaNumber(data.taskCount);
-      const participation = helpers.convertToBanglaNumber(Math.round(data.participationRate || 0));
-      const latestStats = formatLatestStats(data);
-      const metricsMarkup = buildLatestMetricsSection(latestStats);
-      const groupName = _formatLabel(data.groupName);
-      const fontConfig = nameFontConfig[index] || nameFontConfig[nameFontConfig.length - 1];
-      const nameClass =
-        index === 0 ? 'elite-card-name elite-name-xl font-semibold text-gray-900 dark:text-white' : 'elite-card-name elite-name-lg font-semibold text-gray-900 dark:text-white';
-      return `
-        <article class="elite-podium-card relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
-          <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-70"></div>
-          <div class="relative p-6 space-y-5">
-            <div class="flex items-center justify-between">
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-gray-800 shadow">
-                <i class="fas fa-crown text-amber-500"></i> ${rankText}
-              </span>
-              <span class="text-xs uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300">Elite Group</span>
+  const buildPodiumCard = (data, index) => {
+    if (!data) return '';
+    const avgScore = typeof data.averageScore === 'number' ? data.averageScore : 0;
+    const scoreValue = helpers.convertToBanglaNumber(avgScore.toFixed(1));
+    const memberCount = typeof data.studentCount === 'number' ? data.studentCount : 0;
+    const members = helpers.convertToBanglaNumber(memberCount);
+    const latestStats = formatLatestStats(data);
+    const metricsMarkup = buildLatestMetricsSection(latestStats);
+    const groupName = _formatLabel(data.groupName);
+    const fontConfig = nameFontConfig[index] || nameFontConfig[nameFontConfig.length - 1];
+    const nameClass =
+      index === 0 ? 'elite-card-name elite-name-xl font-semibold text-white' : 'elite-card-name elite-name-lg font-semibold text-gray-900 dark:text-white';
+    const memberLineClass = index === 0 ? 'text-white/85' : 'text-gray-800/80 dark:text-white/80';
+    const placeText = podiumLabels[index] || helpers.convertToBanglaRank(index + 1);
+    const articleClass = podiumClasses[index] || podiumClasses[podiumClasses.length - 1];
+    const rankIcon = rankIcons[index] || '<i class="fa-solid fa-trophy text-amber-700 dark:text-amber-200"></i>';
+    return `
+        <article class="${articleClass}" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
+          <span class="elite-rank-chip">
+            <span class="elite-rank-icon">${rankIcon}</span>
+            <span class="elite-rank-title">${placeText}</span>
+          </span>
+          <div class="elite-card-inner">
+            <div class="elite-score-stack">
+              <span class="elite-score-value">${scoreValue}%</span>
+              <span class="elite-score-label">মোট গড় স্কোর</span>
             </div>
-            <div class="space-y-2">
-              <h4 class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min}">${groupName}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">মোট সদস্য: ${students} · মূল্যায়িত: ${evaluated} · টাস্ক: ${tasks}</p>
-            </div>
-            <div class="flex items-center gap-5">
-              ${_buildCircularMeter(data.averageScore, palette, 96)}
-              <div class="flex-1 space-y-3">
-                <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-600 dark:text-gray-300">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
-                    <i class="fas fa-chart-pie text-indigo-500"></i> গড় স্কোর: ${score}%
-                  </span>
-                  <span class="inline-flex items-center justify-end gap-2 rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
-                    <i class="fas fa-user-check text-emerald-500"></i> অংশগ্রহণ: ${participation}%
-                  </span>
-                </div>
-                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                  <div class="h-full rounded-full" style="width: ${Math.min(
-                    100,
-                    Math.round(data.averageScore)
-                  )}%; background: ${palette.solid}; box-shadow: 0 8px 12px ${palette.shadow};"></div>
-                </div>
+            <div class="elite-card-body ${index === 0 ? 'space-y-1.5' : 'space-y-1'}">
+              <div class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min}">${groupName}</div>
+              <div class="${memberLineClass} text-xs sm:text-sm font-medium">
+                <span>সদস্য:</span>
+                <span>${members}</span>
               </div>
             </div>
             ${metricsMarkup}
           </div>
         </article>
       `;
-    })
+  };
+
+  const cards = top3
+    .map((data, index) => buildPodiumCard(data, index))
     .join('');
+
 
   const topGroupColumns = ['grid', 'grid-cols-1', 'gap-6'];
   if (top3.length >= 2) topGroupColumns.push('sm:grid-cols-2');
@@ -668,68 +670,6 @@ function _renderTopGroups(groupData) {
     </div>
   `;
   fitEliteNames();
-
-  // Override with royal podium layout for Top 3
-  try {
-    const labels = ['১ম স্থান', '২য় স্থান', '৩য় স্থান'];
-    const classes = [
-      'relative rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 text-white p-2  shadow-2xl ring-4 ring-yellow-300/60 dark:ring-yellow-400/50 order-1 md:order-2 elite-podium-card',
-      'relative rounded-3xl bg-gradient-to-br from-gray-100 via-gray-200 to-slate-200 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600 text-gray-900 dark:text-gray-100 p-5 shadow-2xl ring-2 ring-slate-300/60 dark:ring-slate-400/40 order-2 md:order-1 elite-podium-card',
-      'relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-3 md:order-3 elite-podium-card',
-    ];
-    const getCardHTML = (data, index) => {
-      if (!data) return '';
-      const isFirst = index === 0;
-      const name = _formatLabel(data.groupName);
-      const scoreValue = helpers.convertToBanglaNumber((data.averageScore || 0).toFixed(1));
-      const members = helpers.convertToBanglaNumber(data.studentCount || 0);
-      const latestStats = formatLatestStats(data);
-      const metricsMarkup = buildLatestMetricsSection(latestStats);
-      const trophyIcon = isFirst
-        ? '<i class="fa-solid fa-crown text-white"></i>'
-        : '<i class="fa-solid fa-trophy text-amber-700 dark:text-amber-200"></i>';
-      const placeText = labels[index];
-      const articleClass = isFirst ? classes[0] : index === 1 ? classes[1] : classes[2];
-      const memberLineClass = isFirst ? 'text-white/80' : 'text-gray-800/80 dark:text-white/80';
-      const fontConfig = nameFontConfig[index] || nameFontConfig[nameFontConfig.length - 1];
-      const nameClass = isFirst
-        ? 'elite-card-name elite-name-xl font-semibold text-white'
-        : 'elite-card-name elite-name-lg font-semibold text-gray-900 dark:text-white';
-      return `
-        <article class="${articleClass} cursor-pointer min-h-[200px]" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
-          <span class="elite-rank-chip">
-            <span class="elite-rank-icon">${trophyIcon}</span>
-            <span class="elite-rank-title">${placeText}</span>
-          </span>
-          <div class="elite-card-inner">
-            <div class="elite-score-stack">
-              <span class="elite-score-value">${scoreValue}%</span>
-              <span class="elite-score-label">মোট গড় স্কোর</span>
-            </div>
-            <div class="elite-card-body ${isFirst ? 'space-y-1.5' : 'space-y-1'}">
-              <div class="${nameClass}" title="${name}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min}">${name}</div>
-              <div class="${memberLineClass} text-xs sm:text-sm font-medium">
-                <span>সদস্য:</span>
-                <span>${members}</span>
-              </div>
-            </div>
-            ${metricsMarkup}
-          </div>
-        </article>
-      `;
-    };
-    const podium = `
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-        ${top3[0] ? getCardHTML(top3[0], 0) : ''}
-        ${top3[1] ? getCardHTML(top3[1], 1) : ''}
-        ${top3[2] ? getCardHTML(top3[2], 2) : ''}
-      </div>
-    `;
-    elements.topGroupsContainer.innerHTML = podium;
-    fitEliteNames();
-  } catch (e) {
-    console.warn('Elite podium render fallback:', e);
-  }
 
   // Make elite group cards open the same group detail modal
   if (elements.topGroupsContainer && typeof window !== 'undefined' && typeof window.openGroupModalById === 'function') {
