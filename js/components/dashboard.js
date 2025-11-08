@@ -190,7 +190,7 @@ function _getDashboardHTMLStructure() {
               hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
               transition-all duration-300
               dark:text-rose-100 dark:from-rose-700 dark:via-rose-800 dark:to-rose-900 dark:ring-rose-600/40
-              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">অতিরিক্ত মূল্যায়ন</span>
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">অতিরিক্ত স্কোর</span>
 
             <span class="relative rounded-2xl px-4 py-1.5
               text-amber-900 bg-gradient-to-b from-amber-50 via-amber-200 to-amber-500
@@ -367,7 +367,7 @@ function _getDashboardHTMLStructure() {
           <span id="progressBarLabel"
                 class="absolute inset-y-0 right-2 flex items-center
                        text-[0.85rem] sm:text-[0.95rem] font-extrabold tracking-wide
-                       text-white drop-shadow">75%</span>
+                       text-slate-900 dark:text-white drop-shadow">75%</span>
           <!-- Moving shine (optional) -->
           <span class="pointer-events-none absolute inset-y-0 -left-10 w-10 skew-x-12
                        bg-white/20 blur-[2px] animate-[shine_2.4s_linear_infinite]"></span>
@@ -376,7 +376,7 @@ function _getDashboardHTMLStructure() {
         <!-- Ticks -->
         <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3
                     text-[0.7rem] font-semibold text-slate-700/70 dark:text-white/60">
-          <span>০%</span><span>১০০%</span>
+       
         </div>
       </div>
     </div>
