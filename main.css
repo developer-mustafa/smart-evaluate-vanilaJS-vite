@@ -672,28 +672,32 @@ details[open] .prereq-content {
   transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.95);
-  color: #78350f;
-  padding: 0.35rem 0.9rem;
+  gap: 0.35rem;
+  padding: 0.35rem 1rem;
   border-radius: 999px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(248, 191, 47, 0.4);
-  font-size: 0.78rem;
-  letter-spacing: 0.2em;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 247, 237, 0.9));
+  color: #92400e;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 700;
   z-index: 2;
+  backdrop-filter: blur(6px);
 }
 
 .elite-podium-card.text-white .elite-rank-chip {
   color: #b45309;
+  border-color: rgba(253, 230, 138, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(253, 230, 138, 0.75));
 }
 
 .dark .elite-podium-card .elite-rank-chip {
-  background: rgba(15, 23, 42, 0.9);
-  color: #fef3c7;
-  border-color: rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(36, 33, 17, 0.9));
+  color: #fde68a;
+  border-color: rgba(250, 204, 21, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .elite-rank-icon {

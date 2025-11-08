@@ -584,7 +584,7 @@ function _renderTopGroups(groupData) {
     'elite-podium-card relative rounded-3xl bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700 text-gray-900 dark:text-white p-5 shadow-2xl ring-2 ring-amber-300/60 dark:ring-amber-500/50 order-3 md:order-3 cursor-pointer',
   ];
   const rankIcons = [
-    '<i class="fa-solid fa-crown text-white"></i>',
+    '<i class="fa-solid fa-crown text-amber-400 dark:text-amber-200"></i>',
     '<i class="fa-solid fa-medal text-slate-700 dark:text-slate-200"></i>',
     '<i class="fa-solid fa-award text-amber-700 dark:text-amber-200"></i>',
   ];
@@ -686,11 +686,11 @@ function _renderTopGroups(groupData) {
   const topGroupsSection = elements.topGroupsContainer.closest('section');
   if (topGroupsSection) {
     const headerTitle = topGroupsSection.querySelector('h3');
-    if (headerTitle) headerTitle.textContent = 'Elite Group';
+    if (headerTitle) headerTitle.textContent = 'এলিট গ্রুপ';
 
     const headerSubtitle = topGroupsSection.querySelector('p.text-xs');
     if (headerSubtitle) {
-      headerSubtitle.textContent = 'Top performing groups ranked by average evaluation score.';
+      headerSubtitle.textContent = 'গড় মূল্যায়ন স্কোরে শীর্ষে থাকা দলগুলোকে এক নজরে দেখুন।';
     }
 
     const headerBadge = topGroupsSection.querySelector('span.bg-indigo-500\\/10');
