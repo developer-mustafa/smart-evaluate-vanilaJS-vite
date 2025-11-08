@@ -234,7 +234,7 @@ function _getDashboardHTMLStructure() {
               <i class="fas fa-people-group text-indigo-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"></i>
               শিক্ষার্থী ও গ্রুপের ফলাফল প্রদান তথ্য
             </span>
-            <span class="text-slate-600 dark:text-white/60 text-[0.75rem]">সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান চার্ট</span>
+            <span class="text-slate-600 dark:text-white/60 text-[0.75rem]">সর্বশেষ এসাইনমেন্ট</span>
           </div>
 
           <div class="grid gap-4 md:grid-cols-2">
@@ -292,6 +292,8 @@ function _getDashboardHTMLStructure() {
         dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 
         dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full">
 
+        
+
         <!-- লাইভ ব্যাজ -->
         <span class="absolute right-3 top-3 sm:right-4 sm:top-4 inline-flex items-center gap-1 rounded-full border 
           border-amber-300/70 bg-amber-100 text-[0.65rem] sm:text-[0.7rem] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-amber-800 
@@ -301,50 +303,89 @@ function _getDashboardHTMLStructure() {
         </span>
 
         <!-- Header -->
-        <div class="mb-2 sm:mb-3">
-          <p class="inline-flex items-center gap-2 text-sm sm:text-[0.95rem] md:text-base font-bold text-slate-900 dark:text-white/90">
-            <span class="flex h-6 w-6 items-center justify-center rounded-full 
-              bg-indigo-100 text-indigo-600 shadow-[0_1px_2px_rgba(0,0,0,0.25)] 
-              dark:bg-indigo-500/20 dark:text-indigo-200">
-              <i class="fas fa-scroll text-[0.7rem]"></i>
-            </span>
-            সর্বশেষ এসাইনমেন্ট
+        <div class="mb-2 sm:mb-3 ">
+          <p class="text-xs font-bold text-slate-700 dark:text-white/60" lang="bn" >
+            
+            সর্বশেষ এসাইনমেন্ট    <span class="text-xs  text-slate-700 dark:text-white/60">
+            আপডেট: <span id="latestAssignmentUpdated">-</span>
+          </span>
           </p>
           <p id="latestTaskTitle"
             class="mt-1 max-w-[28rem] truncate font-bold text-slate-900 dark:text-white text-sm sm:text-base"
             title="-">-</p>
-          <p class="text-xs sm:text-[0.8rem] text-slate-700 dark:text-white/60">
-            আপডেট: <span id="latestAssignmentUpdated">-</span>
-          </p>
+        
         </div>
 
+
+  
+<!-- Evaluation progress: responsive 2-column (title + bar) -->
+<div class="relative rounded-2xl border border-blue-300/70
+            bg-gradient-to-br from-white via-blue-50 to-emerald-50
+            shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_8px_18px_rgba(0,0,0,0.08)]
+            p-1 mb-2
+            dark:border-blue-400/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950
+            dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05),0_10px_24px_rgba(0,0,0,0.55)]">
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-center">
+    <!-- Col 1: Title chip -->
+    <div class="min-w-0">
+      <span class="inline-flex items-center gap-2 rounded-full
+                   px-3 py-1 text-[0.85rem] font-semibold
+                   bg-white/90 text-slate-900 ring-1 ring-white/70
+                   shadow-[0_1px_2px_rgba(0,0,0,0.14)] backdrop-blur
+                   dark:bg-white/10 dark:text-white dark:ring-white/15">
+        <i class="fas fa-chart-simple text-indigo-600 dark:text-indigo-300 text-sm"></i>
+        <span class="truncate" lang="bn">মূল্যায়ন প্রদানের অগ্রগতি</span>
+      </span>
+    </div>
+
+    <!-- Col 2: Progress bar -->
+    <div>
+      <div class="relative h-8 w-full overflow-hidden rounded-full
+                  border border-blue-300/70
+                  bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
+                  shadow-[inset_0_3px_6px_rgba(255,255,255,0.9),inset_0_-4px_8px_rgba(0,0,0,0.08)]
+                  dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/20 dark:to-slate-900
+                  dark:shadow-[inset_0_3px_6px_rgba(255,255,255,0.06),inset_0_-4px_8px_rgba(0,0,0,0.45)]">
+
+        <!-- Fill (no end-cap) -->
+        <div id="progressBar"
+             class="relative h-full w-[75%] md:w-[70%] rounded-full
+                    bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
+                    shadow-[inset_0_2px_3px_rgba(255,255,255,0.65),0_4px_10px_rgba(59,130,246,0.35),0_8px_18px_rgba(16,185,129,0.25)]
+                    transition-all duration-700 ease-out">
+          <!-- Top gloss -->
+          <span class="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full
+                       bg-white/25 dark:bg-white/10"></span>
+          <!-- Inner ridge -->
+          <span class="pointer-events-none absolute inset-y-0 left-0 w-[40%]
+                       bg-gradient-to-r from-white/15 to-transparent"></span>
+          <!-- Right edge glow -->
+          <span class="pointer-events-none absolute right-0 top-0 h-full w-6
+                       bg-gradient-to-l from-white/35 to-transparent dark:from-white/15"></span>
+          <!-- Percent label -->
+          <span id="progressBarLabel"
+                class="absolute inset-y-0 right-2 flex items-center
+                       text-[0.85rem] sm:text-[0.95rem] font-extrabold tracking-wide
+                       text-white drop-shadow">75%</span>
+          <!-- Moving shine (optional) -->
+          <span class="pointer-events-none absolute inset-y-0 -left-10 w-10 skew-x-12
+                       bg-white/20 blur-[2px] animate-[shine_2.4s_linear_infinite]"></span>
+        </div>
+
+        <!-- Ticks -->
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3
+                    text-[0.7rem] font-semibold text-slate-700/70 dark:text-white/60">
+          <span>০%</span><span>১০০%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
         <!-- Content: 3-column on sm+ -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4">
 
-          <!-- Progress bar -->
-          <div>
-            <div class="relative h-7 sm:h-8 w-full overflow-hidden rounded-full
-              border border-blue-300/70
-              bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
-              shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_3px_8px_rgba(0,0,0,0.08)]
-              dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/30 dark:to-slate-900
-              dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_6px_16px_rgba(0,0,0,0.55)]">
-
-              <div id="progressBar" class="relative h-full w-[75%] md:w-[70%] rounded-full
-                bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
-                shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_4px_10px_rgba(59,130,246,0.35)]
-                transition-all duration-700 ease-out">
-                <span class="absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-white/20"></span>
-                <span id="progressBarLabel"
-                  class="absolute inset-y-0 right-2 flex items-center text-[0.8rem] sm:text-[0.9rem] font-bold text-white drop-shadow">75%</span>
-              </div>
-
-              <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-2.5 sm:px-3
-                text-[0.65rem] sm:text-[0.7rem] font-medium text-slate-700/70 dark:text-white/60">
-                <span>০%</span><span>১০০%</span>
-              </div>
-            </div>
-          </div>
+         
 
           <!-- Average -->
           <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
