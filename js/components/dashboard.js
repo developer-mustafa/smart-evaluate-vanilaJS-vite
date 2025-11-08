@@ -137,27 +137,36 @@ function _getDashboardHTMLStructure() {
                         </span>
                         সর্বশেষ এসাইনমেন্ট
                       </p>
+                       <span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200/40 bg-amber-100 px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-100">
+                        <i class="fas fa-bolt text-[0.65rem]"></i>
+                        লাইভ
+                      </span>
                       <p id="latestTaskTitle" class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white max-w-[22rem] truncate" title="-">-</p>
                       <p class="text-xs text-slate-500 dark:text-white/60">আপডেট: <span id="latestAssignmentUpdated">-</span></p>
                     </div>
                  
                   </div>
                   <div class="space-y-4">
-                    <div class="space-y-2">
-                      <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/75">
-                          <span>ফলাফল প্রদানের আপডেট</span>
-                          <span class="inline-flex items-center gap-1 rounded-full border border-amber-200/30 px-2 py-0.5 text-amber-500 dark:text-amber-300 normal-case tracking-normal text-xs">
-                            <i class="fas fa-sparkles text-[0.6rem]"></i> লাইভ
+                    <div class="relative rounded-2xl border border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 shadow-sm dark:border-white/10 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800/70">
+                     
+                      <div class="flex w-full flex-col gap-3 text-sm font-semibold text-slate-600 dark:text-white/80 md:flex-row md:items-center md:gap-4 pr-4 md:pr-6">
+                        <div class="inline-flex flex-wrap items-center gap-2">
+                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-slate-700 dark:bg-white/10 dark:text-white">
+                            <i class="fas fa-chart-simple text-xs text-indigo-500"></i>
+                            ফলাফল প্রদানের আপডেট
                           </span>
                         </div>
-                        <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10 md:flex-1">
-                          <div id="progressBar" class="relative h-full w-0 rounded-full shadow-lg transition-all duration-1000 ease-out">
-                            <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90"></span>
-                          </div>
-                        </div>
+                               <div class="relative h-6 w-full overflow-hidden rounded-full border border-slate-900/10 bg-slate-900/5 dark:border-white/15 dark:bg-white/10 md:flex-1 md:min-w-0">
+  <div id="progressBar" class="relative h-full w-[100%] min-w-[220px] rounded-full bg-blue-600 shadow-lg transition-all duration-1000 ease-out">
+    <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90 drop-shadow">100%</span>
+  </div>
+  <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3 text-[0.7rem] font-semibold text-slate-500/80 dark:text-white/60">
+    <span> </span>
+    <span>১০০%</span>
+  </div>
+</div>
+
                       </div>
-                  
                     </div>
                     <div class="flex flex-col items-center gap-4 md:flex-row md:items-end md:justify-center md:gap-8">
                       <div class="flex flex-col items-center gap-3">
@@ -205,7 +214,7 @@ function _getDashboardHTMLStructure() {
                   <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-white/70">
                     <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800/60 dark:text-white">
                       <i class="fas fa-people-group text-indigo-500"></i>
-                      শিক্ষার্থী ও গ্রুপ স্ট্যাটাস
+                      শিক্ষার্থী ও গ্রুপের ফলাফল প্রদান তথ্য
                     </span>
                     <span class="text-slate-400 dark:text-white/60 text-[0.75rem]">Latest snapshot</span>
                   </div>
@@ -873,8 +882,7 @@ function _calculateAssignmentAverageStats(tasks = [], evaluations = []) {
   });
 
   const overallAverage = assignmentSummaries.length
-    ? assignmentSummaries.reduce((sum, summary) => sum + summary.averagePercent, 0) /
-      assignmentSummaries.length
+    ? assignmentSummaries.reduce((sum, summary) => sum + summary.averagePercent, 0) / assignmentSummaries.length
     : 0;
 
   return { assignmentSummaries, overallAverage, assignmentAverageMap };
@@ -892,11 +900,7 @@ function _buildAssignmentOverview(tasks = [], latestAssignmentSummary = null) {
         _normalizeTimestamp(task.createdAt) ||
         _normalizeTimestamp(task.updatedAt);
       const title = task.title || task.name || 'অনির্ধারিত এসাইনমেন্ট';
-      const identifier =
-        task.id ??
-        task.uid ??
-        task.key ??
-        `${title}-${timestamp || Date.now()}`;
+      const identifier = task.id ?? task.uid ?? task.key ?? `${title}-${timestamp || Date.now()}`;
       return {
         id: identifier,
         title,
@@ -1012,9 +1016,7 @@ function _renderStats(stats) {
     typeof stats.latestAssignmentAverage === 'number' && !isNaN(stats.latestAssignmentAverage)
       ? Math.min(100, Math.max(0, stats.latestAssignmentAverage))
       : null;
-  const overallImprovementSource = hasAssignmentAverageData
-    ? stats.overallAssignmentAverage
-    : stats.overallProgress;
+  const overallImprovementSource = hasAssignmentAverageData ? stats.overallAssignmentAverage : stats.overallProgress;
   const progressValue =
     typeof overallImprovementSource === 'number' && !isNaN(overallImprovementSource)
       ? Math.min(100, Math.max(0, overallImprovementSource))
@@ -1242,9 +1244,8 @@ function _renderTopGroups(groupData) {
     const articleClass = podiumClasses[index] || podiumClasses[podiumClasses.length - 1];
     const rankIcon = rankIcons[index] || '<i class="fa-solid fa-trophy text-amber-700 dark:text-amber-200"></i>';
     return `
-        <article class="${articleClass}" data-group-id="${
-      data.group?.id
-    }" role="button" tabindex="0" aria-pressed="false">
+        <article class="${articleClass}" data-group-id="${data.group?.id
+      }" role="button" tabindex="0" aria-pressed="false">
           <span class="elite-rank-chip">
             <span class="elite-rank-icon">${rankIcon}</span>
             <span class="elite-rank-title">${placeText}</span>
@@ -1255,9 +1256,8 @@ function _renderTopGroups(groupData) {
               <span class="elite-score-label">মোট গড় স্কোর</span>
             </div>
             <div class="elite-card-body ${index === 0 ? 'space-y-1.5' : 'space-y-1'}">
-              <div class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${
-      fontConfig.min
-    }">${groupName}</div>
+              <div class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min
+      }">${groupName}</div>
               <div class="${memberLineClass} text-xs sm:text-sm font-medium">
                 <span>সদস্য:</span>
                 <span>${members}</span>
