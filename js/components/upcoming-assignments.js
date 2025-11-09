@@ -1,6 +1,8 @@
 // js/components/upcoming-assignments.js
-// ✅ Focus-first sort + 3D Cards + Left-rail number + Countdown (conditional) + Light Red/Rose 3D Schedule Pill
-// ✅ Date-only → assumes local 10:20 AM for countdown/status
+// ✅ Focus-first sort + Date-only→10:20 AM + Countdown (conditional + blink)
+// ✅ 3D Cards (original left-rail number) + Light Rose 3D "অনুষ্ঠিত হবে :" pill (no duplication)
+// ✅ Smooth full-width accordion
+// ✅ Dashboard summary cards with soft 3D (both light/dark) via injected CSS
 
 let stateManager;
 let uiManager;
@@ -36,11 +38,13 @@ export function init(dependencies) {
   uiManager = dependencies.managers.uiManager;
   helpers = dependencies.utils;
 
-  _ensurePillStyles(); // inject countdown + light red/rose chef styles
+  _ensureSummarySoft3DStyles();
+  _ensurePillStyles();
+
   _cacheDOMElements();
   _bindEvents();
 
-  console.log('✅ UpcomingAssignments (focus-first + 10:20 rule + light red chef) initialized.');
+  console.log('✅ UpcomingAssignments (focus-first + 10:20 rule + soft 3D + rose chef) initialized.');
   return { render };
 }
 
@@ -66,8 +70,49 @@ function _bindEvents() {
 }
 
 /* =========================
-   Injected Styles (countdown pills + LIGHT red/rose 3D chef)
+   Injected Styles (Summary soft 3D + pills)
 ========================= */
+function _ensureSummarySoft3DStyles() {
+  if (document.getElementById('ua-soft3d-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'ua-soft3d-styles';
+  style.textContent = `
+  .soft3d-card{
+    position: relative; border-radius: 1rem; padding: 1rem; overflow: hidden;
+    color: #0f172a; border: 1px solid rgba(15,23,42,.08);
+    box-shadow: 0 1px 0 rgba(255,255,255,.55) inset, 0 10px 18px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+    backdrop-filter: saturate(110%) blur(.3px);
+  }
+  .dark .soft3d-card{
+    color: #e5e7eb; border-color: rgba(255,255,255,.08);
+    box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 12px 22px rgba(0,0,0,.25), 0 2px 4px rgba(0,0,0,.18);
+  }
+  .soft3d-card::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.24), transparent 60%);
+    mix-blend-mode: soft-light;
+  }
+  .dark .soft3d-card::after{
+    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.10), transparent 60%);
+  }
+  .soft3d--slate { background: linear-gradient(145deg, #eef2ff 0%, #e2e8f0 50%, #e5e7eb 100%); }
+  .dark .soft3d--slate { background: linear-gradient(145deg, #0b1220 0%, #0f172a 55%, #111827 100%); }
+  .soft3d--sky { background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 50%, #a5f3fc 100%); }
+  .dark .soft3d--sky { background: linear-gradient(145deg, #07233a 0%, #0b2f4a 55%, #0e3d59 100%); }
+  .soft3d--amber { background: linear-gradient(145deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%); }
+  .dark .soft3d--amber { background: linear-gradient(145deg, #2e2104 0%, #3a2907 55%, #4a3209 100%); }
+  .soft3d--emerald { background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%); }
+  .dark .soft3d--emerald { background: linear-gradient(145deg, #062418 0%, #0a2f21 55%, #0e3b29 100%); }
+  .soft3d-sub{ font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; opacity:.8; }
+  .dark .soft3d-sub{ opacity:.85; }
+  .soft3d-icon{ font-size:1.25rem; opacity:.9; filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)); }
+  .dark .soft3d-icon{ opacity:.95; filter:none; }
+  .soft3d-value{ font-size:1.5rem; font-weight:700; text-shadow:0 1px 0 rgba(255,255,255,.45); }
+  .dark .soft3d-value{ text-shadow:none; }
+  `;
+  document.head.appendChild(style);
+}
+
 function _ensurePillStyles() {
   if (document.getElementById('ua-pill-styles')) return;
   const style = document.createElement('style');
@@ -85,17 +130,14 @@ function _ensurePillStyles() {
   }
   .cd-green{ color:#166534; background:rgba(187,247,208,.65); border-color:rgba(22,101,52,.25); }
   .dark .cd-green{ color:#A7F3D0; background:rgba(6,95,70,.35); border-color:rgba(167,243,208,.2); }
-
   .cd-amber{ color:#92400e; background:rgba(254,243,199,.65); border-color:rgba(146,64,14,.25); }
   .dark .cd-amber{ color:#FDE68A; background:rgba(120,53,15,.35); border-color:rgba(253,230,138,.2); }
-
   .cd-red{ color:#7f1d1d; background:rgba(254,226,226,.85); border-color:rgba(127,29,29,.22); }
   .dark .cd-red{ color:#fecaca; background:rgba(127,29,29,.28); border-color:rgba(254,202,202,.18); }
-
   @keyframes uablink { 0%, 60%, 100% { opacity:1 } 30% { opacity:.35 } }
   .cd-blink { animation: uablink 1.2s linear infinite; }
 
-  /* Light Red/Rose 3D "Chef" schedule pill (softer tone, high readability) */
+  /* Light Rose 3D "Chef" schedule pill */
   .sched-pill--rose3d{
     --c1:#FFE4E6; --c2:#FECDD3; --c3:#FB7185; --c4:#F43F5E;
     display:inline-flex; align-items:center; gap:.55rem;
@@ -113,8 +155,7 @@ function _ensurePillStyles() {
   }
   .sched-pill--rose3d .sched-icon{
     width:18px; height:18px; display:inline-grid; place-items:center;
-    border-radius:.5rem;
-    background: rgba(255,255,255,.75);
+    border-radius:.5rem; background: rgba(255,255,255,.75);
     box-shadow: 0 1px 0 rgba(0,0,0,.06) inset;
   }
   .dark .sched-pill--rose3d{
@@ -141,7 +182,7 @@ function _ensurePillStyles() {
 function _coerceDate(raw) {
   if (!raw) return null;
   try {
-    if (typeof raw.toDate === 'function') return raw.toDate(); // Firebase
+    if (typeof raw.toDate === 'function') return raw.toDate(); // Firebase Timestamp
     const d = new Date(raw);
     return Number.isNaN(d.getTime()) ? null : d;
   } catch {
@@ -158,9 +199,7 @@ function _applyDefaultTimeIfDateOnly(dateObj) {
     dateObj.getSeconds() !== 0 ||
     dateObj.getMilliseconds() !== 0;
   if (hasTime) return dateObj;
-
-  const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 10, 20, 0, 0); // 10:20 AM local
-  return d;
+  return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 10, 20, 0, 0); // 10:20 AM local
 }
 
 function _getSortableDate(dateInput) {
@@ -230,17 +269,17 @@ export function render() {
   const tasks = stateManager.get('tasks') || [];
   const evaluations = stateManager.get('evaluations') || [];
 
-  // Normalize first (so we have adjusted 10:20 time)
+  // Normalize (with 10:20 rule) so status/ISO are correct
   const normalized = tasks.map((task) => _normalizeTask(task, evaluations));
 
   // Focus-first sorting:
-  // upcoming by urgency (remainingMs asc) → ongoing → completed
+  // upcoming by urgency (remainingMs asc) → ongoing → completed (recent first)
   const now = Date.now();
   const bucket = (t) => (t.status === 'upcoming' ? 0 : t.status === 'ongoing' ? 1 : 2);
   const urgency = (t) => {
     const d = t._dateObj;
     if (!d) return Number.POSITIVE_INFINITY;
-    const ms = d.getTime() - now;
+    const ms = d.getTime() - now; // only upcoming gets finite positive
     return ms > 0 ? ms : Number.POSITIVE_INFINITY;
   };
   const tms = (t) => (t._dateObj ? t._dateObj.getTime() : -Infinity);
@@ -251,17 +290,17 @@ export function render() {
     if (ba !== bb) return ba - bb;
 
     if (ba === 0) {
-      // upcoming → by urgency
+      // upcoming
       const ua = urgency(a),
         ub = urgency(b);
-      if (ua !== ub) return ua - ub;
-      return tms(a) - tms(b);
+      if (ua !== ub) return ua - ub; // soonest first
+      return tms(a) - tms(b); // tiebreak asc
     }
-    // ongoing/completed → by date desc
+    // ongoing/completed → recent first
     return tms(b) - tms(a);
   });
 
-  // running serial (current view)
+  // Assign running serial in the current sorted view
   normalized.forEach((t, i) => (t.assignmentNumber = i + 1));
 
   _renderSummary(normalized);
@@ -270,43 +309,71 @@ export function render() {
   _startCountdownTicker();
 }
 
+/* =========================
+   Summary (soft 3D)
+========================= */
+
 function _renderSummary(tasks) {
   if (!elements.summary) return;
 
   const total = tasks.length;
-  const stats = STATUS_ORDER.map((status) => ({
-    status,
-    count: tasks.filter((task) => task.status === status).length,
-  }));
+  const stats = [
+    {
+      key: 'upcoming',
+      label: STATUS_META.upcoming.label,
+      icon: STATUS_META.upcoming.icon,
+      count: tasks.filter((t) => t.status === 'upcoming').length,
+    },
+    {
+      key: 'ongoing',
+      label: STATUS_META.ongoing.label,
+      icon: STATUS_META.ongoing.icon,
+      count: tasks.filter((t) => t.status === 'ongoing').length,
+    },
+    {
+      key: 'completed',
+      label: STATUS_META.completed.label,
+      icon: STATUS_META.completed.icon,
+      count: tasks.filter((t) => t.status === 'completed').length,
+    },
+  ];
 
   const cardsHtml = [
-    _summaryCard('মোট এসাইনমেন্ট', total, 'fas fa-layer-group', 'from-slate-900 via-slate-800 to-slate-900'),
-    ...stats.map((item) =>
-      _summaryCard(
-        STATUS_META[item.status].label,
-        item.count,
-        STATUS_META[item.status].icon,
-        _getGradientForStatus(item.status)
-      )
-    ),
+    _summaryCard('মোট এসাইনমেন্ট', total, 'fas fa-layer-group', 'slate'),
+    ...stats.map((s) => _summaryCard(s.label, s.count, s.icon, s.key)),
   ];
 
   elements.summary.innerHTML = cardsHtml.join('');
 }
 
-function _summaryCard(label, value, icon, gradient) {
-  const formattedValue = _bn(value);
+function _summaryCard(label, value, icon, themeKey) {
+  const cls = _summaryThemeClass(themeKey); // slate | sky | amber | emerald
+  const formattedValue = helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(String(value)) : String(value);
+
   return `
-    <div class="summary-3d rounded-2xl p-4 text-white bg-gradient-to-br ${gradient}">
+    <div class="soft3d-card ${cls}">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs uppercase tracking-wide text-white/80">${label}</p>
-          <p class="mt-2 text-2xl font-semibold drop-shadow-sm">${formattedValue}</p>
+          <p class="soft3d-sub">${label}</p>
+          <p class="soft3d-value mt-2">${formattedValue}</p>
         </div>
-        <span class="text-2xl opacity-90 drop-shadow-sm"><i class="${icon}"></i></span>
+        <span class="soft3d-icon"><i class="${icon}"></i></span>
       </div>
     </div>
   `;
+}
+
+function _summaryThemeClass(key) {
+  switch (key) {
+    case 'upcoming':
+      return 'soft3d--sky';
+    case 'ongoing':
+      return 'soft3d--amber';
+    case 'completed':
+      return 'soft3d--emerald';
+    default:
+      return 'soft3d--slate'; // total
+  }
 }
 
 /* =========================
@@ -333,9 +400,7 @@ function _renderAssignments(tasks) {
           }">
             <i class="${STATUS_META[status].icon}"></i>${STATUS_META[status].label}
           </span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">
-            ${_bn(statusTasks.length)} টি এন্ট্রি
-          </span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">${_bn(statusTasks.length)} টি এন্ট্রি</span>
         </div>
         <div class="space-y-3">${cards}</div>
       </section>
@@ -354,11 +419,10 @@ function _renderAssignments(tasks) {
   _wireAccordions();
 }
 
-/* Card (left rail number + countdown + LIGHT ROSE 3D schedule pill + accordion) */
+/* Card: left rail number + countdown + rose 3D schedule pill (upcoming only) + accordion */
 function _assignmentCard(task) {
   const meta = STATUS_META[task.status] || STATUS_META.upcoming;
   const participantsLabel = _bn(task.participants);
-
   const assignmentNumber = task.assignmentNumber || 0;
   const formattedNumber = _bn(assignmentNumber);
   const dateLabel = task.dateLabel || 'তারিখ নির্ধারিত নয়';
@@ -366,7 +430,6 @@ function _assignmentCard(task) {
   const accId = `acc_${task.id || Math.random().toString(36).slice(2)}`;
   const panelId = `panel_${task.id || Math.random().toString(36).slice(2)}`;
 
-  // Countdown (colored dynamically)
   const countdownHtml = `
     <span class="cd-pill" data-cd data-iso="${task.dateISO || ''}" data-mode="start">
       <i class="fas fa-hourglass-half"></i>
@@ -374,7 +437,6 @@ function _assignmentCard(task) {
     </span>
   `;
 
-  // LIGHT ROSE 3D schedule pill — only for UPCOMING; single “অনুষ্ঠিত হবে:”
   const roseChef =
     task.status === 'upcoming'
       ? `
@@ -387,13 +449,10 @@ function _assignmentCard(task) {
       : '';
 
   return `
-    <article
-      class="relative card-3d card-3d--bevel focusable overflow-hidden flex"
-      tabindex="0"
-      role="group"
-      aria-label="${helpers.ensureBengaliText(task.name)}"
-    >
-      <!-- Left Rail: পরীক্ষার নং (original) -->
+    <article class="relative card-3d card-3d--bevel focusable overflow-hidden flex" tabindex="0" role="group" aria-label="${helpers.ensureBengaliText(
+      task.name
+    )}">
+      <!-- Left Rail: পরীক্ষার নং (original design) -->
       <div class="flex-shrink-0 w-24 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/60 p-4 border-r border-gray-100 dark:border-gray-700/50">
         <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">পরীক্ষা</span>
         <span class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">${formattedNumber}</span>
@@ -403,14 +462,13 @@ function _assignmentCard(task) {
       <div class="flex-1 p-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div class="min-w-0">
-            <!-- Top row: chip + countdown + ROSE 3D pill -->
+            <!-- Top row: chip + countdown + rose pill -->
             <div class="flex items-center flex-wrap gap-2">
               <span class="chip-3d inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                 meta.chip
               }">
                 <i class="${meta.icon}"></i>${STATUS_META[task.status].label}
               </span>
-
               ${countdownHtml}
               ${roseChef}
             </div>
@@ -526,21 +584,16 @@ function _animateToggle(panel, open) {
 }
 
 /* =========================
-   Normalize + Status (10:20 rule applied here)
+   Normalize + Status (10:20 rule)
 ========================= */
 
 function _normalizeTask(task, evaluations) {
-  // coerce raw date
   const raw = _coerceDate(task.date);
-  // apply 10:20 AM default if time missing
   const adjusted = _applyDefaultTimeIfDateOnly(raw) || raw;
 
   const status = _getTaskStatus({ ...task, date: adjusted });
   const dateInfo = _getDateInfo(adjusted);
   const participants = _countParticipants(task.id, evaluations);
-
-  // ISO from adjusted date (so countdown uses 10:20 if date-only)
-  const dateISO = adjusted ? adjusted.toISOString() : '';
 
   return {
     id: task.id,
@@ -548,11 +601,11 @@ function _normalizeTask(task, evaluations) {
     status,
     dateLabel: dateInfo.label,
     timelineLabel: dateInfo.timelineLabel,
-    scheduleText: dateInfo.scheduleText, // kept for other UI (we don't repeat near pill)
+    scheduleText: dateInfo.scheduleText, // not repeated near the pill
     description: task.description || '',
     participants,
     assignmentNumber: task.assignmentNumber,
-    dateISO,
+    dateISO: adjusted ? adjusted.toISOString() : '',
     _dateObj: adjusted,
   };
 }
@@ -581,13 +634,11 @@ function _getDateInfo(dateObj) {
     };
   }
 
-  // ensure 10:20 AM default for date-only, but if time existed, keep it
   const adjusted = _applyDefaultTimeIfDateOnly(dateObj) || dateObj;
 
   const now = new Date();
   const isFuture = adjusted.getTime() > now.getTime();
 
-  // "isToday" based on same calendar day
   const sameDay =
     adjusted.getFullYear() === now.getFullYear() &&
     adjusted.getMonth() === now.getMonth() &&
