@@ -6,14 +6,80 @@ let stateManager, uiManager, dataService, helpers, app;
 // DOM Elements
 const elements = {};
 
-// Ranking criteria
-const MIN_EVALUATIONS_FOR_RANKING = 2;
-const TOTAL_MAX_SCORE = 100; // This is a fallback, logic now uses 60
+// Ranking criteria (kept for safety)
+const MIN_EVALUATIONS_FOR_RANKING = 1;
+const TOTAL_MAX_SCORE = 100; // fallback (evaluation.maxPossibleScore preferred)
+
+/* -----------------------------
+   Soft Neumorphic 3D (light/dark)
+   — inspired by your toggle references
+------------------------------ */
+function _ensureSoft3DStyles() {
+  if (document.getElementById('ranking-soft3d-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'ranking-soft3d-styles';
+  style.textContent = `
+  .rk-surface{
+    border-radius: 1.1rem;
+    background: var(--rk-bg, #fff);
+    box-shadow:
+      8px 8px 20px rgba(0,0,0,.08),
+      -6px -6px 16px rgba(255,255,255,.7),
+      inset 0 1px 0 rgba(255,255,255,.45);
+  }
+  .dark .rk-surface{
+    --rk-bg: rgba(17,24,39,.9);
+    box-shadow:
+      10px 10px 26px rgba(0,0,0,.45),
+      -6px -6px 14px rgba(255,255,255,.06),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .rk-chip{
+    border-radius: .75rem;
+    background: rgba(255,255,255,.8);
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.6) inset,
+      0 2px 6px rgba(0,0,0,.06);
+  }
+  .dark .rk-chip{
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 2px 6px rgba(0,0,0,.35);
+  }
+
+  .rk-card{
+    border-radius: 1rem;
+    background: var(--rk-bg, #fff);
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow:
+      6px 6px 16px rgba(0,0,0,.08),
+      -4px -4px 12px rgba(255,255,255,.7),
+      inset 0 1px 0 rgba(255,255,255,.45);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .rk-card:hover{ transform: translateY(-1px); }
+  .dark .rk-card{
+    border-color: rgba(255,255,255,.08);
+    box-shadow:
+      10px 10px 24px rgba(0,0,0,.45),
+      -6px -6px 14px rgba(255,255,255,.06),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .rk-micro{
+    font-size: 11px;
+    line-height: 1.1;
+  }
+  `;
+  document.head.appendChild(style);
+}
 
 /**
  * Initializes the Ranking component.
- * @param {object} dependencies - Passed from app.js.
- * @returns {object} - Public methods.
  */
 export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
@@ -22,14 +88,13 @@ export function init(dependencies) {
   helpers = dependencies.utils;
   app = dependencies.app;
 
+  _ensureSoft3DStyles();
   _cacheDOMElements();
   _setupEventListeners();
 
   console.log('✅ Ranking component initialized.');
 
-  return {
-    render,
-  };
+  return { render };
 }
 
 /**
@@ -44,16 +109,17 @@ export function render() {
 
   uiManager.showLoading('র‍্যাঙ্কিং গণনা করা হচ্ছে...');
   try {
-    const { students, evaluations, tasks } = stateManager.getState();
+    const { students, evaluations, tasks, groups } = stateManager.getState();
 
-    // Check if data is ready
     if (!students || !evaluations || !tasks) {
       uiManager.displayEmptyMessage(elements.studentRankingListContainer, 'র‍্যাঙ্কিং গণনার জন্য ডেটা লোড হচ্ছে...');
       return;
     }
 
     const rankedStudents = _calculateStudentRankings(students, evaluations, tasks);
-    _renderRankingList(rankedStudents);
+    const rankedGroups = _calculateGroupRankings(students, evaluations, groups || []);
+
+    _renderRankingList(rankedStudents, rankedGroups, groups || [], students);
   } catch (error) {
     console.error('❌ Error rendering student ranking:', error);
     uiManager.displayEmptyMessage(elements.studentRankingListContainer, 'র‍্যাঙ্কিং লোড করতে একটি ত্রুটি ঘটেছে।');
@@ -62,10 +128,8 @@ export function render() {
   }
 }
 
-/**
- * Caches DOM elements for the Ranking page.
- * @private
- */
+/* ---------------- DOM Cache & Events ---------------- */
+
 function _cacheDOMElements() {
   elements.page = document.getElementById('page-student-ranking');
   if (elements.page) {
@@ -76,27 +140,18 @@ function _cacheDOMElements() {
   }
 }
 
-/**
- * Sets up event listeners for the Ranking page.
- * @private
- */
 function _setupEventListeners() {
   if (!elements.page) return;
-
-  // Refresh button listener
   uiManager.addListener(elements.refreshRankingBtn, 'click', async () => {
     uiManager.showLoading('র‍্যাঙ্কিং রিফ্রেশ করা হচ্ছে...');
     try {
-      // Force refresh all data from server
       await app.refreshAllData();
-      // Re-render this page (will be handled by refreshAllData's showPage call)
     } catch (error) {
       console.error('❌ Error refreshing ranking data:', error);
       uiManager.showToast('র‍্যাঙ্কিং রিফ্রেশ করতে সমস্যা হয়েছে।', 'error');
     }
   });
 
-  // Delegate clicks to open student detail modal if available
   uiManager.addListener(elements.studentRankingListContainer, 'click', (e) => {
     const target = e.target.closest('[data-student-id]') || e.target.closest('.ranking-card');
     if (!target) return;
@@ -104,111 +159,153 @@ function _setupEventListeners() {
     if (id && typeof window !== 'undefined' && typeof window.openStudentModalById === 'function') {
       e.preventDefault();
       try {
-        console.debug('[Ranking] Opening modal for', id);
         window.openStudentModalById(id);
-      } catch (err) {
-        console.warn('Modal open failed:', err);
-      }
+      } catch {}
     }
   });
 }
 
-/**
- * Calculates student rankings based on evaluations.
- * @param {Array<object>} students
- * @param {Array<object>} evaluations
- * @param {Array<object>} tasks
- * @returns {Array<object>} Sorted list of ranked student data.
- * @private
- */
+/* =========================================================
+   RANKING LOGIC (unchanged priority)
+   1) Average mark % DESC (efficiency)
+   2) Evaluations DESC
+   3) TotalScore DESC
+   4) MaxPossible DESC
+   5) Latest time DESC
+   (All % shown with 2 decimals)
+========================================================= */
+
 function _calculateStudentRankings(students, evaluations, tasks) {
   if (!students || !evaluations || !tasks) return [];
 
-  const taskMap = new Map(tasks.map((task) => [task.id, task]));
-  const studentPerformance = {};
+  const studentPerf = {};
 
   evaluations.forEach((evaluation) => {
-    const task = taskMap.get(evaluation.taskId);
-    // PDF-ভিত্তিক লজিক: ডিফল্ট ৬০, যদি না evaluation.maxPossibleScore সেট করা থাকে
     const maxScore = parseFloat(evaluation.maxPossibleScore) || 60;
-    const evaluationTimestamp = _extractTimestamp(
+    const ts = _extractTimestamp(
       evaluation.taskDate || evaluation.updatedAt || evaluation.evaluationDate || evaluation.createdAt
     );
+    const scores = evaluation.scores || {};
 
-    if (maxScore > 0 && evaluation.scores) {
-      Object.entries(evaluation.scores).forEach(([studentId, scoreData]) => {
-        if (!studentPerformance[studentId]) {
-          studentPerformance[studentId] = {
-            totalPercentage: 0,
-            count: 0,
-            totalScore: 0,
-            maxScoreSum: 0,
-            taskIds: new Set(),
-            latestMs: null,
-          };
-        }
-        const totalScore = parseFloat(scoreData.totalScore) || 0;
-        const percentage = (totalScore / maxScore) * 100;
-        const record = studentPerformance[studentId];
-
-        record.totalPercentage += percentage;
-        record.totalScore += totalScore;
-        record.maxScoreSum += maxScore;
-        record.count++;
-        if (evaluation.taskId) record.taskIds.add(evaluation.taskId);
-        if (evaluationTimestamp) {
-          record.latestMs = record.latestMs ? Math.max(record.latestMs, evaluationTimestamp) : evaluationTimestamp;
-        }
-      });
-    }
+    Object.entries(scores).forEach(([studentId, scoreData]) => {
+      if (!studentPerf[studentId]) {
+        studentPerf[studentId] = { evalCount: 0, totalScore: 0, maxScoreSum: 0, latestMs: null };
+      }
+      const totalScore = parseFloat(scoreData.totalScore) || 0;
+      const rec = studentPerf[studentId];
+      rec.evalCount += 1;
+      rec.totalScore += totalScore;
+      rec.maxScoreSum += maxScore;
+      if (ts) rec.latestMs = rec.latestMs ? Math.max(rec.latestMs, ts) : ts;
+    });
   });
 
-  const rankedList = students
-    .map((student) => {
-      const performance = studentPerformance[student.id];
-
-      // PDF-ভিত্তিক লজিক: কমপক্ষে ২টি এসাইনমেন্টে অংশ নিতে হবে
-      if (!performance || performance.count < MIN_EVALUATIONS_FOR_RANKING) {
-        return null;
-      }
-
-      const averageScore = performance.totalPercentage / performance.count;
-      const efficiency =
-        performance.maxScoreSum > 0 ? (performance.totalScore / performance.maxScoreSum) * 100 : averageScore;
-
+  const ranked = students
+    .map((stu) => {
+      const perf = studentPerf[stu.id];
+      if (!perf || perf.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
+      const efficiency = perf.maxScoreSum > 0 ? (perf.totalScore / perf.maxScoreSum) * 100 : 0;
       return {
-        student,
-        averageScore,
-        evalCount: performance.count,
-        efficiencyScore: efficiency,
-        taskCount: performance.taskIds.size,
-        totalScore: performance.totalScore,
-        maxScoreSum: performance.maxScoreSum,
-        latestEvaluationMs: performance.latestMs,
+        student: stu,
+        evalCount: perf.evalCount,
+        totalScore: perf.totalScore,
+        maxScoreSum: perf.maxScoreSum,
+        efficiency,
+        latestEvaluationMs: perf.latestMs || null,
         rank: 0,
       };
     })
     .filter(Boolean)
     .sort((a, b) => {
-      if (b.averageScore !== a.averageScore) {
-        return b.averageScore - a.averageScore;
-      }
-      return b.evalCount - a.evalCount;
+      if (b.efficiency !== a.efficiency) return b.efficiency - a.efficiency;
+      if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      if (b.maxScoreSum !== a.maxScoreSum) return b.maxScoreSum - a.maxScoreSum;
+      return (b.latestEvaluationMs || 0) - (a.latestEvaluationMs || 0);
     });
 
-  rankedList.forEach((item, index) => {
-    item.rank = index + 1;
-  });
-
-  return rankedList;
+  ranked.forEach((x, i) => (x.rank = i + 1));
+  return ranked;
 }
 
 /**
- * Renders the calculated ranking list into the DOM.
- * @param {Array<object>} rankedStudents - Sorted list from _calculateStudentRankings.
- * @private
+ * Group ranking with extra metrics:
+ * - participantsCount (unique students who got scored)
+ * - groupSize (total members in the group)
+ * - remainingCount = groupSize - participantsCount (not negative)
  */
-function _renderRankingList(rankedStudents) {
+function _calculateGroupRankings(students, evaluations, groups) {
+  if (!students || !evaluations) return [];
+
+  const groupNameMap = new Map((groups || []).map((g) => [g.id, g.name || 'গ্রুপ']));
+  const studentToGroup = new Map((students || []).map((s) => [s.id, s.groupId || '__none']));
+
+  // group size map
+  const groupSize = {};
+  (students || []).forEach((s) => {
+    const gid = s.groupId || '__none';
+    groupSize[gid] = (groupSize[gid] || 0) + 1;
+  });
+
+  const groupAgg = {}; // gid -> { evalCount, totalScore, maxScoreSum, latestMs, participants: Set }
+  evaluations.forEach((evaluation) => {
+    const maxScore = parseFloat(evaluation.maxPossibleScore) || 60;
+    const ts = _extractTimestamp(
+      evaluation.taskDate || evaluation.updatedAt || evaluation.evaluationDate || evaluation.createdAt
+    );
+    const scores = evaluation.scores || {};
+    Object.entries(scores).forEach(([studentId, scoreData]) => {
+      const gid = studentToGroup.get(studentId) || '__none';
+      if (!groupAgg[gid]) {
+        groupAgg[gid] = { evalCount: 0, totalScore: 0, maxScoreSum: 0, latestMs: null, participants: new Set() };
+      }
+      const totalScore = parseFloat(scoreData.totalScore) || 0;
+      const rec = groupAgg[gid];
+      rec.evalCount += 1; // total evaluation entries
+      rec.totalScore += totalScore;
+      rec.maxScoreSum += maxScore;
+      rec.participants.add(studentId);
+      if (ts) rec.latestMs = rec.latestMs ? Math.max(rec.latestMs, ts) : ts;
+    });
+  });
+
+  const rankedGroups = Object.entries(groupAgg)
+    .map(([gid, agg]) => {
+      if (agg.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
+      const efficiency = agg.maxScoreSum > 0 ? (agg.totalScore / agg.maxScoreSum) * 100 : 0;
+      const groupTotal = groupSize[gid] || 0;
+      const participantsCount = agg.participants.size;
+      const remainingCount = Math.max(0, groupTotal - participantsCount);
+      return {
+        groupId: gid,
+        groupName: groupNameMap.get(gid) || 'গ্রুপ নেই',
+        evalCount: agg.evalCount,
+        totalScore: agg.totalScore,
+        maxScoreSum: agg.maxScoreSum,
+        efficiency,
+        latestEvaluationMs: agg.latestMs || null,
+        participantsCount,
+        groupSize: groupTotal,
+        remainingCount,
+        rank: 0,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (b.efficiency !== a.efficiency) return b.efficiency - a.efficiency;
+      if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      if (b.maxScoreSum !== a.maxScoreSum) return b.maxScoreSum - a.maxScoreSum;
+      return (b.latestEvaluationMs || 0) - (a.latestEvaluationMs || 0);
+    });
+
+  rankedGroups.forEach((g, i) => (g.rank = i + 1));
+  return rankedGroups;
+}
+
+/* ---------------- Render ---------------- */
+
+function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
   if (!elements.studentRankingListContainer) return;
 
   uiManager.clearContainer(elements.studentRankingListContainer);
@@ -223,13 +320,10 @@ function _renderRankingList(rankedStudents) {
     return;
   }
 
-  const groupsMap = new Map(stateManager.get('groups').map((g) => [g.id, g.name]));
+  const groupsMap = new Map((groups || []).map((g) => [g.id, g.name]));
   const totalRanked = rankedStudents.length;
-  const aggregateAverage = rankedStudents.reduce((sum, item) => sum + item.averageScore, 0) / Math.max(totalRanked, 1);
   const totalEvaluations = rankedStudents.reduce((sum, item) => sum + item.evalCount, 0);
-  const topPerformer = rankedStudents[0];
-  const topScore = topPerformer?.averageScore ?? 0;
-  const topName = topPerformer ? _formatLabel(topPerformer.student.name) : '-';
+  const top = rankedStudents[0];
   const latestMs = rankedStudents.reduce(
     (max, item) => (item.latestEvaluationMs ? Math.max(max, item.latestEvaluationMs) : max),
     0
@@ -241,146 +335,225 @@ function _renderRankingList(rankedStudents) {
       ? new Date(latestMs).toLocaleDateString('bn-BD')
       : 'N/A';
 
+  const formatPct2 = (n) => {
+    const str = (Number(n) || 0).toFixed(2);
+    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(str) : str;
+  };
+  const formatInt = (n) => {
+    const str = `${Math.round(Number(n) || 0)}`;
+    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(str) : str;
+  };
+  const formatNum2 = (n) => {
+    const str = (Number(n) || 0).toFixed(2);
+    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(str) : str;
+  };
+
   const summary = `
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 text-white shadow-xl">
-      <div class="absolute inset-0 opacity-35 bg-[radial-gradient(circle_at_top,_rgba(250,250,250,0.35),_transparent_55%)]"></div>
-      <div class="absolute -left-20 -bottom-20 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
-      <div class="relative p-6 md:p-10 space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p class="text-xs uppercase tracking-[0.35em] text-white/70">Student Leaderboard</p>
-            <h2 class="text-3xl md:text-4xl font-bold leading-tight">শিক্ষার্থী র‌্যাঙ্কিং ইনসাইট</h2>
-            <p class="mt-2 max-w-xl text-sm md:text-base text-white/75 leading-relaxed">
-              ধারাবাহিক পারফরম্যান্স, মূল্যায়নে অংশগ্রহণ এবং টাস্ক সম্পন্নতার উপর ভিত্তি করে শীর্ষ শিক্ষার্থীদের তালিকা।
-              তথ্য দেখুন, অনুপ্রাণিত হোন, এবং সেরা ফলাফলের লক্ষ্যে দলকে এগিয়ে রাখুন।
-            </p>
-          </div>
-          <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold text-white tracking-widest uppercase">
-            <i class="fas fa-sync-alt"></i> শেষ আপডেট: ${latestDate}
-          </span>
+    <section class="rk-surface text-white p-6 md:p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold">Leaderboard (Average% → Evaluations)</h2>
+          <p class="text-white/80 text-sm mt-1">বারে “Total / Max” দেখানো হচ্ছে।</p>
         </div>
-        
-        <div class="grid gap-4 grid-cols-2 xl:grid-cols-4">
-          <div class="rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur">
-            <p class="text-xs uppercase tracking-wide text-white/70">র‌্যাঙ্কিংয়ে অন্তর্ভুক্ত</p>
-            <p class="mt-2 text-2xl font-semibold">${helpers.convertToBanglaNumber(totalRanked)}</p>
-            <p class="text-xs text-white/70 mt-1">যোগ্য শিক্ষার্থী</p>
-          </div>
-          <div class="rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur">
-            <p class="text-xs uppercase tracking-wide text-white/70">গড় স্কোর</p>
-            <p class="mt-2 text-2xl font-semibold">${helpers.convertToBanglaNumber(aggregateAverage.toFixed(1))}%</p>
-            <p class="text-xs text-white/70 mt-1">সকল শিক্ষার্থীর গড়</p>
-          </div>
-          <div class="rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur">
-            <p class="text-xs uppercase tracking-wide text-white/70">মোট মূল্যায়ন</p>
-            <p class="mt-2 text-2xl font-semibold">${helpers.convertToBanglaNumber(totalEvaluations)}</p>
-            <p class="text-xs text-white/70 mt-1">সম্পন্ন হয়েছে</p>
-          </div>
-          <div class="rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur">
-            <p class="text-xs uppercase tracking-wide text-white/70">সেরা পারফরমার</p>
-            <p class="mt-2 text-sm font-semibold text-white/90" title="${topName}">${topName}</p>
-            <p class="text-xs text-white/70 mt-1">স্কোর: ${helpers.convertToBanglaNumber(topScore.toFixed(1))}%</p>
-          </div>
+        <span class="rk-chip px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white bg-white/15">
+          <i class="fas fa-sync-alt"></i> শেষ আপডেট: ${latestDate}
+        </span>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mt-5">
+        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <p class="rk-micro text-gray-500 dark:text-gray-400">যোগ্য শিক্ষার্থী</p>
+          <p class="text-2xl font-semibold mt-1">${formatInt(totalRanked)}</p>
+        </div>
+        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <p class="rk-micro text-gray-500 dark:text-gray-400">মোট মূল্যায়ন</p>
+          <p class="text-2xl font-semibold mt-1">${formatInt(totalEvaluations)}</p>
+        </div>
+        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <p class="rk-micro text-gray-500 dark:text-gray-400">শীর্ষ শিক্ষার্থী</p>
+          <p class="mt-1 font-semibold truncate" title="${_formatLabel(top.student.name)}">${_formatLabel(
+    top.student.name
+  )}</p>
+          <p class="rk-micro text-gray-500 dark:text-gray-400 mt-1">Average: ${formatPct2(top.efficiency)}%</p>
+        </div>
+        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <p class="rk-micro text-gray-500 dark:text-gray-400">Criteria</p>
+          <p class="mt-1 text-sm font-semibold">Average% → #Evaluations → Total → Max → Latest</p>
         </div>
       </div>
     </section>
   `;
 
-  const cards = rankedStudents
+  /* ---------- STUDENT CARDS ---------- */
+  const studentCards = rankedStudents
     .map((item) => {
-      const student = item.student;
-      const rankText = helpers.convertToBanglaRank(item.rank);
-      const score = helpers.convertToBanglaNumber(item.averageScore.toFixed(1));
-      const efficiency = helpers.convertToBanglaNumber(Math.round(item.efficiencyScore || item.averageScore));
-      const evals = helpers.convertToBanglaNumber(item.evalCount);
-      const tasks = helpers.convertToBanglaNumber(item.taskCount);
-      const groupName = groupsMap.get(student.groupId) || 'গ্রুপ নেই';
-      const palette = _getScorePalette(item.averageScore);
-      const lastEvaluated = item.latestEvaluationMs
-        ? helpers?.formatTimestamp
-          ? helpers.formatTimestamp(new Date(item.latestEvaluationMs))
-          : new Date(item.latestEvaluationMs).toLocaleDateString('bn-BD')
-        : 'N/A';
+      const s = item.student;
+      const rankText = _toBnRank(item.rank);
+      const avgPct = formatPct2(item.efficiency);
+      const evals = formatInt(item.evalCount);
+      const totalMark = formatNum2(item.totalScore);
+      const maxPossible = formatNum2(item.maxScoreSum);
+      const groupName = groupsMap.get(s.groupId) || 'গ্রুপ নেই';
+      const palette = _getScorePalette(item.efficiency);
+      const barPct = Math.max(0, Math.min(100, item.maxScoreSum > 0 ? (item.totalScore / item.maxScoreSum) * 100 : 0));
 
-      const clampedScore = Math.max(0, Math.min(100, Number(item.averageScore) || 0));
+      const info3col = `
+        <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>${avgPct}%</div>
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>${evals}</div>
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>${totalMark} / ${maxPossible}</div>
+        </div>
+      `;
 
       return `
-        <article class="ranking-card w-full relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-2 dark:border-gray-700/70 dark:bg-gray-900/75 cursor-pointer" data-student-id="${
-          student.id
-        }" role="button" tabindex="0" aria-pressed="false" onclick="window.openStudentModalById && window.openStudentModalById('${
-        student.id
-      }')">
-          <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-60 pointer-events-none"></div>
-          
-          <div class="relative grid grid-cols-[1fr,auto] gap-4 items-center">
-            
-            <div class="flex items-start gap-3 min-w-0">
-              
-              <div class="flex-shrink-0 flex flex-col items-center justify-center gap-1 rounded-xl bg-white/85 px-3 py-2 text-center text-sm font-semibold text-gray-700 shadow dark:bg-white/10 dark:text-gray-200">
-                <span class="text-lg font-bold">${rankText}</span>
-                <span class="text-[9px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Rank</span>
+        <article class="ranking-card rk-card bg-white dark:bg-gray-900/90 border-0 p-4 text-gray-900 dark:text-gray-100" data-student-id="${
+          s.id
+        }">
+          <div class="flex items-start gap-3">
+            <div class="rk-chip px-3 py-2 text-center">
+              <div class="text-base font-bold">${rankText}</div>
+              <div class="rk-micro text-gray-500 dark:text-gray-400 uppercase tracking-widest">Rank</div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 min-w-0">
+                <h4 class="font-semibold truncate" title="${_formatLabel(s.name)}">${_formatLabel(s.name)}</h4>
+                ${_renderRoleBadge(s.role)}
               </div>
+              <p class="rk-micro text-gray-500 dark:text-gray-400 mt-1">রোল: ${helpers.convertToBanglaNumber(
+                s.roll
+              )} · ${s.academicGroup || 'শাখা নেই'} · গ্রুপ: ${_formatLabel(groupName)}</p>
 
-              <div class="space-y-2 min-w-0 flex-1">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 min-w-0" title="${_formatLabel(student.name)}">
-                    <span class="text-base font-semibold text-gray-900 dark:text-white truncate">${_formatLabel(
-                      student.name
-                    )}</span>
-                    ${_renderRoleBadge(student.role)}
-                  </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    রোল: ${helpers.convertToBanglaNumber(student.roll)} · ${student.academicGroup || 'শাখা নেই'}
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">গ্রুপ: ${_formatLabel(groupName)}</p>
+              ${info3col}
+
+              <div class="mt-3">
+                <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
                 </div>
-                
-                <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs font-medium text-gray-600 dark:text-gray-300">
-                  <span class="inline-flex items-center gap-1.5">
-                    <i class="fas fa-chart-line text-indigo-500 w-3 text-center"></i> গড়: ${score}%
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <i class="fas fa-tasks text-emerald-500 w-3 text-center"></i> টাস্ক: ${tasks}
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <i class="fas fa-clipboard-check text-purple-500 w-3 text-center"></i> মূল্যায়ন: ${evals}
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <i class="fas fa-bullseye text-pink-500 w-3 text-center"></i> দক্ষতা: ${efficiency}%
-                  </span>
+                <div class="rk-micro font-semibold text-gray-800 dark:text-gray-100 mt-1 flex items-center gap-1.5">
+                  <i class="fas fa-scale-balanced text-amber-500"></i>
+                  <span>Total / Max: ${totalMark} / ${maxPossible}</span>
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-col items-center justify-center gap-2.5">
-              ${_buildCircularMeter(item.averageScore, palette, 80)}
-              
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200 shadow">
-                <i class="fas fa-clock text-amber-500"></i> ${lastEvaluated}
-              </span>
-            
+            <div class="flex flex-col items-center gap-2">
+              ${_buildCircularMeter(item.efficiency, palette, 78)}
+              <span class="rk-chip px-2 py-0.5 rk-micro text-gray-800 dark:text-gray-100">Average%</span>
             </div>
-          </div>
-
-          <div class="relative w-full h-2.5 bg-gray-200 dark:bg-gray-700/50 rounded-full overflow-hidden mt-3">
-              <div class="h-full rounded-full" 
-                   style="width: ${clampedScore}%; background-color: ${palette.solid}; transition: width 0.5s ease;">
-              </div>
           </div>
         </article>
       `;
     })
     .join('');
 
+  /* ---------- GROUP CARDS (with participants/remaining) ---------- */
+  const groupCards =
+    (rankedGroups || []).length > 0
+      ? rankedGroups
+          .map((g) => {
+            const rank = _toBnRank(g.rank);
+            const avgPct = formatPct2(g.efficiency);
+            const evals = formatInt(g.evalCount);
+            const totalMark = formatNum2(g.totalScore);
+            const maxPossible = formatNum2(g.maxScoreSum);
+            const palette = _getScorePalette(g.efficiency);
+            const barPct = Math.max(0, Math.min(100, g.maxScoreSum > 0 ? (g.totalScore / g.maxScoreSum) * 100 : 0));
+
+            const info3col = `
+              <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>${avgPct}%</div>
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>${evals}</div>
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>${totalMark} / ${maxPossible}</div>
+              </div>
+            `;
+
+            // participants vs remaining panel
+            const peopleBar = `
+              <div class="mt-2 grid grid-cols-3 gap-2 rk-micro text-gray-700 dark:text-gray-300">
+                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-users mr-1"></i>মোট: ${formatInt(
+                  g.groupSize
+                )}</div>
+                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-user-check mr-1 text-emerald-600"></i>অংশগ্রহণ: ${formatInt(
+                  g.participantsCount
+                )}</div>
+                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-user-clock mr-1 text-rose-500"></i>বাকি: ${formatInt(
+                  g.remainingCount
+                )}</div>
+              </div>
+            `;
+
+            return `
+            <article class="rk-card bg-white dark:bg-gray-900/90 border-0 p-4 text-gray-900 dark:text-gray-100">
+              <div class="flex items-start gap-3">
+                <div class="rk-chip px-3 py-2 text-center">
+                  <div class="text-base font-bold">${rank}</div>
+                  <div class="rk-micro text-gray-500 dark:text-gray-400 uppercase tracking-widest">Group</div>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <h4 class="font-semibold truncate" title="${_formatLabel(g.groupName)}">${_formatLabel(
+              g.groupName
+            )}</h4>
+
+                  ${info3col}
+                  ${peopleBar}
+
+                  <div class="mt-3">
+                    <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
+                      <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
+                    </div>
+                    <div class="rk-micro font-semibold text-gray-800 dark:text-gray-100 mt-1 flex items-center gap-1.5">
+                      <i class="fas fa-scale-balanced text-amber-500"></i>
+                      <span>Total / Max: ${totalMark} / ${maxPossible}</span>
+                    </div>
+                  </div>
+
+                  <div class="rk-micro text-gray-700 dark:text-gray-200 mt-2 flex items-center gap-1.5">
+                    <i class="fas fa-chart-line text-sky-500"></i>
+                    <span>মূল্যায়নে অংশগ্রহণ: ${evals}</span>
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-center gap-2">
+                  ${_buildCircularMeter(g.efficiency, palette, 78)}
+                  <span class="rk-chip px-2 py-0.5 rk-micro text-gray-800 dark:text-gray-100">Group Avg%</span>
+                </div>
+              </div>
+            </article>
+            `;
+          })
+          .join('')
+      : `<div class="rk-card p-4 text-gray-700 dark:text-gray-300">গ্রুপ র‍্যাঙ্কিং প্রদর্শনের মতো তথ্য পাওয়া যায়নি।</div>`;
+
   elements.studentRankingListContainer.innerHTML = `
     <div class="space-y-8">
       ${summary}
-      <div class="space-y-4">
-        ${cards}
-      </div>
+
+      <!-- Students -->
+      <section class="space-y-3">
+        <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <h3 class="font-semibold">শিক্ষার্থী র‍্যাঙ্কিং</h3>
+          <p class="rk-micro text-gray-500 dark:text-gray-400">প্রাধান্য: Average% → অংশগ্রহণ → Total → Max → Latest</p>
+        </header>
+        <div class="grid gap-4 grid-cols-1">
+          ${studentCards}
+        </div>
+      </section>
+
+      <!-- Groups -->
+      <section class="space-y-3">
+        <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+          <h3 class="font-semibold">গ্রুপ র‍্যাঙ্কিং</h3>
+          <p class="rk-micro text-gray-500 dark:text-gray-400">একই নিয়ম—Average% → অংশগ্রহণ → Total → Max → Latest</p>
+        </header>
+        <div class="grid gap-4 grid-cols-1">
+          ${groupCards}
+        </div>
+      </section>
     </div>
   `;
 }
+
+/* ---------------- helpers ---------------- */
 
 function _formatLabel(value) {
   if (value === null || value === undefined) return '';
@@ -390,7 +563,6 @@ function _formatLabel(value) {
       : String(value);
   return _escapeHtml(text.trim());
 }
-
 function _escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -401,78 +573,80 @@ function _escapeHtml(value) {
 }
 
 function _getScorePalette(score) {
-  const numeric = Number(score) || 0;
-  if (numeric >= 85) {
-    return {
-      solid: '#22c55e',
-      gradient: 'from-emerald-500/15 via-emerald-400/10 to-transparent',
-      shadow: 'rgba(34,197,94,0.28)',
-    };
-  }
-  if (numeric >= 70) {
-    return {
-      solid: '#0ea5e9',
-      gradient: 'from-sky-500/15 via-sky-400/10 to-transparent',
-      shadow: 'rgba(14,165,233,0.25)',
-    };
-  }
-  if (numeric >= 55) {
-    return {
-      solid: '#f59e0b',
-      gradient: 'from-amber-500/15 via-amber-400/10 to-transparent',
-      shadow: 'rgba(245,158,11,0.25)',
-    };
-  }
-  return {
-    solid: '#f43f5e',
-    gradient: 'from-rose-500/15 via-rose-400/10 to-transparent',
-    shadow: 'rgba(244,63,94,0.25)',
-  };
+  const n = Number(score) || 0;
+  if (n >= 85) return { solid: '#22c55e', shadow: 'rgba(34,197,94,0.28)' };
+  if (n >= 70) return { solid: '#0ea5e9', shadow: 'rgba(14,165,233,0.25)' };
+  if (n >= 55) return { solid: '#f59e0b', shadow: 'rgba(245,158,11,0.25)' };
+  return { solid: '#f43f5e', shadow: 'rgba(244,63,94,0.25)' };
 }
+
+const ROLE_BADGE_META = {
+  'team-leader': {
+    label: 'টিম লিডার',
+    icon: 'fa-crown',
+    className:
+      'bg-amber-100 text-amber-900 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-50 dark:border-amber-400/30',
+  },
+  'time-keeper': {
+    label: 'টাইম কিপার',
+    icon: 'fa-stopwatch',
+    className:
+      'bg-sky-100 text-sky-900 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-50 dark:border-sky-400/30',
+  },
+  reporter: {
+    label: 'রিপোর্টার',
+    icon: 'fa-pen-nib',
+    className:
+      'bg-purple-100 text-purple-900 border border-purple-200 dark:bg-purple-500/20 dark:text-purple-50 dark:border-purple-400/30',
+  },
+  'resource-manager': {
+    label: 'রিসোর্স ম্যানেজার',
+    icon: 'fa-box-open',
+    className:
+      'bg-emerald-100 text-emerald-900 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-50 dark:border-emerald-400/30',
+  },
+  'peace-maker': {
+    label: 'পিস মেকার',
+    icon: 'fa-dove',
+    className:
+      'bg-rose-100 text-rose-900 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-50 dark:border-rose-400/30',
+  },
+};
 
 function _renderRoleBadge(roleCode) {
   const role = (roleCode || '').toString().trim();
   if (!role) return '';
-  const labelMap = {
-    'team-leader': 'টিম লিডার',
-    'time-keeper': 'টাইম কিপার',
-    reporter: 'রিপোর্টার',
-    'resource-manager': 'রিসোর্স ম্যানেজার',
-    'peace-maker': 'পিস মেকার',
-  };
-  const classMap = {
-    'team-leader':
-      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-200 dark:border-amber-700/40',
-    'time-keeper': 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-200 dark:border-sky-700/40',
-    reporter:
-      'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-200 dark:border-purple-700/40',
-    'resource-manager':
-      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-200 dark:border-emerald-700/40',
-    'peace-maker':
-      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-200 dark:border-rose-700/40',
-  };
-  const label = _formatLabel(labelMap[role] || role);
-  const klass =
-    classMap[role] ||
-    'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/40 dark:text-gray-200 dark:border-gray-700/40';
-  return `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${klass}"><i class="fas fa-id-badge"></i>${label}</span>`;
+  const meta =
+    ROLE_BADGE_META[role] || {
+      label: role,
+      icon: 'fa-id-badge',
+      className:
+        'bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700/40 dark:text-gray-100 dark:border-gray-600/50',
+    };
+  const label = _formatLabel(meta.label || role);
+  return `<span class="rk-chip px-2 py-0.5 rk-micro font-semibold ${meta.className}"><i class="fas ${meta.icon} mr-1"></i>${label}</span>`;
 }
 
-/**
- * সার্কুলার প্রোগ্রেস মিটার তৈরি করে (কমপ্যাক্ট ভার্সন)
- */
-function _buildCircularMeter(score, palette, size = 80) {
-  const clamped = Math.max(0, Math.min(100, Number(score) || 0));
-  const diameter = typeof size === 'number' ? size : 80;
-  const displayValue = helpers.convertToBanglaNumber(Math.round(clamped).toString());
+/** compact circular meter */
+function _buildCircularMeter(percent, palette, size = 78) {
+  const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+  const display = helpers?.convertToBanglaNumber
+    ? helpers.convertToBanglaNumber(clamped.toFixed(2))
+    : clamped.toFixed(2);
+  const d = typeof size === 'number' ? size : 78;
   return `
-    <div class="relative flex items-center justify-center" style="width:${diameter}px;height:${diameter}px;">
-      <div class="absolute inset-0 rounded-full" style="background: conic-gradient(${palette.solid} ${clamped}%, rgba(255,255,255,0.12) ${clamped}% 100%);"></div>
-      <div class="absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-inner" style="box-shadow: 0 8px 18px ${palette.shadow};">
-        <span class="text-base font-semibold text-gray-800 dark:text-gray-100">${displayValue}%</span>
+    <div class="relative flex items-center justify-center" style="width:${d}px;height:${d}px;">
+      <div class="absolute inset-0 rounded-full" style="background: conic-gradient(${palette.solid} ${clamped}%, rgba(0,0,0,0.08) ${clamped}% 100%);"></div>
+      <div class="absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center" style="box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 18px ${palette.shadow};">
+        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">${display}%</span>
       </div>
     </div>
   `;
+}
+
+function _toBnRank(n) {
+  const raw = `#${n}`;
+  return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
 }
 
 function _extractTimestamp(value) {
@@ -487,13 +661,11 @@ function _extractTimestamp(value) {
     if (typeof value.toDate === 'function') {
       try {
         return value.toDate().getTime();
-      } catch (error) {
+      } catch {
         return null;
       }
     }
-    if (typeof value.seconds === 'number') {
-      return value.seconds * 1000;
-    }
+    if (typeof value.seconds === 'number') return value.seconds * 1000;
   }
   return null;
 }

@@ -525,7 +525,7 @@ function _getDashboardHTMLStructure() {
           <div class="relative flex items-start justify-between">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">টাস্ক ম্যানেজমেন্ট</p>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মোট টাস্ক</h3>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">মোট এসাইনমেন্ট</h3>
               <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white" id="totalTasks">-</p>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">নির্ধারিত সব মূল্যায়ন টাস্ক</p>
             </div>
@@ -689,8 +689,7 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
   const totalGroups = groups.length;
   const totalStudents = students.length;
   const totalTasks = tasks.length;
-  const maleStudents = students.filter((s) => (s.gender || '').trim() === 'ছেলে').length;
-  const femaleStudents = students.filter((s) => (s.gender || '').trim() === 'মেয়ে').length;
+  const { male: maleStudents, female: femaleStudents } = _calculateGenderBuckets(students);
   const malePercentage = totalStudents > 0 ? (maleStudents / totalStudents) * 100 : 0;
   const femalePercentage = totalStudents > 0 ? (femaleStudents / totalStudents) * 100 : 0;
   const academicGroups = new Set(students.map((s) => s.academicGroup).filter(Boolean));
@@ -744,6 +743,45 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
     latestAssignmentSummary,
     assignmentOverview,
   };
+}
+
+function _calculateGenderBuckets(students = []) {
+  return students.reduce(
+    (acc, student) => {
+      const detected = _normalizeGender(student.gender);
+      if (detected === 'male') acc.male++;
+      else if (detected === 'female') acc.female++;
+      return acc;
+    },
+    { male: 0, female: 0 }
+  );
+}
+
+function _normalizeGender(value) {
+  const raw = (value || '').toString().trim();
+  if (!raw) return '';
+  const normalized = raw
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  const banglaAligned = normalized.replace(/য়/g, 'য়');
+  if (
+    banglaAligned.includes('ছেলে') ||
+    normalized.includes('male') ||
+    normalized.includes('boy') ||
+    normalized === 'm'
+  ) {
+    return 'male';
+  }
+  if (
+    banglaAligned.includes('মেয়ে') ||
+    normalized.includes('female') ||
+    normalized.includes('girl') ||
+    normalized === 'f'
+  ) {
+    return 'female';
+  }
+  return '';
 }
 
 function _calculateGroupPerformance(groups, students, evaluations, tasks) {

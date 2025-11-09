@@ -80,8 +80,82 @@ const ACADEMIC_BADGE_META = {
   },
 };
 
+/* ------------------------------------
+   SOFT 3D THEME (Injected Once)
+------------------------------------ */
+function _ensureSoft3DStyles() {
+  if (document.getElementById('members-soft3d-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'members-soft3d-styles';
+  style.textContent = `
+  /* Panel (group section wrapper) */
+  .panel-3d{
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.6) inset,
+      0 10px 18px rgba(0,0,0,.06),
+      0 2px 4px rgba(0,0,0,.04);
+  }
+  .dark .panel-3d{
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 12px 22px rgba(0,0,0,.25),
+      0 2px 4px rgba(0,0,0,.18);
+  }
+
+  /* Section header gloss */
+  .header-3d::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.18), transparent 60%);
+  }
+  .dark .header-3d::after{
+    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.08), transparent 60%);
+  }
+
+  /* Card 3D (student card/list item) */
+  .card-3d{
+    border-radius: .875rem;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.55) inset,
+      0 10px 18px rgba(0,0,0,.06),
+      0 2px 4px rgba(0,0,0,.04);
+    transition: transform .15s ease, box-shadow .15s ease;
+    will-change: transform;
+  }
+  .card-3d:hover{
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.6) inset,
+      0 14px 24px rgba(0,0,0,.10),
+      0 4px 8px rgba(0,0,0,.06);
+  }
+  .dark .card-3d{
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 12px 22px rgba(0,0,0,.25),
+      0 2px 4px rgba(0,0,0,.18);
+  }
+  .dark .card-3d:hover{
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.10) inset,
+      0 16px 26px rgba(0,0,0,.35),
+      0 4px 8px rgba(0,0,0,.25);
+  }
+
+  /* Chip/Badge subtle inner highlight */
+  .badge-3d{
+    box-shadow: 0 1px 0 rgba(255,255,255,.45) inset, 0 1px 2px rgba(0,0,0,.06);
+  }
+  .dark .badge-3d{
+    box-shadow: 0 1px 0 rgba(255,255,255,.10) inset, 0 1px 2px rgba(0,0,0,.25);
+  }
+  `;
+  document.head.appendChild(style);
+}
+
 function _renderStudentRoleBadge(roleCode) {
-  const baseClasses = `${BADGE_BASE_CLASS} mt-1`;
+  const baseClasses = `${BADGE_BASE_CLASS} badge-3d mt-1`;
   if (!roleCode) {
     return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">দায়িত্ব নির্ধারিত নয়</span>`;
   }
@@ -94,7 +168,7 @@ function _renderStudentRoleBadge(roleCode) {
 }
 
 function _renderAcademicBadge(academicGroup) {
-  const baseClasses = BADGE_BASE_CLASS;
+  const baseClasses = `${BADGE_BASE_CLASS} badge-3d`;
   const value = (academicGroup || '').toString().trim();
   if (!value) {
     return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">একাডেমিক শাখা নির্ধারিত নয়</span>`;
@@ -147,6 +221,8 @@ export function init(dependencies) {
   // Initialize debouncers using the helper
   membersSearchDebouncer = helpers.createDebouncer(300);
   cardsSearchDebouncer = helpers.createDebouncer(300);
+
+  _ensureSoft3DStyles(); // ✅ 3D theme once
 
   _cacheDOMElements();
   _setupEventListeners();
@@ -282,8 +358,8 @@ function _setupEventListeners() {
         stateManager.updateFilters('studentCards', { searchTerm: searchTerm });
         _renderStudentCardsList();
       });
-      });
-    }
+    });
+  }
 }
 
 /**
@@ -353,7 +429,6 @@ function _handleStudentCardActivation(event) {
     console.warn('Members: failed to open student modal', error);
   }
 }
-
 
 /**
  * ফিল্টার ড্রপডাউনগুলো (গ্রুপ ও একাডেমিক গ্রুপ) পপুলেট করে।
@@ -482,7 +557,7 @@ function _renderStudentsList() {
             : '';
 
           return `
-            <article class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-4 shadow-sm hover:shadow-md transition">
+            <article class="card-3d rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-4 hover:shadow-md transition">
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <h5 class="text-base font-semibold text-gray-900 dark:text-white">${name || 'নাম নেই'}</h5>
@@ -497,7 +572,7 @@ function _renderStudentsList() {
               </div>
               <div class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
                 <p><span class="font-medium text-gray-700 dark:text-gray-200">সেশন:</span> ${session || 'N/A'}</p>
-                <p><span class="font-medium text-gray-700 dark:text-gray-200"> </span> ${gender || 'N/A'}</p>
+                <p><span class="font-medium text-gray-700 dark:text-gray-200">লিঙ্গ:</span> ${gender || 'N/A'}</p>
                 <p><span class="font-medium text-gray-700 dark:text-gray-200">একাডেমিক গ্রুপ:</span> ${
                   academicGroupText || 'N/A'
                 }</p>
@@ -516,10 +591,10 @@ function _renderStudentsList() {
         })
         .join('');
 
-      const headerClasses = `px-4 py-3 bg-gradient-to-r ${
+      const headerClasses = `relative header-3d px-4 py-3 bg-gradient-to-r ${
         palette.headerBg || 'from-slate-500 to-slate-600'
       } text-white flex items-center justify-between`;
-      const sectionWrapper = `mb-6 rounded-xl overflow-hidden shadow-sm border ${
+      const sectionWrapper = `mb-6 panel-3d rounded-xl overflow-hidden shadow-sm border ${
         palette.panelBorder || 'border-gray-200 dark:border-gray-700'
       }`;
       const bodyWrapper = `p-4 ${palette.sectionBg || 'bg-gray-50 dark:bg-gray-900/40'}`;
@@ -547,7 +622,6 @@ function _renderStudentsList() {
  * ফিল্টার করা শিক্ষার্থীদের কার্ড ভিউ (#page-all-students) রেন্ডার করে।
  * @private
  */
-
 function _renderStudentCardsList() {
   if (!elements.allStudentsCardsContainer) return;
 
@@ -589,9 +663,27 @@ function _renderStudentCardsList() {
     academicCounts[key] = (academicCounts[key] || 0) + 1;
     if (student.contact && String(student.contact).trim()) contactable++;
     if (student.role) roleAssigned++;
-    const gender = (student.gender || '').trim();
-    if (gender.includes('ছেলে')) maleCount++;
-    else if (gender.includes('মেয়ে')) femaleCount++;
+    const genderRaw = (student.gender || '').trim();
+    if (genderRaw) {
+      const normalized = genderRaw
+        .normalize('NFC')
+        .replace(/\s+/g, '')
+        .toLowerCase();
+      const banglaAligned = normalized.replace(/য়/g, 'য়'); // keep both মেয়ে এবং মেয়ে একীভূত
+      const isMale =
+        banglaAligned.includes('ছেলে') ||
+        normalized.includes('male') ||
+        normalized.includes('boy') ||
+        normalized === 'm';
+      const isFemale =
+        banglaAligned.includes('মেয়ে') ||
+        normalized.includes('female') ||
+        normalized.includes('girl') ||
+        normalized === 'f';
+
+      if (isMale) maleCount++;
+      else if (isFemale) femaleCount++;
+    }
   });
 
   const formatNumber = (value, fractionDigits = 0) => {
@@ -744,13 +836,15 @@ function _renderStudentCardsList() {
 
       return `
   <article
-    class="relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
+    class="card-3d relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
       palette.panelBorder || 'border-gray-200 dark:border-gray-700'
-    } bg-white dark:bg-gray-900/80 shadow-sm hover:shadow-lg transition duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-2"
+    } bg-white dark:bg-gray-900/80 hover:shadow-lg transition duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-2"
     data-student-id="${student.id}"
     role="button"
     tabindex="0"
     aria-label="${name} - বিস্তারিত"
+    onclick="_handleStudentCardActivation && _handleStudentCardActivation(event)"
+    onkeydown="_handleStudentCardActivation && _handleStudentCardActivation(event)"
   >
     <!-- Top gradient bar -->
     <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
@@ -773,7 +867,7 @@ function _renderStudentCardsList() {
       <h4
         class="mt-1 text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white
                text-center whitespace-normal break-words hyphens-auto"
-        title="\${name}"
+        title="${name}"
       >
         ${name}
       </h4>
@@ -782,10 +876,10 @@ function _renderStudentCardsList() {
       <div class="flex flex-wrap justify-center gap-1.5">
         ${_renderAcademicBadge(student.academicGroup)}
         ${_renderStudentRoleBadge(student.role)}
-        <span class="\${BADGE_BASE_CLASS} ${
-          palette.chipBg ||
-          'bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
-        }">গ্রুপ: ${groupName}</span>
+        <span class="${BADGE_BASE_CLASS} ${
+        palette.chipBg ||
+        'bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
+      } badge-3d">গ্রুপ: ${groupName}</span>
       </div>
 
       <!-- Info grid (compact, non-overlapping) -->
@@ -801,14 +895,12 @@ function _renderStudentCardsList() {
 
         <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
           <i class="fas fa-venus-mars text-pink-500"></i>
-          <span class="text-gray-600 dark:text-gray-300"></span>
+          <span class="text-gray-600 dark:text-gray-300">লিঙ্গ:</span>
           <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${gender}</span>
         </div>
-
-
-
-       
       </section>
+
+      ${contactBlock}
     </div>
   </article>
 `;
@@ -816,12 +908,10 @@ function _renderStudentCardsList() {
     .join('');
 
   elements.allStudentsCardsContainer.innerHTML = `
-   
-  
-      <div class="grid items-stretch gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        ${cards}
-      </div>
-   
+    ${summary}
+    <div class="grid items-stretch gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      ${cards}
+    </div>
   `;
 }
 
@@ -1303,4 +1393,3 @@ function _getGroupColorClasses(groups) {
   });
   return map;
 }
-
