@@ -6,6 +6,15 @@ let stateManager, uiManager, dataService, helpers, app;
 // DOM Elements
 const elements = {};
 
+// Search state & cached data for re-rendering student list
+const studentSearchState = { name: '', roll: '' };
+const cachedRankingData = {
+  rankedStudents: [],
+  rankedGroups: [],
+  groups: [],
+  students: [],
+};
+
 // Ranking criteria (kept for safety)
 const MIN_EVALUATIONS_FOR_RANKING = 1;
 const TOTAL_MAX_SCORE = 100; // fallback (evaluation.maxPossibleScore preferred)
@@ -21,7 +30,7 @@ function _ensureSoft3DStyles() {
   style.textContent = `
   .rk-surface{
     border-radius: 1.1rem;
-    background: var(--rk-bg, #fff);
+    background-color: var(--rk-bg, #fff);
     box-shadow:
       8px 8px 20px rgba(0,0,0,.08),
       -6px -6px 16px rgba(255,255,255,.7),
@@ -118,6 +127,13 @@ export function render() {
 
     const rankedStudents = _calculateStudentRankings(students, evaluations, tasks);
     const rankedGroups = _calculateGroupRankings(students, evaluations, groups || []);
+
+    cachedRankingData.rankedStudents = rankedStudents;
+    cachedRankingData.rankedGroups = rankedGroups;
+    cachedRankingData.groups = groups || [];
+    cachedRankingData.students = students || [];
+    studentSearchState.name = '';
+    studentSearchState.roll = '';
 
     _renderRankingList(rankedStudents, rankedGroups, groups || [], students);
   } catch (error) {
@@ -254,6 +270,7 @@ function _calculateGroupRankings(students, evaluations, groups) {
       evaluation.taskDate || evaluation.updatedAt || evaluation.evaluationDate || evaluation.createdAt
     );
     const scores = evaluation.scores || {};
+    const countedGroups = new Set();
     Object.entries(scores).forEach(([studentId, scoreData]) => {
       const gid = studentToGroup.get(studentId) || '__none';
       if (!groupAgg[gid]) {
@@ -261,7 +278,10 @@ function _calculateGroupRankings(students, evaluations, groups) {
       }
       const totalScore = parseFloat(scoreData.totalScore) || 0;
       const rec = groupAgg[gid];
-      rec.evalCount += 1; // total evaluation entries
+      if (!countedGroups.has(gid)) {
+        rec.evalCount += 1;
+        countedGroups.add(gid);
+      }
       rec.totalScore += totalScore;
       rec.maxScoreSum += maxScore;
       rec.participants.add(studentId);
@@ -305,18 +325,34 @@ function _calculateGroupRankings(students, evaluations, groups) {
 
 /* ---------------- Render ---------------- */
 
-function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
+function _renderRankingList(rankedStudents, rankedGroups, groups, students, options = {}) {
   if (!elements.studentRankingListContainer) return;
 
-  uiManager.clearContainer(elements.studentRankingListContainer);
+  let onlyUpdateStudents = Boolean(options?.onlyUpdateStudents);
+  let studentCardsTarget = null;
 
-  if (rankedStudents.length === 0) {
-    uiManager.displayEmptyMessage(
-      elements.studentRankingListContainer,
-      `কোনো শিক্ষার্থী র‍্যাঙ্কিংয়ের জন্য যোগ্য নয় (কমপক্ষে ${helpers.convertToBanglaNumber(
-        MIN_EVALUATIONS_FOR_RANKING
-      )} টি মূল্যায়নে অংশ নিতে হবে)।`
-    );
+  if (onlyUpdateStudents) {
+    studentCardsTarget = elements.studentRankingListContainer.querySelector('[data-student-cards]');
+    if (!studentCardsTarget) {
+      onlyUpdateStudents = false;
+    }
+  }
+
+  if (!onlyUpdateStudents) {
+    uiManager.clearContainer(elements.studentRankingListContainer);
+  }
+
+  if (!rankedStudents || rankedStudents.length === 0) {
+    if (!onlyUpdateStudents) {
+      uiManager.displayEmptyMessage(
+        elements.studentRankingListContainer,
+        `কোনো শিক্ষার্থী র‍্যাঙ্কিংয়ের জন্য যোগ্য নয় (কমপক্ষে ${helpers.convertToBanglaNumber(
+          MIN_EVALUATIONS_FOR_RANKING
+        )} টি মূল্যায়নে অংশ নিতে হবে)।`
+      );
+    } else if (studentCardsTarget) {
+      studentCardsTarget.innerHTML = '';
+    }
     return;
   }
 
@@ -348,6 +384,8 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
     return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(str) : str;
   };
 
+  const filteredStudents = _filterStudentsForSearch(rankedStudents);
+
   const summary = `
     <section class="rk-surface text-white p-6 md:p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -355,7 +393,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
           <h2 class="text-2xl md:text-3xl font-bold">Leaderboard (Average% → Evaluations)</h2>
           <p class="text-white/80 text-sm mt-1">বারে “Total / Max” দেখানো হচ্ছে।</p>
         </div>
-        <span class="rk-chip px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white bg-white/15">
+        <span class="rk-chip px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-white text-slate-900 shadow dark:bg-white/20 dark:text-white">
           <i class="fas fa-sync-alt"></i> শেষ আপডেট: ${latestDate}
         </span>
       </div>
@@ -383,9 +421,37 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
     </section>
   `;
 
+  const studentSearchPanel = `
+    <div class="rk-surface px-4 py-4 md:px-5 md:py-5 flex flex-col md:flex-row gap-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
+      <label class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <span>নাম দিয়ে সার্চ</span>
+        <input
+          id="studentSearchName"
+          type="text"
+          class="mt-2 w-full px-3 py-2 rounded-lg border border-gray-200/80 bg-white/80 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-400 dark:bg-gray-900/60 dark:border-gray-700 dark:text-gray-100"
+          placeholder="উদাহরণ: রাকিব, সুমি"
+          value="${_escapeHtml(studentSearchState.name)}"
+        />
+      </label>
+      <label class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <span>রোল দিয়ে সার্চ (এক্স্যাক্ট ম্যাচ)</span>
+        <input
+          id="studentSearchRoll"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          class="mt-2 w-full px-3 py-2 rounded-lg border border-gray-200/80 bg-white/80 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 dark:bg-gray-900/60 dark:border-gray-700 dark:text-gray-100"
+          placeholder="উদাহরণ: 203"
+          value="${_escapeHtml(studentSearchState.roll)}"
+        />
+        <span class="rk-micro text-gray-500 dark:text-gray-400 mt-1 block">সঠিক রোল লিখলেই ফলাফল তাৎক্ষণিকভাবে ফিল্টার হবে।</span>
+      </label>
+    </div>
+  `;
+
   /* ---------- STUDENT CARDS ---------- */
-  const studentCards = rankedStudents
-    .map((item) => {
+  const studentCards = filteredStudents.length
+    ? filteredStudents.map((item) => {
       const s = item.student;
       const rankText = _toBnRank(item.rank);
       const avgPct = formatPct2(item.efficiency);
@@ -398,9 +464,10 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
 
       const info3col = `
         <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>${avgPct}%</div>
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>${evals}</div>
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>${totalMark} / ${maxPossible}</div>
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>গড়: ${avgPct}%</div>
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>মূল্যায়ন সংখ্যা: ${evals} টি</div>
+          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>
+          মোট নম্বর: ${totalMark} / ${maxPossible}</div>
         </div>
       `;
 
@@ -411,7 +478,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
           <div class="flex items-start gap-3">
             <div class="rk-chip px-3 py-2 text-center">
               <div class="text-base font-bold">${rankText}</div>
-              <div class="rk-micro text-gray-500 dark:text-gray-400 uppercase tracking-widest">Rank</div>
+              <div class="rk-micro text-gray-500 dark:text-gray-400">র‍্যাঙ্ক</div>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 min-w-0">
@@ -428,10 +495,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
                 <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
                   <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
                 </div>
-                <div class="rk-micro font-semibold text-gray-800 dark:text-gray-100 mt-1 flex items-center gap-1.5">
-                  <i class="fas fa-scale-balanced text-amber-500"></i>
-                  <span>Total / Max: ${totalMark} / ${maxPossible}</span>
-                </div>
+                
               </div>
             </div>
 
@@ -443,7 +507,13 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
         </article>
       `;
     })
-    .join('');
+    .join('')
+    : `<div class="rk-card p-4 text-center text-gray-600 dark:text-gray-300">সার্চের সাথে মিল পাওয়া যায়নি।</div>`;
+
+  if (onlyUpdateStudents && studentCardsTarget) {
+    studentCardsTarget.innerHTML = studentCards;
+    return;
+  }
 
   /* ---------- GROUP CARDS (with participants/remaining) ---------- */
   const groupCards =
@@ -460,16 +530,16 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
 
             const info3col = `
               <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>${avgPct}%</div>
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>${evals}</div>
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>${totalMark} / ${maxPossible}</div>
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>গড়: ${avgPct}%</div>
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>মূল্যায়ন সংখ্যা: ${evals}টি</div>
+                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>মোট নম্বর: ${totalMark} / ${maxPossible}</div>
               </div>
             `;
 
             // participants vs remaining panel
             const peopleBar = `
               <div class="mt-2 grid grid-cols-3 gap-2 rk-micro text-gray-700 dark:text-gray-300">
-                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-users mr-1"></i>মোট: ${formatInt(
+                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-users mr-1"></i>মোট সদস্য: ${formatInt(
                   g.groupSize
                 )}</div>
                 <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-user-check mr-1 text-emerald-600"></i>অংশগ্রহণ: ${formatInt(
@@ -486,7 +556,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
               <div class="flex items-start gap-3">
                 <div class="rk-chip px-3 py-2 text-center">
                   <div class="text-base font-bold">${rank}</div>
-                  <div class="rk-micro text-gray-500 dark:text-gray-400 uppercase tracking-widest">Group</div>
+                  <div class="rk-micro text-gray-500 dark:text-gray-400">গ্রুপ র‍্যাঙ্ক</div>
                 </div>
 
                 <div class="min-w-0 flex-1">
@@ -501,16 +571,10 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
                     <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
                       <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
                     </div>
-                    <div class="rk-micro font-semibold text-gray-800 dark:text-gray-100 mt-1 flex items-center gap-1.5">
-                      <i class="fas fa-scale-balanced text-amber-500"></i>
-                      <span>Total / Max: ${totalMark} / ${maxPossible}</span>
-                    </div>
+                   
                   </div>
 
-                  <div class="rk-micro text-gray-700 dark:text-gray-200 mt-2 flex items-center gap-1.5">
-                    <i class="fas fa-chart-line text-sky-500"></i>
-                    <span>মূল্যায়নে অংশগ্রহণ: ${evals}</span>
-                  </div>
+                 
                 </div>
 
                 <div class="flex flex-col items-center gap-2">
@@ -529,12 +593,13 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
       ${summary}
 
       <!-- Students -->
-      <section class="space-y-3">
+      <section class="space-y-4">
         <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
           <h3 class="font-semibold">শিক্ষার্থী র‍্যাঙ্কিং</h3>
-          <p class="rk-micro text-gray-500 dark:text-gray-400">প্রাধান্য: Average% → অংশগ্রহণ → Total → Max → Latest</p>
+          <p class="rk-micro text-gray-500 dark:text-gray-400">প্রাধান্য: Average% → মূল্যায়ন সংখ্যা → Total → Max → Latest</p>
         </header>
-        <div class="grid gap-4 grid-cols-1">
+        ${studentSearchPanel}
+        <div class="grid gap-4 grid-cols-1" data-student-cards>
           ${studentCards}
         </div>
       </section>
@@ -543,7 +608,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
       <section class="space-y-3">
         <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
           <h3 class="font-semibold">গ্রুপ র‍্যাঙ্কিং</h3>
-          <p class="rk-micro text-gray-500 dark:text-gray-400">একই নিয়ম—Average% → অংশগ্রহণ → Total → Max → Latest</p>
+          <p class="rk-micro text-gray-500 dark:text-gray-400">একই নিয়ম—Average% → মূল্যায়ন সংখ্যা → Total → Max → Latest</p>
         </header>
         <div class="grid gap-4 grid-cols-1">
           ${groupCards}
@@ -551,6 +616,93 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students) {
       </section>
     </div>
   `;
+
+  if (!onlyUpdateStudents) {
+    _attachStudentSearchListeners();
+  }
+}
+
+/* ---------------- search helpers ---------------- */
+
+function _attachStudentSearchListeners() {
+  if (!elements.studentRankingListContainer) return;
+
+  const nameInput = elements.studentRankingListContainer.querySelector('#studentSearchName');
+  const rollInput = elements.studentRankingListContainer.querySelector('#studentSearchRoll');
+
+  if (nameInput) {
+    elements.studentSearchNameInput = nameInput;
+    uiManager.addListener(nameInput, 'input', (event) => {
+      _handleStudentSearchChange('name', event.target.value || '');
+    });
+  }
+  if (rollInput) {
+    elements.studentSearchRollInput = rollInput;
+    uiManager.addListener(rollInput, 'input', (event) => {
+      _handleStudentSearchChange('roll', event.target.value || '');
+    });
+  }
+}
+
+function _handleStudentSearchChange(field, rawValue) {
+  if (!Object.prototype.hasOwnProperty.call(studentSearchState, field)) return;
+  const nextValue = typeof rawValue === 'string' ? rawValue : rawValue?.toString() || '';
+  if (studentSearchState[field] === nextValue) return;
+  studentSearchState[field] = nextValue;
+  _rerenderStudentCardsWithFilters();
+}
+
+function _rerenderStudentCardsWithFilters() {
+  if (!cachedRankingData.rankedStudents || cachedRankingData.rankedStudents.length === 0) return;
+  _renderRankingList(
+    cachedRankingData.rankedStudents,
+    cachedRankingData.rankedGroups,
+    cachedRankingData.groups,
+    cachedRankingData.students,
+    { onlyUpdateStudents: true }
+  );
+}
+
+function _filterStudentsForSearch(rankedStudents = []) {
+  const nameQuery = (studentSearchState.name || '').trim().toLowerCase();
+  const rollQuery = _normalizeRollString(studentSearchState.roll);
+  if (!nameQuery && !rollQuery) return rankedStudents;
+
+  return rankedStudents.filter((item) => {
+    if (!item?.student) return false;
+    const student = item.student;
+    if (nameQuery) {
+      const studentName = (student.name || '').toString().toLowerCase();
+      if (!studentName.includes(nameQuery)) return false;
+    }
+    if (rollQuery) {
+      const studentRoll = _normalizeRollString(student.roll);
+      if (!studentRoll || studentRoll !== rollQuery) return false;
+    }
+    return true;
+  });
+}
+
+const BN_TO_EN_DIGITS = {
+  '০': '0',
+  '১': '1',
+  '২': '2',
+  '৩': '3',
+  '৪': '4',
+  '৫': '5',
+  '৬': '6',
+  '৭': '7',
+  '৮': '8',
+  '৯': '9',
+};
+
+function _normalizeRollString(value) {
+  if (value === undefined || value === null) return '';
+  return value
+    .toString()
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[০-৯]/g, (digit) => BN_TO_EN_DIGITS[digit] || digit);
 }
 
 /* ---------------- helpers ---------------- */
@@ -645,8 +797,24 @@ function _buildCircularMeter(percent, palette, size = 78) {
 }
 
 function _toBnRank(n) {
-  const raw = `#${n}`;
-  return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
+  const num = Number(n) || 0;
+  const ordinalMap = {
+    1: '১ম',
+    2: '২য়',
+    3: '৩য়',
+    4: '৪র্থ',
+    5: '৫ম',
+    6: '৬ষ্ঠ',
+    7: '৭ম',
+    8: '৮ম',
+    9: '৯ম',
+    10: '১০ম',
+  };
+  if (ordinalMap[num]) return `${ordinalMap[num]} র‍্যাঙ্ক`;
+
+  const raw = `${num}`;
+  const bnNumber = helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
+  return `${bnNumber}তম র‍্যাঙ্ক`;
 }
 
 function _extractTimestamp(value) {
