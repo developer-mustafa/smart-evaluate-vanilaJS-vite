@@ -14,6 +14,17 @@ const DEFAULT_SCORE_BREAKDOWN = {
   mcq: 40,
 };
 const DEFAULT_TOTAL_SCORE = 100; // 20 + 15 + 25 + 40
+const DEFAULT_TASK_TIME = '11:55';
+const TASK_TIME_FIELD_CANDIDATES = [
+  'scheduledTime',
+  'scheduleTime',
+  'assignmentTime',
+  'assignmentClock',
+  'time',
+  'startTime',
+  'timeSlot',
+  'meetingTime',
+];
 const TASK_STATUS_OPTIONS = [
   { value: 'upcoming', label: 'আপকামিং এসাইনমেন্ট' },
   { value: 'ongoing', label: 'চলমান এসাইনমেন্ট' },
@@ -91,6 +102,7 @@ function _cacheDOMElements() {
 
   elements.taskDescriptionInput = elements.page.querySelector('#taskDescriptionInput');
   elements.taskDateInput = elements.page.querySelector('#taskDateInput');
+  elements.taskTimeInput = elements.page.querySelector('#taskTimeInput');
   elements.taskStatusInput = elements.page.querySelector('#taskStatusInput');
   elements.addTaskBtn = elements.page.querySelector('#addTaskBtn');
   elements.tasksListContainer = elements.page.querySelector('#tasksList');
@@ -100,6 +112,9 @@ function _cacheDOMElements() {
   }
   if (elements.taskStatusInput && !elements.taskStatusInput.value) {
     elements.taskStatusInput.value = 'upcoming';
+  }
+  if (elements.taskTimeInput && !elements.taskTimeInput.value) {
+    elements.taskTimeInput.value = DEFAULT_TASK_TIME;
   }
 }
 
@@ -163,6 +178,84 @@ function _getComparableDateString(dateInput) {
     console.warn('Unsupported date type for comparison:', dateInput, e);
   }
   return ''; // Fallback
+}
+
+function _normalizeTimeString(value) {
+  const parsed = _parseFlexibleTimeString(value);
+  if (!parsed) return null;
+  const hour = String(parsed.hour).padStart(2, '0');
+  const minute = String(parsed.minute).padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
+function _parseFlexibleTimeString(rawValue) {
+  if (rawValue === undefined || rawValue === null) return null;
+  const raw = String(rawValue).trim();
+  if (!raw) return null;
+  const normalized = raw.toLowerCase();
+  const match = normalized.match(/(\d{1,2})(?::(\d{1,2}))?\s*(am|pm|a\.m\.|p\.m\.)?/);
+  if (!match) {
+    if (/^\d{3,4}$/.test(normalized)) {
+      const digits = normalized.padStart(4, '0');
+      const hour = parseInt(digits.slice(0, 2), 10);
+      const minute = parseInt(digits.slice(2), 10);
+      if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
+        return {
+          hour: Math.min(Math.max(hour, 0), 23),
+          minute: Math.min(Math.max(minute, 0), 59),
+        };
+      }
+    }
+    return null;
+  }
+
+  let hour = parseInt(match[1], 10);
+  let minute = match[2] ? parseInt(match[2], 10) : 0;
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+
+  const meridiem = match[3];
+  if (meridiem) {
+    const isPM = meridiem.includes('p');
+    const isAM = meridiem.includes('a');
+    if (isPM && hour < 12) hour += 12;
+    if (isAM && hour === 12) hour = 0;
+  }
+  hour = Math.min(Math.max(hour, 0), 23);
+  minute = Math.min(Math.max(minute, 0), 59);
+  return { hour, minute };
+}
+
+function _combineDateAndTime(dateValue, timeValue) {
+  const datePart = _getComparableDateString(dateValue);
+  if (!datePart) return '';
+  const timePart = _normalizeTimeString(timeValue) || DEFAULT_TASK_TIME;
+  try {
+    const combined = new Date(`${datePart}T${timePart}:00`);
+    if (!Number.isNaN(combined.getTime())) {
+      return combined.toISOString();
+    }
+  } catch {
+    // fall through
+  }
+  return dateValue || '';
+}
+
+function _getTaskTimeValue(task) {
+  if (!task) return DEFAULT_TASK_TIME;
+  for (const key of TASK_TIME_FIELD_CANDIDATES) {
+    if (!Object.prototype.hasOwnProperty.call(task, key)) continue;
+    const normalized = _normalizeTimeString(task[key]);
+    if (normalized) return normalized;
+  }
+  const dateObj = _parseDateInput(task.date);
+  if (dateObj && !Number.isNaN(dateObj.getTime())) {
+    const hour = dateObj.getHours();
+    const minute = dateObj.getMinutes();
+    if (hour || minute) {
+      return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    }
+  }
+  return DEFAULT_TASK_TIME;
 }
 
 /** Updates the total max score display */
@@ -283,9 +376,12 @@ function _renderTasksList(tasks) {
 async function _handleAddTask() {
   const name = elements.taskNameInput?.value.trim();
   const description = elements.taskDescriptionInput?.value.trim();
-  const date = elements.taskDateInput?.value;
+  const dateInput = elements.taskDateInput?.value;
+  const rawTimeValue = elements.taskTimeInput?.value;
+  const normalizedTime = _normalizeTimeString(rawTimeValue) || DEFAULT_TASK_TIME;
+  const combinedDateTime = _combineDateAndTime(dateInput, normalizedTime);
   const statusInput = _validateStatusInput(elements.taskStatusInput?.value);
-  const status = statusInput || _deriveStatusFromDate(date);
+  const status = statusInput || _deriveStatusFromDate(combinedDateTime);
 
   const maxScores = {
     task: parseFloat(elements.maxTaskScoreInput?.value) || 0,
@@ -325,7 +421,8 @@ async function _handleAddTask() {
   const newTaskData = {
     name,
     description,
-    date,
+    date: combinedDateTime || dateInput,
+    scheduledTime: normalizedTime,
     maxScore: totalMaxScore,
     maxScoreBreakdown: maxScores,
     status,
@@ -340,6 +437,7 @@ async function _handleAddTask() {
     _setBreakdownInputs(DEFAULT_SCORE_BREAKDOWN, ''); // Reset breakdown inputs
     if (elements.taskDescriptionInput) elements.taskDescriptionInput.value = '';
     if (elements.taskDateInput) elements.taskDateInput.value = '';
+    if (elements.taskTimeInput) elements.taskTimeInput.value = DEFAULT_TASK_TIME;
     if (elements.taskStatusInput) elements.taskStatusInput.value = 'upcoming';
     uiManager.showToast('টাস্ক সফলভাবে যোগ করা হয়েছে।', 'success');
   } catch (error) {
@@ -409,6 +507,7 @@ function _handleEditTask(taskId) {
       (parseFloat(currentBreakdown.mcq) || 0)
     : task.maxScore || DEFAULT_TOTAL_SCORE;
   const dateValue = _getComparableDateString(task.date) || '';
+  const timeValue = _getTaskTimeValue(task);
   const currentStatus = _getTaskStatus(task);
 
   const contentHTML = `
@@ -439,7 +538,10 @@ function _handleEditTask(taskId) {
             <div><label for="editTaskDescription" class="label">বিবরণ</label><textarea id="editTaskDescription" class="form-input" rows="3">${
               task.description || ''
             }</textarea></div>
-            <div><label for="editTaskDate" class="label">?????*</label><input id="editTaskDate" type="date" value="${dateValue}" class="form-input"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><label for="editTaskDate" class="label">?????*</label><input id="editTaskDate" type="date" value="${dateValue}" class="form-input"></div>
+              <div><label for="editTaskTime" class="label">???????? (ঐচ্ছিক)</label><input id="editTaskTime" type="time" value="${timeValue}" class="form-input"></div>
+            </div>
             <div><label for="editTaskStatus" class="label">স্টেটাস</label><select id="editTaskStatus" class="form-input">
               ${_buildStatusOptions(currentStatus)}
             </select></div>
@@ -450,8 +552,11 @@ function _handleEditTask(taskId) {
     const updatedName = document.getElementById('editTaskName')?.value.trim();
     const updatedDescription = document.getElementById('editTaskDescription')?.value.trim();
     const updatedDate = document.getElementById('editTaskDate')?.value;
+    const updatedTimeRaw = document.getElementById('editTaskTime')?.value;
+    const updatedTime = _normalizeTimeString(updatedTimeRaw) || DEFAULT_TASK_TIME;
+    const combinedUpdatedDate = _combineDateAndTime(updatedDate, updatedTime);
     const updatedStatus =
-      _validateStatusInput(document.getElementById('editTaskStatus')?.value) || _deriveStatusFromDate(updatedDate);
+      _validateStatusInput(document.getElementById('editTaskStatus')?.value) || _deriveStatusFromDate(combinedUpdatedDate);
     const updatedMaxScores = {
       task: parseFloat(document.getElementById('editmaxTaskScoreInput')?.value) || 0,
       team: parseFloat(document.getElementById('editmaxTeamScoreInput')?.value) || 0,
@@ -488,7 +593,8 @@ function _handleEditTask(taskId) {
     const updatedData = {
       name: updatedName,
       description: updatedDescription,
-      date: updatedDate,
+      date: combinedUpdatedDate || updatedDate,
+      scheduledTime: updatedTime,
       maxScore: updatedTotalMaxScore,
       maxScoreBreakdown: updatedMaxScores,
       status: updatedStatus,

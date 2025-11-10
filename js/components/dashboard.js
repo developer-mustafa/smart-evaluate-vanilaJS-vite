@@ -5,6 +5,21 @@ let stateManager, uiManager, helpers, app;
 // Cached DOM Elements
 const elements = {};
 
+const DEFAULT_ASSIGNMENT_HOUR = 11;
+const DEFAULT_ASSIGNMENT_MINUTE = 55;
+const DEFAULT_ASSIGNMENT_SECOND = 0;
+const KNOWN_TASK_TIME_KEYS = [
+  'time',
+  'scheduledTime',
+  'scheduleTime',
+  'assignmentTime',
+  'startTime',
+  'startAt',
+  'timeSlot',
+  'slotTime',
+  'meetingTime',
+];
+
 /**
  * Initializes the Dashboard component.
  */
@@ -337,13 +352,7 @@ function _getDashboardHTMLStructure() {
         dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 
         dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full">
 
-        <!-- লাইভ ব্যাজ -->
-        <span class="absolute right-3 top-3 sm:right-4 sm:top-4 inline-flex items-center gap-1 rounded-full border 
-          border-amber-300/70 bg-amber-100 text-[0.65rem] sm:text-[0.7rem] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-amber-800 
-          shadow-[0_1px_3px_rgba(0,0,0,0.15)] px-2 py-0.5 
-          dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
-          <i class="fas fa-bolt text-[0.6rem]"></i> লাইভ
-        </span>
+       
 
         <!-- Header -->
         <div class="mb-2 sm:mb-3 ">
@@ -353,7 +362,7 @@ function _getDashboardHTMLStructure() {
           </span>
           </p>
           <p id="latestTaskTitle"
-            class="mt-1 max-w-[28rem] truncate font-bold text-slate-900 dark:text-white text-sm sm:text-base"
+            class="mt-1 max-w-[28rem]  font-bold text-slate-900 dark:text-white text-sm sm:text-lg"
             title="-">-</p>
         </div>
 
@@ -571,6 +580,10 @@ function _getDashboardHTMLStructure() {
 
 function _normalizeTimestamp(value) {
   if (!value) return 0;
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isNaN(ms) ? 0 : ms;
+  }
   if (typeof value === 'object') {
     if (typeof value.seconds === 'number') return value.seconds * 1000;
     if (typeof value.toDate === 'function') {
@@ -585,10 +598,134 @@ function _normalizeTimestamp(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function _formatDateTime(timestamp) {
-  if (!timestamp) return '-';
+function _getTaskScheduleTimestamp(task) {
+  if (!task) return 0;
+  const candidates = [
+    task.date,
+    task.scheduleDate,
+    task.startDate,
+    task.dueDate,
+    task.deadline,
+    task.assignmentDate,
+    task.assignmentDay,
+    task.createdAt,
+    task.updatedAt,
+  ];
+  let baseTimestamp = 0;
+  for (const candidate of candidates) {
+    const ts = _normalizeTimestamp(candidate);
+    if (ts) {
+      baseTimestamp = ts;
+      break;
+    }
+  }
+  if (!baseTimestamp) return 0;
+
+  const explicitTime = _extractTaskTime(task);
+  const dateObj = new Date(baseTimestamp);
+
+  if (explicitTime) {
+    dateObj.setHours(explicitTime.hour, explicitTime.minute, 0, 0);
+  } else if (
+    dateObj.getHours() === 0 &&
+    dateObj.getMinutes() === 0 &&
+    dateObj.getSeconds() === 0 &&
+    dateObj.getMilliseconds() === 0
+  ) {
+    dateObj.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
+  }
+  return dateObj.getTime();
+}
+
+function _extractTaskTime(task) {
+  if (!task) return null;
+
+  // numeric hour/minute fields
+  const hourCandidates = ['timeHour', 'hour', 'startHour'];
+  const minuteCandidates = ['timeMinute', 'minute', 'startMinute'];
+  const hourValue = hourCandidates
+    .map((key) => (typeof task[key] === 'number' ? task[key] : parseInt(task[key], 10)))
+    .find((val) => Number.isFinite(val));
+  const minuteValue = minuteCandidates
+    .map((key) => (typeof task[key] === 'number' ? task[key] : parseInt(task[key], 10)))
+    .find((val) => Number.isFinite(val));
+  if (Number.isFinite(hourValue) && hourValue >= 0 && hourValue <= 23) {
+    const minute = Number.isFinite(minuteValue) && minuteValue >= 0 && minuteValue <= 59 ? minuteValue : 0;
+    return { hour: hourValue, minute };
+  }
+
+  for (const key of KNOWN_TASK_TIME_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(task, key)) continue;
+    const parsed = _parseTimeString(task[key]);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+function _parseTimeString(rawValue) {
+  if (!rawValue) return null;
+  const raw = String(rawValue).trim();
+  if (!raw) return null;
+  const normalized = raw.toLowerCase();
+  const timeMatch = normalized.match(/(\d{1,2})(?::(\d{1,2}))?\s*(am|pm|a\.m\.|p\.m\.)?/i);
+  if (!timeMatch) return null;
+
+  let hour = parseInt(timeMatch[1], 10);
+  let minute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+
+  const meridiem = timeMatch[3];
+  if (meridiem) {
+    const isPM = meridiem.includes('p');
+    const isAM = meridiem.includes('a');
+    if (isPM && hour < 12) hour += 12;
+    if (isAM && hour === 12) hour = 0;
+  }
+  hour = Math.min(Math.max(hour, 0), 23);
+  minute = Math.min(Math.max(minute, 0), 59);
+  return { hour, minute };
+}
+
+function _findLatestTaskMeta(tasks = []) {
+  let latest = null;
+  tasks.forEach((task) => {
+    if (!task) return;
+    const ts = _getTaskScheduleTimestamp(task);
+    if (!ts) return;
+    if (!latest || ts > latest.ts) {
+      const id = task.id ?? task.uid ?? task.key ?? task.slug ?? null;
+      const timeParts = _extractTaskTime(task);
+      latest = { task, id, ts, timeParts };
+    }
+  });
+  return latest;
+}
+
+function _formatTimeFromParts(parts) {
+  if (!parts) return null;
   try {
-    const date = new Date(timestamp);
+    const date = new Date();
+    date.setHours(parts.hour, parts.minute ?? 0, 0, 0);
+    return new Intl.DateTimeFormat('bn-BD', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+  } catch {
+    return null;
+  }
+}
+
+function _formatDateTime(value) {
+  const normalized = _normalizeTimestamp(value);
+  if (!normalized) return '-';
+  try {
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return '-';
+    if (
+      date.getHours() === 0 &&
+      date.getMinutes() === 0 &&
+      date.getSeconds() === 0 &&
+      date.getMilliseconds() === 0
+    ) {
+      date.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
+    }
     return new Intl.DateTimeFormat('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   } catch {
     return '-';
@@ -600,6 +737,26 @@ function _formatDateOnly(timestamp) {
   try {
     const date = new Date(timestamp);
     return new Intl.DateTimeFormat('bn-BD', { dateStyle: 'medium' }).format(date);
+  } catch {
+    return '-';
+  }
+}
+
+function _formatTimeOnly(value) {
+  const normalized = _normalizeTimestamp(value);
+  if (!normalized) return '-';
+  try {
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return '-';
+    if (
+      date.getHours() === 0 &&
+      date.getMinutes() === 0 &&
+      date.getSeconds() === 0 &&
+      date.getMilliseconds() === 0
+    ) {
+      date.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
+    }
+    return new Intl.DateTimeFormat('bn-BD', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
   } catch {
     return '-';
   }
@@ -833,7 +990,8 @@ function _getEvaluationAveragePercent(evaluation, taskMap) {
 }
 
 function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [], evaluations = []) {
-  if (!evaluations.length) return null;
+  const fallbackTaskMeta = _findLatestTaskMeta(tasks);
+  if (!evaluations.length && !fallbackTaskMeta) return null;
 
   const groupStudentCounts = new Map(groups.map((group) => [group.id, 0]));
   students.forEach((student) => {
@@ -854,98 +1012,195 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
     }
   });
 
-  if (!latestEvaluation || !latestEvaluation.taskId) return null;
-  const latestTaskId = latestEvaluation.taskId;
-  const taskInfo = tasks.find((task) => task.id === latestTaskId);
-  const taskTitle = taskInfo?.title || taskInfo?.name || 'সর্বশেষ এসাইনমেন্ট';
+  const latestTaskId = latestEvaluation?.taskId || fallbackTaskMeta?.id;
+  if (!latestTaskId) return null;
+  const taskInfo = tasks.find((task) => task.id === latestTaskId) || fallbackTaskMeta?.task || null;
+  const taskTitle =
+    taskInfo?.title ||
+    taskInfo?.name ||
+    fallbackTaskMeta?.task?.title ||
+    fallbackTaskMeta?.task?.name ||
+    'সর্বশেষ অ্যাসাইনমেন্ট';
+
+  const scheduledTs = _getTaskScheduleTimestamp(taskInfo) || fallbackTaskMeta?.ts || 0;
+  const scheduledTimeParts = _extractTaskTime(taskInfo) || fallbackTaskMeta?.timeParts || null;
+  const scheduledTimeDisplay = _formatTimeFromParts(scheduledTimeParts);
 
   const assignmentGroupIds = new Set();
+
   let hasExplicitAssignmentMeta = false;
+
   const groupCandidateKeys = [
+
     'assignedGroupIds',
+
     'targetGroupIds',
+
     'groupIds',
+
     'assignedGroups',
+
     'groups',
+
     'targets',
+
     'selectedGroups',
+
     'participantGroups',
+
     'assignmentTargets',
+
   ];
 
+
+
   const pushGroupCandidate = (candidate, fromExplicitSource = false, depth = 0) => {
+
     if (candidate === undefined || candidate === null || depth > 6) return;
+
     if (Array.isArray(candidate)) {
+
       candidate.forEach((value) => pushGroupCandidate(value, fromExplicitSource, depth + 1));
+
       return;
+
     }
+
     if (typeof candidate === 'object') {
+
       if ('id' in candidate || 'groupId' in candidate || 'value' in candidate) {
+
         pushGroupCandidate(candidate.id ?? candidate.groupId ?? candidate.value, fromExplicitSource, depth + 1);
+
         return;
+
       }
+
       if (candidate.group) {
+
         pushGroupCandidate(candidate.group.id ?? candidate.group.groupId, fromExplicitSource, depth + 1);
+
         return;
+
       }
+
       Object.values(candidate).forEach((value) => pushGroupCandidate(value, fromExplicitSource, depth + 1));
+
       return;
+
     }
+
     const normalized = typeof candidate === 'string' ? candidate.trim() : candidate;
+
     if (normalized !== undefined && normalized !== null && normalized !== '') {
+
       assignmentGroupIds.add(normalized);
+
       if (fromExplicitSource) hasExplicitAssignmentMeta = true;
+
     }
+
   };
 
+
+
   if (taskInfo) {
+
     if (taskInfo.assignToAllGroups || taskInfo.assignmentScope === 'all' || taskInfo.targetScope === 'all') {
+
       groups.forEach((group) => pushGroupCandidate(group.id, true));
+
     }
+
     groupCandidateKeys.forEach((key) => {
+
       if (Object.prototype.hasOwnProperty.call(taskInfo, key)) {
+
         pushGroupCandidate(taskInfo[key], true);
+
       }
+
     });
+
   }
+
+
 
   const evalsForTask = evaluations.filter((evaluation) => evaluation.taskId === latestTaskId);
+
   const evaluatedGroupIds = new Set();
+
   let evaluatedStudents = 0;
 
+
+
   evalsForTask.forEach((evaluation) => {
+
     if (evaluation.groupId) {
+
       evaluatedGroupIds.add(evaluation.groupId);
+
       pushGroupCandidate(evaluation.groupId, false);
+
     }
+
     const participantCount = evaluation?.scores
+
       ? Object.keys(evaluation.scores).length
+
       : Number(evaluation.participantCount) || 0;
+
     evaluatedStudents += participantCount;
+
   });
+
+
 
   if (!assignmentGroupIds.size || !hasExplicitAssignmentMeta) {
+
     groups.forEach((group) => {
+
       if (group?.id !== undefined && group?.id !== null) assignmentGroupIds.add(group.id);
+
     });
+
   }
+
+
 
   let totalEligible = 0;
+
   assignmentGroupIds.forEach((groupId) => {
+
     totalEligible += groupStudentCounts.get(groupId) || 0;
+
   });
+
   if (totalEligible === 0) {
+
     totalEligible = students.length;
+
   }
+
   if (totalEligible === 0) totalEligible = evaluatedStudents;
 
+
+
   evaluatedStudents = Math.min(evaluatedStudents, totalEligible);
+
   const pendingStudents = Math.max(totalEligible - evaluatedStudents, 0);
+
   const completionPercent = totalEligible > 0 ? Math.min(100, (evaluatedStudents / totalEligible) * 100) : 0;
 
+
+
   const groupTotal = assignmentGroupIds.size || groups.length || evaluatedGroupIds.size;
+
   const groupsEvaluated = evaluatedGroupIds.size;
+
   const groupsPending = Math.max((groupTotal || 0) - groupsEvaluated, 0);
+
+
 
   return {
     taskId: latestTaskId,
@@ -954,11 +1209,13 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
     pending: pendingStudents,
     total: totalEligible,
     completionPercent,
-    lastUpdated: latestEvaluation.ts,
+    lastUpdated: latestEvaluation?.ts || scheduledTs || Date.now(),
+    scheduledTimeDisplay,
     groupTotal,
     groupsEvaluated,
     groupsPending,
   };
+
 }
 
 function _calculateAssignmentAverageStats(tasks = [], evaluations = []) {
@@ -1007,12 +1264,7 @@ function _buildAssignmentOverview(tasks = [], latestAssignmentSummary = null) {
   const latestTaskId = latestAssignmentSummary?.taskId || null;
   return tasks
     .map((task) => {
-      const timestamp =
-        _normalizeTimestamp(task.date) ||
-        _normalizeTimestamp(task.deadline) ||
-        _normalizeTimestamp(task.scheduleDate) ||
-        _normalizeTimestamp(task.createdAt) ||
-        _normalizeTimestamp(task.updatedAt);
+      const timestamp = _getTaskScheduleTimestamp(task);
       const title = task.title || task.name || 'অনির্ধারিত এসাইনমেন্ট';
       const identifier = task.id ?? task.uid ?? task.key ?? `${title}-${timestamp || Date.now()}`;
       return {
@@ -1105,6 +1357,15 @@ function _renderStats(stats) {
   const latestGroupsEvaluated = latestSummary ? formatNum(latestSummary.groupsEvaluated) : '-';
   const latestGroupsPending = latestSummary ? formatNum(latestSummary.groupsPending) : '-';
   const latestGroupTotal = latestSummary ? formatNum(latestSummary.groupTotal) : '-';
+  const latestDateLabel = latestSummary ? _formatDateOnly(latestSummary.lastUpdated) : '-';
+  let latestTimeLabel = latestSummary ? _formatTimeOnly(latestSummary.lastUpdated) : '-';
+  if (latestTimeLabel === '-' && latestSummary?.scheduledTimeDisplay) {
+    latestTimeLabel = latestSummary.scheduledTimeDisplay;
+  }
+  const latestComposite =
+    latestDateLabel === '-' && latestTimeLabel === '-'
+      ? '-'
+      : `তারিখ: ${latestDateLabel} | সময়: ${latestTimeLabel}`;
 
   if (elements.latestTaskTitle) {
     const title = latestSummary?.taskTitle || 'সর্বশেষ এসাইনমেন্ট';
@@ -1112,7 +1373,7 @@ function _renderStats(stats) {
     elements.latestTaskTitle.setAttribute('title', title);
   }
   if (elements.latestAssignmentUpdated) {
-    setText(elements.latestAssignmentUpdated, latestSummary ? _formatDateTime(latestSummary.lastUpdated) : '-');
+    setText(elements.latestAssignmentUpdated, latestComposite);
   }
   if (elements.latestAssignmentEvaluated) setText(elements.latestAssignmentEvaluated, latestEvaluated);
   if (elements.latestAssignmentPending) setText(elements.latestAssignmentPending, latestPending);
