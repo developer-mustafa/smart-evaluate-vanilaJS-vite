@@ -319,20 +319,23 @@
             <span class="flex-1 text-left text-sm font-medium">আপকামিং এসাইনমেন্ট</span>
           </button>
 
+
+            <button
+            data-page="student-ranking"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          >
+            <i class="fas fa-trophy w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">রেঙ্ক লিডারবোর্ড</span>
+          </button>
+
           <button
             data-page="all-students"
             class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-green-400"
           >
             <i class="fas fa-user-graduate w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী কার্ড</span>
+            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী তথ্য</span>
           </button>
-          <button
-            data-page="student-ranking"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-yellow-400"
-          >
-            <i class="fas fa-trophy w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী র‌্যাঙ্কিং</span>
-          </button>
+        
           <button
             data-page="group-analysis"
             class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-400"
@@ -597,7 +600,7 @@
           </div>
 
           <div id="page-all-students" class="page space-y-4 hidden">
-            <h2 class="text-2xl font-bold mb-4">সকল শিক্ষার্থী (কার্ড ভিউ)</h2>
+            <h2 class="text-2xl font-bold mb-4">শিক্ষার্থী তথ্য</h2>
             <div class="card">
               <div class="card-body space-y-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -682,7 +685,7 @@
 
           <div id="page-student-ranking" class="page space-y-6 hidden">
             <div class="flex justify-between items-center my-4">
-              <h2 class="text-2xl font-bold">শিক্ষার্থী র‌্যাঙ্কিং</h2>
+              <h2 class="text-2xl font-bold">রেঙ্ক লিডারবোর্ড</h2>
               <button id="refreshRanking" class="btn btn-secondary text-sm">
                 <i class="fas fa-sync-alt mr-2"></i>
                 রিফ্রেশ
@@ -712,7 +715,7 @@
           </div>
 
           <div id="page-graph-analysis" class="page hidden">
-            <h2 class="text-2xl font-bold mb-4">গ্রাফ বিশ্লেষণ</h2>
+            <h2 class="text-2xl font-bold mb-4">মূল্যায়ন বিশ্লেষণ</h2>
             <div id="graphAnalysisContent">
               <div class="placeholder-content">
                 <i class="fas fa-spinner fa-spin mr-2"></i>
@@ -722,7 +725,7 @@
           </div>
 
           <div id="page-statistics" class="page space-y-6 hidden">
-            <h2 class="text-2xl font-bold mb-4">মূল্যায়ন পরিসংখ্যান</h2>
+            <h2 class="text-2xl font-bold mb-4">গ্রুপ পরিসংখ্যান</h2>
             <div id="statsFilterContainer">
               <div class="placeholder-content">
                 <i class="fas fa-filter mr-2"></i>

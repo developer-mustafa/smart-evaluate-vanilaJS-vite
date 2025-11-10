@@ -665,10 +665,7 @@ function _renderStudentCardsList() {
     if (student.role) roleAssigned++;
     const genderRaw = (student.gender || '').trim();
     if (genderRaw) {
-      const normalized = genderRaw
-        .normalize('NFC')
-        .replace(/\s+/g, '')
-        .toLowerCase();
+      const normalized = genderRaw.normalize('NFC').replace(/\s+/g, '').toLowerCase();
       const banglaAligned = normalized.replace(/য়/g, 'য়'); // keep both মেয়ে এবং মেয়ে একীভূত
       const isMale =
         banglaAligned.includes('ছেলে') ||
@@ -777,7 +774,7 @@ function _renderStudentCardsList() {
               </span>
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.4em] text-white/70">Student Directory</p>
-                <h2 class="text-3xl md:text-4xl font-bold leading-tight">সকল শিক্ষার্থী (কার্ড ভিউ)</h2>
+                <h2 class="text-3xl md:text-4xl font-bold leading-tight">শিক্ষার্থী তথ্য</h2>
               </div>
             </div>
             <p class="max-w-3xl text-sm leading-relaxed text-white/75 md:text-base">দলভিত্তিক শিক্ষার্থীদের তথ্য এক নজরে দেখতে কার্ড ভিউ ব্যবহার করুন। গ্রুপ, একাডেমিক বিভাগ কিংবা নাম-রোল দিয়ে ফিল্টার করলেই তথ্য রিয়েল-টাইমে হালনাগাদ হয়।</p>

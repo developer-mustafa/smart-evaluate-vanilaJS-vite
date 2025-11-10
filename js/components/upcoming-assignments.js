@@ -1,6 +1,6 @@
 // js/components/upcoming-assignments.js
-// ✅ Focus-first sort + Date-only→10:20 AM + Countdown (conditional + blink)
-// ✅ 3D Cards (original left-rail number) + Light Rose 3D "অনুষ্ঠিত হবে :" pill (no duplication)
+// ✅ Focus-first sort + Date-only→11:55 AM + Countdown (conditional + blink)
+// ✅ 3D Cards (original left-rail number) + Soft “অনুষ্ঠিত হবে :” capsule with localized date & time
 // ✅ Smooth full-width accordion
 // ✅ Dashboard summary cards with soft 3D (both light/dark) via injected CSS
 
@@ -32,6 +32,26 @@ const STATUS_META = {
     icon: 'fas fa-check-circle text-emerald-500',
   },
 };
+
+const DEFAULT_ASSIGNMENT_HOUR = 11;
+const DEFAULT_ASSIGNMENT_MINUTE = 55;
+const DEFAULT_ASSIGNMENT_SECOND = 0;
+
+const BN_MONTHS = [
+  'জানুয়ারি',
+  'ফেব্রুয়ারি',
+  'মার্চ',
+  'এপ্রিল',
+  'মে',
+  'জুন',
+  'জুলাই',
+  'আগস্ট',
+  'সেপ্টেম্বর',
+  'অক্টোবর',
+  'নভেম্বর',
+  'ডিসেম্বর',
+];
+const BN_WEEKDAYS = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
 
 export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
@@ -137,40 +157,60 @@ function _ensurePillStyles() {
   @keyframes uablink { 0%, 60%, 100% { opacity:1 } 30% { opacity:.35 } }
   .cd-blink { animation: uablink 1.2s linear infinite; }
 
-  /* Light Rose 3D "Chef" schedule pill */
-  .sched-pill--rose3d{
-    --c1:#FFE4E6; --c2:#FECDD3; --c3:#FB7185; --c4:#F43F5E;
-    display:inline-flex; align-items:center; gap:.55rem;
-    border-radius:.85rem; padding:.36rem .78rem;
-    font-weight:800; font-size:.92rem; line-height:1.12;
-    white-space:nowrap;
-    border:1px solid rgba(244,63,94,.28);
-    background:
-      radial-gradient(120% 160% at 115% -20%, rgba(255,255,255,.42), transparent 55%),
-      linear-gradient(135deg, var(--c1), var(--c2) 42%, var(--c3) 70%, var(--c4));
-    color:#3f1116;
-    box-shadow: 0 1px 0 rgba(255,255,255,.75) inset,
-                0 10px 18px rgba(244,63,94,.16),
-                var(--inner-highlight);
+  /* Flat schedule pill aligned with countdown colors */
+  .sched-pill{
+    display:inline-flex; flex-wrap:wrap; align-items:center; gap:.45rem;
+    border-radius:.75rem; padding:.35rem .8rem;
+    font-size:.88rem; line-height:1.15;
+    font-weight:600;
+    border:1px solid rgba(148,163,184,.35);
+    background: rgba(248,250,252,.85);
+    color:#0f172a;
+    white-space:normal;
+    box-shadow: var(--inner-highlight);
   }
-  .sched-pill--rose3d .sched-icon{
-    width:18px; height:18px; display:inline-grid; place-items:center;
-    border-radius:.5rem; background: rgba(255,255,255,.75);
-    box-shadow: 0 1px 0 rgba(0,0,0,.06) inset;
+  .dark .sched-pill{
+    background: rgba(30,41,59,.45);
+    border-color: rgba(148,163,184,.35);
+    color:#e2e8f0;
   }
-  .dark .sched-pill--rose3d{
-    --c1:#4c0b12; --c2:#7f1423; --c3:#be2c41; --c4:#e11d48;
-    color:#FFE4E6;
-    border-color: rgba(244,63,94,.22);
-    background:
-      radial-gradient(120% 160% at 115% -20%, rgba(255,255,255,.12), transparent 55%),
-      linear-gradient(135deg, var(--c1), var(--c2) 40%, var(--c3) 68%, var(--c4));
-    box-shadow: 0 1px 0 rgba(255,255,255,.10) inset,
-                0 14px 24px rgba(0,0,0,.34),
-                var(--inner-highlight);
+  .sched-pill__label{
+    font-weight:700;
+    letter-spacing:.01em;
   }
-  .sched-label{ letter-spacing:.02em; }
-  .dot{ opacity:.6; margin:0 .45rem; }
+  .sched-pill__value{
+    font-weight:600;
+  }
+  .sched-pill[data-status="upcoming"]{
+    background: rgba(16,185,129,.15);
+    border-color: rgba(16,185,129,.35);
+    color:#065f46;
+  }
+  .dark .sched-pill[data-status="upcoming"]{
+    background: rgba(5,150,105,.35);
+    border-color: rgba(16,185,129,.45);
+    color:#a7f3d0;
+  }
+  .sched-pill[data-status="ongoing"]{
+    background: rgba(251,191,36,.2);
+    border-color: rgba(245,158,11,.35);
+    color:#7c2d12;
+  }
+  .dark .sched-pill[data-status="ongoing"]{
+    background: rgba(120,53,15,.35);
+    border-color: rgba(251,191,36,.45);
+    color:#fde68a;
+  }
+  .sched-pill[data-status="completed"]{
+    background: rgba(148,163,184,.25);
+    border-color: rgba(71,85,105,.35);
+    color:#1f2937;
+  }
+  .dark .sched-pill[data-status="completed"]{
+    background: rgba(30,41,59,.55);
+    border-color: rgba(148,163,184,.45);
+    color:#cbd5f5;
+  }
   `;
   document.head.appendChild(style);
 }
@@ -193,13 +233,9 @@ function _coerceDate(raw) {
 /** If date looks date-only (00:00:00), set local time to 10:20 AM */
 function _applyDefaultTimeIfDateOnly(dateObj) {
   if (!dateObj) return null;
-  const hasTime =
-    dateObj.getHours() !== 0 ||
-    dateObj.getMinutes() !== 0 ||
-    dateObj.getSeconds() !== 0 ||
-    dateObj.getMilliseconds() !== 0;
-  if (hasTime) return dateObj;
-  return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 10, 20, 0, 0); // 10:20 AM local
+  const normalized = new Date(dateObj);
+  normalized.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
+  return normalized;
 }
 
 function _getSortableDate(dateInput) {
@@ -210,6 +246,37 @@ function _getSortableDate(dateInput) {
 function _bn(n) {
   const s = String(n);
   return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(s) : s;
+}
+
+function _formatScheduleLabel(dateObj) {
+  if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) {
+    return 'তারিখ নির্ধারিত নয়';
+  }
+  const day = _bn(String(dateObj.getDate()).padStart(2, '0'));
+  const month = BN_MONTHS[dateObj.getMonth()] || '';
+  const year = _bn(dateObj.getFullYear());
+  const weekday = BN_WEEKDAYS[dateObj.getDay()] || '';
+  const timeLabel = _formatScheduleTime(dateObj);
+  return `${day} ${month} ${year} - ${weekday}, ${timeLabel}`;
+}
+
+function _formatScheduleTime(dateObj) {
+  const hour = dateObj.getHours();
+  const minute = dateObj.getMinutes();
+  const partOfDay = _getDayPartLabel(hour);
+  const period = hour >= 12 ? 'pm' : 'am';
+  const hr12 = hour % 12 || 12;
+  const minuteStr = String(minute).padStart(2, '0');
+  const time = `${_bn(hr12)}:${_bn(minuteStr)}`;
+  return `${partOfDay} ${time} ${period}`;
+}
+
+function _getDayPartLabel(hour) {
+  if (hour < 4) return 'ভোর';
+  if (hour < 12) return 'সকাল';
+  if (hour < 16) return 'দুপুর';
+  if (hour < 19) return 'বিকাল';
+  return 'রাত';
 }
 
 /** returns parts + remainingDays (ceil) + remainingMs (future only) */
@@ -437,16 +504,13 @@ function _assignmentCard(task) {
     </span>
   `;
 
-  const roseChef =
-    task.status === 'upcoming'
-      ? `
-      <span class="sched-pill--rose3d">
-        <span class="sched-icon"><i class="fas fa-crown"></i></span>
-        <span class="sched-label">অনুষ্ঠিত হবে :</span>
-        <span class="dot">•</span>${dateLabel}
-      </span>
-    `
-      : '';
+  const schedulePrefix = `${task.scheduleText || 'অনুষ্ঠিত হবে'} :`;
+  const scheduleCapsule = `
+    <span class="sched-pill" data-status="${task.status}">
+      <span class="sched-pill__label">${schedulePrefix}</span>
+      <span class="sched-pill__value">${dateLabel}</span>
+    </span>
+  `;
 
   return `
     <article class="relative card-3d card-3d--bevel focusable overflow-hidden flex" tabindex="0" role="group" aria-label="${helpers.ensureBengaliText(
@@ -467,10 +531,10 @@ function _assignmentCard(task) {
               <span class="chip-3d inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                 meta.chip
               }">
-                <i class="${meta.icon}"></i>${STATUS_META[task.status].label}
+                <i class="${meta.icon}"></i>${meta.label}
               </span>
               ${countdownHtml}
-              ${roseChef}
+              ${scheduleCapsule}
             </div>
 
             <h4 class="text-lg font-semibold text-gray-900 dark:text-white mt-2">${task.name}</h4>
@@ -481,7 +545,7 @@ function _assignmentCard(task) {
               <i class="fas fa-user-check text-blue-500"></i> অংশগ্রহণ: ${participantsLabel}
             </span>
             <span class="inline-flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800/70 px-3 py-1 border border-gray-200/80 dark:border-white/10 shadow-[var(--inner-highlight)]">
-              <i class="fas fa-clock text-purple-500"></i> অবস্থা: ${task.timelineLabel}
+              <i class="fas fa-clock text-purple-500"></i> সময়: ${task.startTimeLabel || 'সকাল ১১:৫৫ am'}
             </span>
           </div>
         </div>
@@ -602,6 +666,7 @@ function _normalizeTask(task, evaluations) {
     dateLabel: dateInfo.label,
     timelineLabel: dateInfo.timelineLabel,
     scheduleText: dateInfo.scheduleText, // not repeated near the pill
+    startTimeLabel: dateInfo.startTimeLabel,
     description: task.description || '',
     participants,
     assignmentNumber: task.assignmentNumber,
@@ -628,7 +693,8 @@ function _getDateInfo(dateObj) {
     return {
       label: 'তারিখ নির্ধারিত নয়',
       scheduleText: 'তারিখ আপডেট প্রয়োজন',
-      timelineLabel: 'অজানা',
+      timelineLabel: 'সময়রেখা অনুপস্থিত',
+      startTimeLabel: 'সকাল ১১:৫৫ am',
       isFuture: false,
       isToday: false,
     };
@@ -646,21 +712,20 @@ function _getDateInfo(dateObj) {
 
   const isToday = sameDay && adjusted.getTime() >= now.getTime();
 
-  const label = helpers.formatTimestamp
-    ? helpers.formatTimestamp(adjusted)
-    : adjusted.toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' });
+  const label = _formatScheduleLabel(adjusted);
+  const startTimeLabel = _formatScheduleTime(adjusted);
 
   let scheduleText = 'অনুষ্ঠিত হয়েছে';
-  let timelineLabel = 'সমাপ্ত';
+  let timelineLabel = 'সমাপ্ত সময়সূচি';
   if (isFuture) {
     scheduleText = 'অনুষ্ঠিত হবে';
-    timelineLabel = 'আসন্ন';
+    timelineLabel = 'আসন্ন সময়সূচি';
   } else if (isToday) {
     scheduleText = 'আজ অনুষ্ঠিত';
-    timelineLabel = 'চলমান';
+    timelineLabel = 'চলমান সময়সূচি';
   }
 
-  return { label, scheduleText, timelineLabel, isFuture, isToday };
+  return { label, scheduleText, timelineLabel, startTimeLabel, isFuture, isToday };
 }
 
 function _countParticipants(taskId, evaluations) {
