@@ -500,30 +500,31 @@ function _assignmentCard(task) {
   const countdownHtml = `
     <span class="cd-pill" data-cd data-iso="${task.dateISO || ''}" data-mode="start">
       <i class="fas fa-hourglass-half"></i>
-      <span class="cd-text">—</span>
+      <span class="cd-text text-[11px] sm:text-sm">${_countdownLabel(_diffParts(task._dateObj))}</span>
     </span>
+   
   `;
 
   const schedulePrefix = `${task.scheduleText || 'অনুষ্ঠিত হবে'} :`;
   const scheduleCapsule = `
     <span class="sched-pill" data-status="${task.status}">
-      <span class="sched-pill__label">${schedulePrefix}</span>
-      <span class="sched-pill__value">${dateLabel}</span>
+      <span class="sched-pill__label text-sm sm:text-base">${schedulePrefix}</span>
+      <span class="sched-pill__value text-xs sm:text-sm">${dateLabel}</span>
     </span>
   `;
 
   return `
-    <article class="relative card-3d card-3d--bevel focusable overflow-hidden flex" tabindex="0" role="group" aria-label="${helpers.ensureBengaliText(
+    <article class="relative card-3d card-3d--bevel focusable flex flex-col sm:flex-row overflow-visible sm:overflow-hidden" tabindex="0" role="group" aria-label="${helpers.ensureBengaliText(
       task.name
     )}">
       <!-- Left Rail: পরীক্ষার নং (original design) -->
-      <div class="flex-shrink-0 w-24 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/60 p-4 border-r border-gray-100 dark:border-gray-700/50">
+      <div class="flex-shrink-0 w-full sm:w-24 flex flex-row sm:flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800/60 p-4 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-700/50">
         <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">পরীক্ষা</span>
-        <span class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">${formattedNumber}</span>
+        <span class="text-3xl font-extrabold text-blue-600 dark:text-blue-400">${formattedNumber}</span>
       </div>
 
       <!-- Content -->
-      <div class="flex-1 p-4">
+      <div class="flex-1 p-4 min-w-0">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div class="min-w-0">
             <!-- Top row: chip + countdown + rose pill -->
@@ -537,10 +538,10 @@ function _assignmentCard(task) {
               ${scheduleCapsule}
             </div>
 
-            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mt-2">${task.name}</h4>
+            <h4 class="text-xs sm:text-base font-semibold text-gray-900 dark:text-white mt-2">${task.name}</h4>
           </div>
 
-          <div class="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-300">
+          <div class="flex sm:flex-col  gap-2 text-[10px] sm:text-base text-gray-600 dark:text-gray-300">
             <span class="inline-flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800/70 px-3 py-1 border border-gray-200/80 dark:border-white/10 shadow-[var(--inner-highlight)]">
               <i class="fas fa-user-check text-blue-500"></i> অংশগ্রহণ: ${participantsLabel}
             </span>
@@ -632,6 +633,7 @@ function _animateToggle(panel, open) {
 
   const startHeight = panel.getBoundingClientRect().height;
   panel.style.maxHeight = startHeight + 'px';
+  panel.style.overflow = 'hidden';
   panel.setAttribute('data-open', String(open));
 
   const targetHeight = open ? panel.scrollHeight : 0;
@@ -642,6 +644,7 @@ function _animateToggle(panel, open) {
 
   const onEnd = () => {
     panel.style.maxHeight = open ? 'none' : '0';
+    panel.style.overflow = open ? 'visible' : 'hidden';
     panel.removeEventListener('transitionend', onEnd);
   };
   panel.addEventListener('transitionend', onEnd, { once: true });
