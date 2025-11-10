@@ -21,7 +21,7 @@ const cachedRankingData = {
 // Ranking criteria
 const MIN_EVALUATIONS_FOR_RANKING = 1;
 
-/* ----------------------------- Soft Neumorphic + Gradient ------------------------------ */
+/* ----------------------------- Soft Neumorphic + Gradient + Badges ------------------------------ */
 function _ensureSoft3DStyles() {
   if (document.getElementById('ranking-soft3d-styles')) return;
   const style = document.createElement('style');
@@ -114,6 +114,35 @@ function _ensureSoft3DStyles() {
 
   .rk-micro{ font-size: 11px; line-height: 1.1; }
 
+  /* -------- Pretty, soft badges for Branch & Role -------- */
+  .rk-badges{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* mobile: 2 columns */
+    gap: .35rem;
+    margin-top: .45rem;
+
+  }
+  .rk-badge{
+    display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+    padding:.32rem .50rem; border-radius:.65rem;
+    border:1px solid var(--rk-badge-border, rgba(0,0,0,.06));
+    background: var(--rk-badge-bg, rgba(255,255,255,.85));
+    color: var(--rk-badge-fg, #0f172a);
+    font-weight:600; font-size:11px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.60) inset, 0 2px 6px var(--rk-badge-glow, rgba(0,0,0,.05));
+    white-space: nowrap;
+    min-width: 0;
+    text-align: center;
+  }
+  .rk-badge i{ font-size: 11px; }
+  .rk-badge--compact{ padding:.28rem .45rem; font-size:10px; }
+
+  @media (min-width: 640px){
+    .rk-badges{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .rk-badge{ padding:.46rem .66rem; font-size:12px; }
+    .rk-badge i{ font-size:12px; }
+  }
+
   /* -------- Tabs -------- */
   .rk-tabbar{
     display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; justify-content:space-between;
@@ -143,16 +172,13 @@ function _ensureSoft3DStyles() {
     box-shadow: 0 6px 14px var(--rk-glow, rgba(14,165,233,.25));
   }
 
-  .rk-tab-search{
-    display:flex; gap:.5rem; width:100%; max-width:560px;
-  }
+  .rk-tab-search{ display:flex; gap:.5rem; width:100%; max-width:560px; }
   .rk-input{
     flex:1 1 auto;
     padding:.55rem .75rem; border-radius:.7rem;
     border:1px solid rgba(0,0,0,.08);
     background: rgba(255,255,255,.85);
-    color:#0f172a; font-size: 14px;
-    outline: none;
+    color:#0f172a; font-size: 14px; outline: none;
   }
   .rk-input::placeholder{ color:#94a3b8; }
   .rk-input:focus{ border-color: rgba(14,165,233,.45); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
@@ -264,12 +290,7 @@ function _setupEventListeners() {
 }
 
 /* =========================================================
-   RANKING LOGIC (unchanged priority)
-   1) Average mark % DESC (efficiency)
-   2) Evaluations DESC
-   3) TotalScore DESC
-   4) MaxPossible DESC
-   5) Latest time DESC
+   RANKING LOGIC
 ========================================================= */
 
 function _calculateStudentRankings(students, evaluations, tasks) {
@@ -425,17 +446,6 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
     const raw = (v ?? '').toString();
     return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
   };
-  const roleLabel = (code) => {
-    const map = {
-      'team-leader': 'টিম লিডার',
-      'time-keeper': 'টাইম কিপার',
-      reporter: 'রিপোর্টার',
-      'resource-manager': 'রিসোর্স ম্যানেজার',
-      'peace-maker': 'পিস মেকার',
-    };
-    const r = (code || '').toString().trim();
-    return map[r] || r || '—';
-  };
 
   // Determine accent palette from current tab top rank
   const topStudent = (rankedStudents && rankedStudents[0]) || null;
@@ -471,7 +481,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
     </div>
   `;
 
-  // STUDENT CARDS (compact with right circular meter & one-line identity row)
+  // STUDENT CARDS (with responsive badge grid & meter size)
   const studentCards =
     rankedStudents && rankedStudents.length
       ? (uiTabState.active === 'students' ? _filterStudentsForSearch(rankedStudents) : rankedStudents)
@@ -484,13 +494,14 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
             const totalMark = formatNum2(item.totalScore);
             const palette = _getScorePalette(item.efficiency);
 
-            // identity (single micro line)
             const groupName = groupsMap.get(s.groupId) || 'গ্রুপ নেই';
-            const idLine = `নাম: ${_escapeHtml(s.name || '')} · রোল: ${toBn(
-              s.roll || '—'
-            )} · একাডেমিক গ্রুপ: ${_escapeHtml(s.academicGroup || '—')} · গ্রুপ: ${_escapeHtml(
-              groupName
-            )} · দায়িত্ব: ${_escapeHtml(roleLabel(s.role))}`;
+            const idLine = `রোল: ${toBn(s.roll || '—')} · গ্রুপ: ${_escapeHtml(groupName)}`;
+
+            // Badges: Academic Branch + Role (soft colors)
+            const branchMeta = _branchBadgeMeta(s.academicGroup);
+            const roleMeta = _roleBadgeMeta(s.role);
+            const branchBadge = _renderBadge(branchMeta, s.academicGroup || 'একাডেমিক শাখা');
+            const roleBadge = _renderBadge(roleMeta, _roleLabel(s.role));
 
             return `
         <article class="ranking-card rk-card p-4 flex items-center gap-3 justify-between"
@@ -511,16 +522,21 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
                 idLine
               )}">${idLine}</p>
 
-              <div class="mt-2 grid grid-cols-3 gap-2 text-[12px] font-semibold">
-                <div class="rk-chip px-2 py-1">Avg: ${avgPct}%</div>
-                <div class="rk-chip px-2 py-1">Eval: ${evals}</div>
-                <div class="rk-chip px-2 py-1">${totalMark} / ${maxPossible}</div>
+              <div class="rk-badges">
+                ${branchBadge}
+                ${roleBadge}
               </div>
+
+              <div class="flex gap-4 sm:gap-8 mt-2 text-[10px] sm:text-sm font-semibold">
+                <div class="hidden sm:flex">গড়: ${avgPct}%</div>
+                <div class="">এসাইনমেন্ট অংশগ্রহন: ${evals} টি</div>
+              </div>
+             
             </div>
           </div>
 
           <div class="flex flex-col items-center gap-1 shrink-0">
-            ${_buildCircularMeter(item.efficiency, palette, 72)}
+            ${_buildCircularMeter(item.efficiency, palette, _meterSize())}
             <span class="rk-micro text-gray-500 dark:text-gray-400">Avg%</span>
           </div>
         </article>`;
@@ -528,7 +544,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
           .join('')
       : `<div class="rk-card p-4 text-center text-gray-600 dark:text-gray-300">কোনো শিক্ষার্থী পাওয়া যায়নি।</div>`;
 
-  // GROUP CARDS (compact, single-line members row + right circular meter)
+  // GROUP CARDS
   const groupCards =
     rankedGroups && rankedGroups.length
       ? rankedGroups
@@ -561,7 +577,7 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
           </div>
 
           <div class="flex flex-col items-center gap-1 shrink-0">
-            ${_buildCircularMeter(g.efficiency, palette, 72)}
+            ${_buildCircularMeter(g.efficiency, palette, _meterSize())}
             <span class="rk-micro text-gray-500 dark:text-gray-400">Avg%</span>
           </div>
         </article>`;
@@ -760,6 +776,138 @@ function _getScorePalette(score) {
   };
 }
 
+/* ===== Role & Branch badge helpers (soft, comfy colors) ===== */
+
+function _roleLabel(code) {
+  const map = {
+    'team-leader': 'টিম লিডার',
+    'time-keeper': 'টাইম কিপার',
+    reporter: 'রিপোর্টার',
+    'resource-manager': 'রিসোর্স ম্যানেজার',
+    'peace-maker': 'পিস মেকার',
+  };
+  const r = (code || '').toString().trim();
+  return map[r] || r || 'দায়িত্ব নেই';
+}
+
+function _roleBadgeMeta(roleCode) {
+  const r = (roleCode || '').toString().trim();
+  // soft palettes
+  const palettes = {
+    'team-leader': {
+      icon: 'fa-crown',
+      bg: 'rgba(251, 191, 36, .18)',
+      fg: '#92400e',
+      border: 'rgba(245, 158, 11, .35)',
+      glow: 'rgba(251, 191, 36, .28)',
+    }, // amber
+    'time-keeper': {
+      icon: 'fa-stopwatch',
+      bg: 'rgba(56, 189, 248, .16)',
+      fg: '#0c4a6e',
+      border: 'rgba(59, 130, 246, .35)',
+      glow: 'rgba(56, 189, 248, .26)',
+    }, // sky
+    reporter: {
+      icon: 'fa-pen-nib',
+      bg: 'rgba(196, 181, 253, .18)',
+      fg: '#4c1d95',
+      border: 'rgba(167, 139, 250, .35)',
+      glow: 'rgba(196, 181, 253, .26)',
+    }, // violet
+    'resource-manager': {
+      icon: 'fa-box-open',
+      bg: 'rgba(134, 239, 172, .18)',
+      fg: '#065f46',
+      border: 'rgba(16, 185, 129, .35)',
+      glow: 'rgba(134, 239, 172, .26)',
+    }, // emerald
+    'peace-maker': {
+      icon: 'fa-dove',
+      bg: 'rgba(253, 164, 175, .18)',
+      fg: '#7f1d1d',
+      border: 'rgba(244, 63, 94, .35)',
+      glow: 'rgba(253, 164, 175, .28)',
+    }, // rose
+  };
+  const def = {
+    icon: 'fa-id-badge',
+    bg: 'rgba(226, 232, 240, .22)',
+    fg: '#111827',
+    border: 'rgba(148,163,184,.35)',
+    glow: 'rgba(148,163,184,.20)',
+  };
+  return palettes[r] || def;
+}
+
+function _branchBadgeMeta(academicGroup) {
+  const g = (academicGroup || '').toString().trim().toLowerCase();
+  const isSci = /science|বিজ্ঞান/.test(g);
+  const isArts = /arts|মানবিক/.test(g);
+  const isCom = /commerce|ব্যবসা|কমার্স/.test(g);
+  const isVoc = /vocational|ভোকেশনাল/.test(g);
+  if (isSci)
+    return {
+      icon: 'fa-atom',
+      bg: 'rgba(153, 246, 228, .18)',
+      fg: '#115e59',
+      border: 'rgba(45, 212, 191, .35)',
+      glow: 'rgba(94, 234, 212, .26)',
+    }; // teal
+  if (isArts)
+    return {
+      icon: 'fa-palette',
+      bg: 'rgba(254, 215, 170, .20)',
+      fg: '#7c2d12',
+      border: 'rgba(251, 146, 60, .35)',
+      glow: 'rgba(254, 215, 170, .28)',
+    }; // orange
+  if (isCom)
+    return {
+      icon: 'fa-chart-line',
+      bg: 'rgba(191, 219, 254, .20)',
+      fg: '#1e3a8a',
+      border: 'rgba(99, 102, 241, .35)',
+      glow: 'rgba(191, 219, 254, .28)',
+    }; // indigo/blue
+  if (isVoc)
+    return {
+      icon: 'fa-tools',
+      bg: 'rgba(165, 243, 252, .20)',
+      fg: '#164e63',
+      border: 'rgba(34, 211, 238, .35)',
+      glow: 'rgba(165, 243, 252, .28)',
+    }; // cyan
+  return {
+    icon: 'fa-layer-group',
+    bg: 'rgba(241, 245, 249, .22)',
+    fg: '#0f172a',
+    border: 'rgba(148,163,184,.35)',
+    glow: 'rgba(148,163,184,.18)',
+  }; // slate default
+}
+
+function _renderBadge(meta, label) {
+  const safe = _escapeHtml(label || '');
+  return `<span class="rk-badge rk-badge--compact"
+    style="--rk-badge-bg:${meta.bg};
+           --rk-badge-fg:${meta.fg};
+           --rk-badge-border:${meta.border};
+           --rk-badge-glow:${meta.glow};">
+           <i class="fas ${meta.icon}"></i>${safe}
+  </span>`;
+}
+
+/* ========== Meter size responsive helper ========== */
+function _meterSize() {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches ? 64 : 72;
+  } catch {
+    return 72;
+  }
+}
+
+/** compact circular meter */
 function _buildCircularMeter(percent, palette, size = 72) {
   const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
   const display = helpers?.convertToBanglaNumber
