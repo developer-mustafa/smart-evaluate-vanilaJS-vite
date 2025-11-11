@@ -6,11 +6,17 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import jsPDFAutotable from 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import JSZip from 'jszip';
 import Papa from 'papaparse';
 
-jsPDFAutotable(jsPDF);
+jsPDF.prototype.autoTable = function (...args) {
+  return autoTable(this, ...args);
+};
+jsPDF.API = jsPDF.API || {};
+jsPDF.API.autoTable = function (...args) {
+  return autoTable(this, ...args);
+};
 Chart.register(...registerables, ChartDataLabels, zoomPlugin);
 
 if (typeof window !== 'undefined') {
@@ -21,7 +27,7 @@ if (typeof window !== 'undefined') {
   window.jsPDF = jsPDF;
   window.jspdf = window.jspdf || {};
   window.jspdf.jsPDF = jsPDF;
-  window.jspdf.autoTable = jsPDF.API?.autoTable;
+  window.jspdf.autoTable = autoTable;
   window.JSZip = JSZip;
   window.Papa = Papa;
 }
@@ -30,3 +36,4 @@ import './js/app.js';
 import './js/components/student-result-details.js';
 import './js/components/group-result-details.js';
 import './js/utils/perf.js';
+
