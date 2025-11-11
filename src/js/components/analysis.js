@@ -1,6 +1,6 @@
 ﻿// js/components/analysis.js
 
-import { PDF_FONT_BASE64 } from '../config/pdfFont.js';
+
 
 let stateManager;
 let uiManager;
