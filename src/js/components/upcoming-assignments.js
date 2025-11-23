@@ -33,6 +33,35 @@ const STATUS_META = {
   },
 };
 
+const assignmentTabState = { active: 'all' }; // all | upcoming | ongoing | completed
+const TAB_ORDER = ['all', 'upcoming', 'ongoing', 'completed'];
+const TAB_META = {
+  all: {
+    label: 'মোট এসাইনমেন্ট',
+    description: 'সমস্ত টাস্ক',
+    icon: 'fas fa-layer-group',
+    theme: 'slate',
+  },
+  upcoming: {
+    label: STATUS_META.upcoming.label,
+    description: 'আসন্ন তালিকা',
+    icon: STATUS_META.upcoming.icon,
+    theme: 'sky',
+  },
+  ongoing: {
+    label: STATUS_META.ongoing.label,
+    description: 'চলমান টাস্ক',
+    icon: STATUS_META.ongoing.icon,
+    theme: 'amber',
+  },
+  completed: {
+    label: STATUS_META.completed.label,
+    description: 'সম্পন্ন টাস্ক',
+    icon: STATUS_META.completed.icon,
+    theme: 'emerald',
+  },
+};
+
 const DEFAULT_ASSIGNMENT_HOUR = 11;
 const DEFAULT_ASSIGNMENT_MINUTE = 55;
 const DEFAULT_ASSIGNMENT_SECOND = 0;
@@ -58,7 +87,7 @@ export function init(dependencies) {
   uiManager = dependencies.managers.uiManager;
   helpers = dependencies.utils;
 
-  _ensureSummarySoft3DStyles();
+  _ensureTabStyles();
   _ensurePillStyles();
 
   _cacheDOMElements();
@@ -73,12 +102,14 @@ function _cacheDOMElements() {
   elements.summary = document.getElementById('upcomingAssignmentSummary');
   elements.list = document.getElementById('upcomingAssignmentsList');
   elements.filter = document.getElementById('assignmentStatusFilter');
+  if (elements.filter) {
+    elements.filter.classList.add('hidden');
+    elements.filter.setAttribute('aria-hidden', 'true');
+    elements.filter.style.display = 'none';
+  }
 }
 
 function _bindEvents() {
-  if (elements.filter) {
-    uiManager.addListener(elements.filter, 'change', () => render());
-  }
   uiManager.addListener(document, 'keydown', (e) => {
     if (e.key === 'Escape') {
       document.querySelectorAll('[data-acc-panel][data-open="true"]').forEach((p) => _animateToggle(p, false));
@@ -90,45 +121,108 @@ function _bindEvents() {
 }
 
 /* =========================
-   Injected Styles (Summary soft 3D + pills)
+   Injected Styles (Tabs + pills)
 ========================= */
-function _ensureSummarySoft3DStyles() {
-  if (document.getElementById('ua-soft3d-styles')) return;
+function _ensureTabStyles() {
+  if (document.getElementById('ua-tabs-styles')) return;
   const style = document.createElement('style');
-  style.id = 'ua-soft3d-styles';
+  style.id = 'ua-tabs-styles';
   style.textContent = `
-  .soft3d-card{
-    position: relative; border-radius: 1rem; padding: 1rem; overflow: hidden;
-    color: #0f172a; border: 1px solid rgba(15,23,42,.08);
-    box-shadow: 0 1px 0 rgba(255,255,255,.55) inset, 0 10px 18px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
-    backdrop-filter: saturate(110%) blur(.3px);
+  .ua-tabbar{
+    display:flex;
+    gap:.5rem;
+    padding:.4rem;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(15,23,42,.85);
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.4), 0 20px 40px rgba(2,6,23,.45);
   }
-  .dark .soft3d-card{
-    color: #e5e7eb; border-color: rgba(255,255,255,.08);
-    box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 12px 22px rgba(0,0,0,.25), 0 2px 4px rgba(0,0,0,.18);
+  .ua-tab{
+    --ua-tab-bg:rgba(255,255,255,.85);
+    --ua-tab-border:rgba(148,163,184,.35);
+    --ua-tab-color:#0f172a;
+    --ua-tab-active:#2563eb;
+    --ua-tab-active-bg:linear-gradient(120deg,#4c6ef5,#2563eb);
+    --ua-tab-active-shadow:rgba(37,99,235,.35);
+    --ua-tab-desc:rgba(71,85,105,.8);
+    flex:1 1 0;
+    min-width:0;
+    height:52px;
+    justify-content:center;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.65rem;
+    padding:.35rem 1.25rem;
+    border-radius:999px;
+    border:1px solid var(--ua-tab-border);
+    background:var(--ua-tab-bg);
+    color:var(--ua-tab-color);
+    text-align:left;
+    font-weight:600;
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+    box-shadow:0 4px 10px rgba(15,23,42,.08);
   }
-  .soft3d-card::after{
-    content:""; position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.24), transparent 60%);
-    mix-blend-mode: soft-light;
+  .ua-tab:focus{ outline:none; box-shadow:0 0 0 3px rgba(248,113,113,.45); }
+  .ua-tab:hover{ transform:translateY(-1px); }
+  .ua-tab[aria-selected="true"]{
+    color:#fff;
+    background:var(--ua-tab-active-bg);
+    border-color:transparent;
+    box-shadow:0 16px 28px var(--ua-tab-active-shadow);
   }
-  .dark .soft3d-card::after{
-    background: radial-gradient(120% 140% at 110% -20%, rgba(255,255,255,.10), transparent 60%);
+  .ua-tab[aria-selected="true"] .ua-tab-count{
+    background:rgba(255,255,255,.25);
   }
-  .soft3d--slate { background: linear-gradient(145deg, #eef2ff 0%, #e2e8f0 50%, #e5e7eb 100%); }
-  .dark .soft3d--slate { background: linear-gradient(145deg, #0b1220 0%, #0f172a 55%, #111827 100%); }
-  .soft3d--sky { background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 50%, #a5f3fc 100%); }
-  .dark .soft3d--sky { background: linear-gradient(145deg, #07233a 0%, #0b2f4a 55%, #0e3d59 100%); }
-  .soft3d--amber { background: linear-gradient(145deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%); }
-  .dark .soft3d--amber { background: linear-gradient(145deg, #2e2104 0%, #3a2907 55%, #4a3209 100%); }
-  .soft3d--emerald { background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%); }
-  .dark .soft3d--emerald { background: linear-gradient(145deg, #062418 0%, #0a2f21 55%, #0e3b29 100%); }
-  .soft3d-sub{ font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; opacity:.8; }
-  .dark .soft3d-sub{ opacity:.85; }
-  .soft3d-icon{ font-size:1.25rem; opacity:.9; filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)); }
-  .dark .soft3d-icon{ opacity:.95; filter:none; }
-  .soft3d-value{ font-size:1.5rem; font-weight:700; text-shadow:0 1px 0 rgba(255,255,255,.45); }
-  .dark .soft3d-value{ text-shadow:none; }
+  .ua-tab-label{
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+    font-size:.95rem;
+    letter-spacing:.02em;
+    font-weight:700;
+  }
+  .ua-tab-count{
+    font-size:.85rem;
+    font-weight:700;
+    padding:.15rem .55rem;
+    border-radius:999px;
+    background:rgba(15,23,42,.12);
+  }
+  .ua-tab-desc{ display:none; }
+  @media (min-width:768px){
+    .ua-tab{ min-width: 220px; }
+  }
+  @media (min-width:1024px){
+    .ua-tabbar{ justify-content:space-between; }
+    .ua-tab{
+      flex:1 1 0;
+      min-width:0;
+    }
+  }
+  .dark .ua-tab{
+    --ua-tab-bg:rgba(15,23,42,.9);
+    --ua-tab-border:rgba(148,163,184,.25);
+    --ua-tab-color:#e2e8f0;
+    --ua-tab-desc:rgba(148,163,184,.8);
+    box-shadow:0 10px 24px rgba(0,0,0,.55);
+  }
+  .ua-tab[data-theme="slate"]{
+    --ua-tab-active-bg:linear-gradient(120deg,#6366f1,#4338ca);
+    --ua-tab-active-shadow:rgba(99,102,241,.45);
+  }
+  .ua-tab[data-theme="sky"]{
+    --ua-tab-active-bg:linear-gradient(120deg,#0ea5e9,#2563eb);
+    --ua-tab-active-shadow:rgba(14,165,233,.4);
+  }
+  .ua-tab[data-theme="amber"]{
+    --ua-tab-active-bg:linear-gradient(120deg,#f59e0b,#eab308);
+    --ua-tab-active-shadow:rgba(245,158,11,.4);
+  }
+  .ua-tab[data-theme="emerald"]{
+    --ua-tab-active-bg:linear-gradient(120deg,#0d9488,#10b981);
+    --ua-tab-active-shadow:rgba(16,185,129,.4);
+  }
   `;
   document.head.appendChild(style);
 }
@@ -411,70 +505,52 @@ export function render() {
 }
 
 /* =========================
-   Summary (soft 3D)
+   Summary Tabs
 ========================= */
 
 function _renderSummary(tasks) {
   if (!elements.summary) return;
 
-  const total = tasks.length;
-  const stats = [
-    {
-      key: 'upcoming',
-      label: STATUS_META.upcoming.label,
-      icon: STATUS_META.upcoming.icon,
-      count: tasks.filter((t) => t.status === 'upcoming').length,
-    },
-    {
-      key: 'ongoing',
-      label: STATUS_META.ongoing.label,
-      icon: STATUS_META.ongoing.icon,
-      count: tasks.filter((t) => t.status === 'ongoing').length,
-    },
-    {
-      key: 'completed',
-      label: STATUS_META.completed.label,
-      icon: STATUS_META.completed.icon,
-      count: tasks.filter((t) => t.status === 'completed').length,
-    },
-  ];
+  const counts = {
+    all: tasks.length,
+    upcoming: tasks.filter((t) => t.status === 'upcoming').length,
+    ongoing: tasks.filter((t) => t.status === 'ongoing').length,
+    completed: tasks.filter((t) => t.status === 'completed').length,
+  };
 
-  const cardsHtml = [
-    _summaryCard('মোট এসাইনমেন্ট', total, 'fas fa-layer-group', 'slate'),
-    ...stats.map((s) => _summaryCard(s.label, s.count, s.icon, s.key)),
-  ];
-
-  elements.summary.innerHTML = cardsHtml.join('');
-}
-
-function _summaryCard(label, value, icon, themeKey) {
-  const cls = _summaryThemeClass(themeKey); // slate | sky | amber | emerald
-  const formattedValue = helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(String(value)) : String(value);
-
-  return `
-    <div class="soft3d-card ${cls}">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="soft3d-sub">${label}</p>
-          <p class="soft3d-value mt-2">${formattedValue}</p>
-        </div>
-        <span class="soft3d-icon"><i class="${icon}"></i></span>
-      </div>
+  const tabsHtml = `
+    <div class="ua-tabbar" role="tablist" aria-label="Assignment filter tabs">
+      ${TAB_ORDER.map((key) => {
+        const meta = TAB_META[key];
+        if (!meta) return '';
+        const selected = assignmentTabState.active === key;
+        const count = _bn(counts[key] ?? 0);
+        return `
+          <button type="button" role="tab"
+            class="ua-tab"
+            data-tab="${key}"
+            data-theme="${meta.theme}"
+            aria-selected="${selected}">
+            <span class="ua-tab-label"><i class="${meta.icon}"></i>${meta.label}</span>
+            <span class="ua-tab-count">${count}</span>
+            <span class="ua-tab-desc">${meta.description}</span>
+          </button>
+        `;
+      }).join('')}
     </div>
   `;
-}
 
-function _summaryThemeClass(key) {
-  switch (key) {
-    case 'upcoming':
-      return 'soft3d--sky';
-    case 'ongoing':
-      return 'soft3d--amber';
-    case 'completed':
-      return 'soft3d--emerald';
-    default:
-      return 'soft3d--slate'; // total
-  }
+  elements.summary.innerHTML = tabsHtml;
+
+  const buttons = elements.summary.querySelectorAll('[data-tab]');
+  buttons.forEach((btn) => {
+    uiManager.addListener(btn, 'click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      if (!targetTab || targetTab === assignmentTabState.active) return;
+      assignmentTabState.active = targetTab;
+      render();
+    });
+  });
 }
 
 /* =========================
@@ -484,8 +560,8 @@ function _summaryThemeClass(key) {
 function _renderAssignments(tasks) {
   if (!elements.list) return;
 
-  const filterValue = elements.filter?.value || 'all';
-  const visibleStatuses = filterValue === 'all' ? STATUS_ORDER : [filterValue];
+  const activeTab = assignmentTabState.active || 'all';
+  const visibleStatuses = activeTab === 'all' ? STATUS_ORDER : [activeTab];
   let content = '';
 
   visibleStatuses.forEach((status) => {
