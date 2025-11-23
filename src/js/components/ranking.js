@@ -301,14 +301,27 @@ function _setupEventListeners() {
 
   // Card click → open student modal if available
   uiManager.addListener(elements.studentRankingListContainer, 'click', (e) => {
-    const target = e.target.closest('[data-student-id]') || e.target.closest('.ranking-card');
-    if (!target) return;
-    const id = target.getAttribute('data-student-id');
-    if (id && typeof window !== 'undefined' && typeof window.openStudentModalById === 'function') {
-      e.preventDefault();
-      try {
-        window.openStudentModalById(id);
-      } catch {}
+    const studentCard = e.target.closest('[data-student-id]');
+    if (studentCard && typeof window !== 'undefined' && typeof window.openStudentModalById === 'function') {
+      const studentId = studentCard.getAttribute('data-student-id');
+      if (studentId) {
+        e.preventDefault();
+        try {
+          window.openStudentModalById(studentId);
+        } catch {}
+        return;
+      }
+    }
+
+    const groupCard = e.target.closest('[data-group-id]');
+    if (groupCard && typeof window !== 'undefined' && typeof window.openGroupModalById === 'function') {
+      const groupId = groupCard.getAttribute('data-group-id');
+      if (groupId) {
+        e.preventDefault();
+        try {
+          window.openGroupModalById(groupId);
+        } catch {}
+      }
     }
   });
 }
@@ -580,10 +593,12 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
             const membersLine = `মোট সদস্য: ${formatInt(g.groupSize)} · পরীক্ষায় অংশগ্রহন : ${formatInt(
               g.participantsCount
             )} · বাকি সদস্য: ${formatInt(g.remainingCount)}`;
+            const dataGroupAttr =
+              g.groupId && g.groupId !== '__none' ? ` data-group-id="${_escapeHtml(g.groupId)}"` : '';
 
             return `
         <article class="rk-card p-4 flex items-center gap-3 justify-between"
-          data-accent style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${palette.shadow};">
+          data-accent${dataGroupAttr} style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${palette.shadow};">
           
           <div class="flex items-start gap-3 min-w-0">
             <div class="rk-chip px-3 py-2 text-center shrink-0">
@@ -1037,3 +1052,4 @@ function _extractTimestamp(value) {
   }
   return null;
 }
+
