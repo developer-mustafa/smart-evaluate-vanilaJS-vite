@@ -719,12 +719,7 @@ function _formatDateTime(value) {
   try {
     const date = new Date(normalized);
     if (Number.isNaN(date.getTime())) return '-';
-    if (
-      date.getHours() === 0 &&
-      date.getMinutes() === 0 &&
-      date.getSeconds() === 0 &&
-      date.getMilliseconds() === 0
-    ) {
+    if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0) {
       date.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
     }
     return new Intl.DateTimeFormat('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
@@ -749,12 +744,7 @@ function _formatTimeOnly(value) {
   try {
     const date = new Date(normalized);
     if (Number.isNaN(date.getTime())) return '-';
-    if (
-      date.getHours() === 0 &&
-      date.getMinutes() === 0 &&
-      date.getSeconds() === 0 &&
-      date.getMilliseconds() === 0
-    ) {
+    if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0) {
       date.setHours(DEFAULT_ASSIGNMENT_HOUR, DEFAULT_ASSIGNMENT_MINUTE, DEFAULT_ASSIGNMENT_SECOND, 0);
     }
     return new Intl.DateTimeFormat('bn-BD', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
@@ -977,9 +967,7 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
     return { list: [], map: new Map() };
   }
 
-  const studentToGroup = new Map(
-    students.map((student) => [String(student.id), _normalizeGroupId(student.groupId)])
-  );
+  const studentToGroup = new Map(students.map((student) => [String(student.id), _normalizeGroupId(student.groupId)]));
   const groupSize = {};
   students.forEach((student) => {
     const gid = _normalizeGroupId(student.groupId);
@@ -1125,7 +1113,6 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
   let hasExplicitAssignmentMeta = false;
 
   const groupCandidateKeys = [
-
     'assignedGroupIds',
 
     'targetGroupIds',
@@ -1143,82 +1130,55 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
     'participantGroups',
 
     'assignmentTargets',
-
   ];
 
-
-
   const pushGroupCandidate = (candidate, fromExplicitSource = false, depth = 0) => {
-
     if (candidate === undefined || candidate === null || depth > 6) return;
 
     if (Array.isArray(candidate)) {
-
       candidate.forEach((value) => pushGroupCandidate(value, fromExplicitSource, depth + 1));
 
       return;
-
     }
 
     if (typeof candidate === 'object') {
-
       if ('id' in candidate || 'groupId' in candidate || 'value' in candidate) {
-
         pushGroupCandidate(candidate.id ?? candidate.groupId ?? candidate.value, fromExplicitSource, depth + 1);
 
         return;
-
       }
 
       if (candidate.group) {
-
         pushGroupCandidate(candidate.group.id ?? candidate.group.groupId, fromExplicitSource, depth + 1);
 
         return;
-
       }
 
       Object.values(candidate).forEach((value) => pushGroupCandidate(value, fromExplicitSource, depth + 1));
 
       return;
-
     }
 
     const normalized = typeof candidate === 'string' ? candidate.trim() : candidate;
 
     if (normalized !== undefined && normalized !== null && normalized !== '') {
-
       assignmentGroupIds.add(normalized);
 
       if (fromExplicitSource) hasExplicitAssignmentMeta = true;
-
     }
-
   };
 
-
-
   if (taskInfo) {
-
     if (taskInfo.assignToAllGroups || taskInfo.assignmentScope === 'all' || taskInfo.targetScope === 'all') {
-
       groups.forEach((group) => pushGroupCandidate(group.id, true));
-
     }
 
     groupCandidateKeys.forEach((key) => {
-
       if (Object.prototype.hasOwnProperty.call(taskInfo, key)) {
-
         pushGroupCandidate(taskInfo[key], true);
-
       }
-
     });
-
   }
-
-
 
   const evalsForTask = evaluations.filter((evaluation) => evaluation.taskId === latestTaskId);
 
@@ -1226,59 +1186,37 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
 
   let evaluatedStudents = 0;
 
-
-
   evalsForTask.forEach((evaluation) => {
-
     if (evaluation.groupId) {
-
       evaluatedGroupIds.add(evaluation.groupId);
 
       pushGroupCandidate(evaluation.groupId, false);
-
     }
 
     const participantCount = evaluation?.scores
-
       ? Object.keys(evaluation.scores).length
-
       : Number(evaluation.participantCount) || 0;
 
     evaluatedStudents += participantCount;
-
   });
 
-
-
   if (!assignmentGroupIds.size || !hasExplicitAssignmentMeta) {
-
     groups.forEach((group) => {
-
       if (group?.id !== undefined && group?.id !== null) assignmentGroupIds.add(group.id);
-
     });
-
   }
-
-
 
   let totalEligible = 0;
 
   assignmentGroupIds.forEach((groupId) => {
-
     totalEligible += groupStudentCounts.get(groupId) || 0;
-
   });
 
   if (totalEligible === 0) {
-
     totalEligible = students.length;
-
   }
 
   if (totalEligible === 0) totalEligible = evaluatedStudents;
-
-
 
   evaluatedStudents = Math.min(evaluatedStudents, totalEligible);
 
@@ -1286,15 +1224,11 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
 
   const completionPercent = totalEligible > 0 ? Math.min(100, (evaluatedStudents / totalEligible) * 100) : 0;
 
-
-
   const groupTotal = assignmentGroupIds.size || groups.length || evaluatedGroupIds.size;
 
   const groupsEvaluated = evaluatedGroupIds.size;
 
   const groupsPending = Math.max((groupTotal || 0) - groupsEvaluated, 0);
-
-
 
   return {
     taskId: latestTaskId,
@@ -1309,7 +1243,6 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
     groupsEvaluated,
     groupsPending,
   };
-
 }
 
 function _calculateAssignmentAverageStats(tasks = [], evaluations = []) {
@@ -1457,9 +1390,7 @@ function _renderStats(stats) {
     latestTimeLabel = latestSummary.scheduledTimeDisplay;
   }
   const latestComposite =
-    latestDateLabel === '-' && latestTimeLabel === '-'
-      ? '-'
-      : `: ${latestDateLabel} | সময়: ${latestTimeLabel}`;
+    latestDateLabel === '-' && latestTimeLabel === '-' ? '-' : `: ${latestDateLabel} | সময়: ${latestTimeLabel}`;
 
   if (elements.latestTaskTitle) {
     const title = latestSummary?.taskTitle || 'সর্বশেষ এসাইনমেন্ট';
@@ -1871,7 +1802,7 @@ function _buildRankCard(data, rank) {
   const evaluated = formatInt(data.evaluatedMembers || 0);
   const tasks = formatInt(data.taskCount || 0);
 
-  const summaryLine = `মোট সদস্য: ${members} · মূল্যায়িত: ${evaluated} · টাস্ক: ${tasks}`;
+  const summaryLine = `মোট সদস্য: ${members} · মূল্যায়িত: ${evaluated} `;
   const groupId = data.group?.id || '';
 
   return `
@@ -1893,11 +1824,11 @@ function _buildRankCard(data, rank) {
         <div class="grid grid-cols-2 gap-2 text-[12px] font-semibold">
           <span class="inline-flex items-center justify-center rounded-lg bg-slate-100 px-2 py-1 text-slate-700
                        dark:bg-slate-800 dark:text-slate-100">
-            Avg: ${avgPct}%
+            গড়: ${avgPct}%
           </span>
           <span class="inline-flex items-center justify-center rounded-lg bg-slate-900/5 px-2 py-1 text-slate-700
                        dark:bg-white/10 dark:text-slate-100">
-            Eval: ${evals}
+            এসাইনমেন্ট অংশগ্রহন: ${evals}
           </span>
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-300 truncate" title="${summaryLine}">
@@ -1913,7 +1844,6 @@ function _buildRankCard(data, rank) {
   </article>`;
 }
 
-
 /** UPDATED: Renders group ranking list using new Rank Card */
 function _renderGroupsRanking(groupData, rankingMeta = null) {
   if (!elements.groupsRankingList) return;
@@ -1925,8 +1855,7 @@ function _renderGroupsRanking(groupData, rankingMeta = null) {
     return;
   }
 
-  const normalizedRankingMap =
-    rankingMeta && rankingMeta.map instanceof Map ? rankingMeta.map : new Map();
+  const normalizedRankingMap = rankingMeta && rankingMeta.map instanceof Map ? rankingMeta.map : new Map();
   const normalizeId = (value) => _normalizeGroupId(value);
 
   const sortedGroups = [...evaluatedGroups].sort((a, b) => {

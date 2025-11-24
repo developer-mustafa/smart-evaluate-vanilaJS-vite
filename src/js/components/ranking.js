@@ -598,7 +598,9 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
 
             return `
         <article class="rk-card p-4 flex items-center gap-3 justify-between"
-          data-accent${dataGroupAttr} style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${palette.shadow};">
+          data-accent${dataGroupAttr} style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${
+              palette.shadow
+            };">
           
           <div class="flex items-start gap-3 min-w-0">
             <div class="rk-chip px-3 py-2 text-center shrink-0">
@@ -608,8 +610,8 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
             <div class="min-w-0">
               <h4 class="font-semibold truncate" title="${_formatLabel(g.groupName)}">${_formatLabel(g.groupName)}</h4>
               <div class="mt-1 grid grid-cols-2 gap-2 text-[12px] font-semibold">
-                <div class="rk-chip px-2 py-1">Avg: ${avgPct}%</div>
-                <div class="rk-chip px-2 py-1">Eval: ${evals}</div>
+                <div class="rk-chip px-2 py-1">গড়: ${avgPct}%</div>
+                <div class="rk-chip px-2 py-1">এসাইনমেন্ট অংশগ্রহন: ${evals}</div>
               </div>
               <p class="rk-micro mt-2 text-gray-600 dark:text-gray-300 truncate" title="${membersLine}">${membersLine}</p>
             </div>
@@ -1052,4 +1054,3 @@ function _extractTimestamp(value) {
   }
   return null;
 }
-

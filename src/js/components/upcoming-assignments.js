@@ -130,9 +130,11 @@ function _ensureTabStyles() {
   style.textContent = `
   .ua-tabbar{
     display:flex;
-    gap:.5rem;
-    padding:.4rem;
-    border-radius:999px;
+    flex-wrap:wrap;
+    gap:.65rem;
+    justify-content:center;
+    padding:.5rem;
+    border-radius:1rem;
     border:1px solid rgba(255,255,255,.12);
     background:rgba(15,23,42,.85);
     box-shadow:inset 0 0 0 1px rgba(15,23,42,.4), 0 20px 40px rgba(2,6,23,.45);
@@ -145,15 +147,15 @@ function _ensureTabStyles() {
     --ua-tab-active-bg:linear-gradient(120deg,#4c6ef5,#2563eb);
     --ua-tab-active-shadow:rgba(37,99,235,.35);
     --ua-tab-desc:rgba(71,85,105,.8);
-    flex:1 1 0;
-    min-width:0;
-    height:52px;
-    justify-content:center;
+    flex:1 1 calc(50% - .65rem);
+    min-width:140px;
+    max-width:100%;
+    min-height:52px;
+    justify-content:space-between;
     display:flex;
     align-items:center;
-    justify-content:space-between;
     gap:.65rem;
-    padding:.35rem 1.25rem;
+    padding:.45rem 1.05rem;
     border-radius:999px;
     border:1px solid var(--ua-tab-border);
     background:var(--ua-tab-bg);
@@ -181,24 +183,45 @@ function _ensureTabStyles() {
     font-size:.95rem;
     letter-spacing:.02em;
     font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .ua-tab-count{
-    font-size:.85rem;
+    font-size:1rem;
     font-weight:700;
-    padding:.15rem .55rem;
+    padding:.22rem .65rem;
     border-radius:999px;
     background:rgba(15,23,42,.12);
   }
   .ua-tab-desc{ display:none; }
+  @media (max-width:640px){
+    .ua-tab{
+      flex:1 1 calc(50% - .65rem);
+      min-width:0;
+      padding:.55rem .85rem;
+      gap:.55rem;
+      justify-content:center;
+    }
+    .ua-tab-label{
+      font-size:.9rem;
+      white-space:normal;
+      line-height:1.25;
+      text-align:center;
+    }
+    .ua-tab-count{
+      font-size:.8rem;
+    }
+  }
   @media (min-width:768px){
-    .ua-tab{ min-width: 220px; }
+    .ua-tab{
+      flex:1 1 0;
+      min-width: 220px;
+    }
   }
   @media (min-width:1024px){
     .ua-tabbar{ justify-content:space-between; }
-    .ua-tab{
-      flex:1 1 0;
-      min-width:0;
-    }
+    .ua-tab{ min-width:0; }
   }
   .dark .ua-tab{
     --ua-tab-bg:rgba(15,23,42,.9);
@@ -406,6 +429,18 @@ function _diffParts(targetDate) {
   const t = targetDate?.getTime?.() ?? NaN;
   if (Number.isNaN(t)) return { valid: false };
 
+  // Calendar-day delta for precise wording
+  let dayDiff = 0;
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetMid = new Date(targetDate);
+    targetMid.setHours(0, 0, 0, 0);
+    dayDiff = Math.round((targetMid.getTime() - today.getTime()) / 86400000);
+  } catch {
+    dayDiff = 0;
+  }
+
   let delta = t - now;
   const past = delta <= 0;
   if (past) delta = Math.abs(delta);
@@ -419,34 +454,43 @@ function _diffParts(targetDate) {
   const remainingDays = past ? 0 : Math.ceil((t - now) / 86400000);
   const remainingMs = past ? Number.POSITIVE_INFINITY : t - now;
 
-  return { valid: true, past, days, hours, minutes, seconds, remainingDays, remainingMs };
+  return { valid: true, past, days, hours, minutes, seconds, remainingDays, remainingMs, dayDiff };
 }
 
 function _countdownLabel(parts, isStart = true) {
-  if (!parts.valid) return 'সময় অকার্যকর';
-  const D = _bn(parts.days),
-    H = _bn(parts.hours),
-    M = _bn(parts.minutes),
-    S = _bn(parts.seconds);
-  if (!parts.past) {
-    return isStart
-      ? `শুরু হতে বাকি: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড`
-      : `শেষ হতে বাকি: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড`;
+  if (!parts.valid) return 'সময় মেলেনি';
+
+  const D = _bn(parts.days);
+  const H = _bn(parts.hours);
+  const M = _bn(parts.minutes);
+  const S = _bn(parts.seconds);
+
+  let prefix = 'শুরু হতে বাকি';
+  if (parts.past) {
+    prefix = parts.dayDiff === -1 ? 'গতকাল শেষ হয়েছে' : 'শেষ হয়েছে';
+  } else {
+    if (parts.dayDiff === 0) prefix = 'আজ পরীক্ষা';
+    else if (parts.dayDiff === 1) prefix = 'আগামীকাল পরীক্ষা';
+    else if (parts.dayDiff === 2) prefix = 'পরশু পরীক্ষা';
   }
-  return isStart
-    ? `শেষ হয়েছে গত: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড আগে`
-    : `শেষ হয়েছে: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড আগে`;
+
+  const suffix = parts.past ? 'আগে' : 'পর';
+  const segments = [];
+  if (parts.days > 0) segments.push(`${D} দিন`);
+  segments.push(`${H} ঘন্টা`, `${M} মিনিট`, `${S} সেকেন্ড`);
+  return `${prefix}: ${segments.join(' ')} ${suffix}`;
 }
 
 function _countdownClass(parts) {
   if (!parts.valid) return 'cd-pill';
-  const d = parts.remainingDays;
-  if (d > 14) return 'cd-pill cd-green';
-  if (d > 7) return 'cd-pill cd-amber';
-  if (d >= 4) return 'cd-pill cd-red';
-  return 'cd-pill cd-red cd-blink'; // 0–3 days → blink
-}
+  if (parts.past) return 'cd-pill cd-red'; // past due: no blinking
 
+  const d = parts.remainingDays;
+  if (d > 10) return 'cd-pill cd-green';
+  if (d >= 6) return 'cd-pill cd-amber';
+  if (d > 3) return 'cd-pill cd-red';
+  return 'cd-pill cd-red cd-blink'; // 0-3 days -> blink
+}
 /* =========================
    Render Pipeline
 ========================= */

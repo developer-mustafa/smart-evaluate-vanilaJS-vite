@@ -561,83 +561,57 @@
             </div>
           </div>
 
-          <div id="page-all-students" class="page space-y-4 hidden">
-            <h2 class="text-2xl font-bold mb-4">শিক্ষার্থী তথ্য</h2>
-            <div class="card">
+                    <div id="page-all-students" class="page space-y-4 hidden">
+            <h2 class="text-2xl font-bold mb-4">Students Directory</h2>
+            <div class="card overflow-hidden">
               <div class="card-body space-y-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div class="flex items-start gap-3">
-                    <span
-                      class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-inner dark:bg-blue-500/20 dark:text-blue-200"
-                    >
-                      <i class="fas fa-user-group text-lg"></i>
-                    </span>
-                    <div class="space-y-1">
-                      <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">শিক্ষার্থী ফিল্টার</h3>
-                      <p class="text-sm text-gray-500 dark:text-gray-400">
-                        গ্রুপ, বিভাগ বা নাম দিয়ে দ্রুত শিক্ষার্থী খুঁজে নিন।
-                      </p>
-                    </div>
+                  <div class="space-y-1">
+                    <p class="text-xs font-semibold uppercase tracking-[0.4em] text-blue-500 dark:text-blue-300">Filter Panel</p>
+                    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Minimal Control Hub</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Group, stream and quick search controls packed inside a glassy row.</p>
                   </div>
-                  <div
-                    class="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"
-                  >
-                    <i class="fas fa-bolt"></i>
-                    <span>লাইভ আপডেট</span>
-                  </div>
+                  <span class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-gray-700 shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-gray-100">
+                    <i class="fas fa-sparkles text-blue-500"></i>
+                    LIVE
+                  </span>
                 </div>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                    <span>গ্রুপ নির্বাচন</span>
-                    <div class="relative">
-                      <span
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
-                      >
+                  <label class="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
+                    <span>Group</span>
+                    <div class="relative flex items-center rounded-[1.5rem] border border-gray-200/70 bg-white/80 p-3 text-sm shadow-[0_25px_70px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/15 dark:bg-slate-900/70">
+                      <span class="pointer-events-none mr-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:bg-blue-400/20 dark:text-blue-200">
                         <i class="fas fa-layer-group"></i>
                       </span>
-                      <select id="cardsFilterGroup" class="form-select pl-10" aria-label="Filter by group">
-                        <option value="all">সকল গ্রুপ</option>
+                      <select id="cardsFilterGroup" class="w-full bg-transparent text-gray-900 focus:outline-none dark:text-gray-100" aria-label="Filter by group">
+                        <option value="all">All groups</option>
                       </select>
                     </div>
                   </label>
-                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                    <span>অ্যাকাডেমিক গ্রুপ</span>
-                    <div class="relative">
-                      <span
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
-                      >
+                  <label class="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
+                    <span>Stream</span>
+                    <div class="relative flex items-center rounded-[1.5rem] border border-gray-200/70 bg-white/80 p-3 text-sm shadow-[0_25px_70px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/15 dark:bg-slate-900/70">
+                      <span class="pointer-events-none mr-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:bg-emerald-400/20 dark:text-emerald-200">
                         <i class="fas fa-graduation-cap"></i>
                       </span>
-                      <select
-                        id="cardsFilterAcademicGroup"
-                        class="form-select pl-10"
-                        aria-label="Filter by academic group"
-                      >
-                        <option value="all">সকল একাডেমিক গ্রুপ</option>
+                      <select id="cardsFilterAcademicGroup" class="w-full bg-transparent text-gray-900 focus:outline-none dark:text-gray-100" aria-label="Filter by academic group">
+                        <option value="all">All streams</option>
                       </select>
                     </div>
                   </label>
-                  <label class="flex flex-col gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                    <span>নাম বা রোল অনুসন্ধান</span>
-                    <div class="relative">
-                      <span
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300"
-                      >
+                  <label class="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
+                    <span>Search</span>
+                    <div class="relative flex items-center rounded-[1.5rem] border border-gray-200/70 bg-white/80 p-3 text-sm shadow-[0_25px_70px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/15 dark:bg-slate-900/70">
+                      <span class="pointer-events-none mr-3 flex h-10 w-10 items-center justify-center rounded-xl bg-pink-500/15 text-pink-600 dark:bg-pink-400/20 dark:text-pink-200">
                         <i class="fas fa-magnifying-glass"></i>
                       </span>
-                      <input
-                        id="allStudentsSearchInput"
-                        type="search"
-                        placeholder="যেমন: রফিক, বিজ্ঞান, ১০১"
-                        class="form-input pl-10"
-                        aria-label="Search students"
-                      />
+                      <input id="allStudentsSearchInput" type="search" placeholder="Name, roll or contact..." class="w-full bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder-gray-500" aria-label="Search students" />
                     </div>
                   </label>
                 </div>
               </div>
             </div>
-            <div id="allStudentsCards" class="">
+          <div id="allStudentsCards" class="">
               <div class="placeholder-content col-span-full">
                 <i class="fas fa-spinner fa-spin mr-2"></i>
                 কার্ড লোড হচ্ছে...
@@ -1005,14 +979,12 @@
             </div>
           </div>
 
-          <div id="page-upcoming-assignments" class="page hidden space-y-6">
+          <div id="page-upcoming-assignments" class="page hidden space-y-2">
             <div class="flex flex-col gap-3">
               <div>
 
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">আপকামিং এসাইনমেন্ট</h2>
-                <p class="text-sm text-gray-600 dark:text-gray-300 max-w-3xl">
-               সামনে কোন এসাইনমেন্ট নির্ধারিত, কোনটি বর্তমানে চলমান এবং কোনটি সম্পন্ন হয়েছে — সব এক নজরে দেখে নাও। যথাযথ প্রস্তুতির জন্য প্রতিটি এসাইনমেন্টের আগে সংশ্লিষ্ট প্রি-রিকোয়ারমেন্ট নোট ভালোভাবে পড়ে বুঝে নাও।
-                </p>
+              
               </div>
               <div class="hidden">
                 <label for="assignmentStatusFilter" class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1032,20 +1004,7 @@
               aria-label="Assignment summary tabs"
             ></section>
             <div class="card">
-              <div class="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <h3 class="text-lg font-semibold">এসাইনমেন্ট তালিকা</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    নাম, স্টেটাস, অংশগ্রহণকারী ও প্রি-রিকোয়ারমেন্ট এক জায়গায় দেখুন।
-                  </p>
-                </div>
-                <span
-                  class="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-100 px-3 py-1 text-xs font-semibold"
-                >
-                  <i class="fas fa-info-circle"></i>
-                  তথ্য স্বয়ংক্রিয়ভাবে টাস্ক ব্যবস্থাপনা থেকে আপডেট হয়।
-                </span>
-              </div>
+              
               <div id="upcomingAssignmentsList" class="card-body space-y-4"></div>
             </div>
           </div>
