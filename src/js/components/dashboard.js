@@ -267,32 +267,13 @@ function _getDashboardHTMLStructure() {
 
             <!-- Col 2: Progress bar -->
             <div>
-              <div class="relative h-8 w-full overflow-hidden rounded-full
-                          border border-blue-300/70
-                          bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
-                          shadow-[inset_0_3px_6px_rgba(255,255,255,0.9),inset_0_-4px_8px_rgba(0,0,0,0.08)]
-                          dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/20 dark:to-slate-900
-                          dark:shadow-[inset_0_3px_6px_rgba(255,255,255,0.06),inset_0_-4px_8px_rgba(0,0,0,0.45)]">
-
-                <!-- Fill -->
-                <div id="progressBar"
-                     class="relative h-full w-[75%] md:w-[70%] rounded-full
-                            bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
-                            shadow-[inset_0_2px_3px_rgba(255,255,255,0.65),0_4px_10px_rgba(59,130,246,0.35),0_8px_18px_rgba(16,185,129,0.25)]
-                            transition-all duration-700 ease-out">
-                  <span class="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full
-                               bg-white/25 dark:bg-white/10"></span>
-                  <span class="pointer-events-none absolute inset-y-0 left-0 w-[40%]
-                               bg-gradient-to-r from-white/15 to-transparent"></span>
-                  <span class="pointer-events-none absolute right-0 top-0 h-full w-6
-                               bg-gradient-to-l from-white/35 to-transparent dark:from-white/15"></span>
-                  <span id="progressBarLabel"
-                        class="absolute inset-y-0 right-2 flex items-center
-                               text-[0.85rem] sm:text-[0.95rem] font-extrabold tracking-wide
-                               text-slate-900 dark:text-white drop-shadow">75%</span>
-                  <span class="pointer-events-none absolute inset-y-0 -left-10 w-10 skew-x-12
-                               bg-white/20 blur-[2px] animate-[shine_2.4s_linear_infinite]"></span>
+              <div class="battery">
+                <div class="battery-shell">
+                  <div id="progressBar" class="battery-liquid">
+                    <span id="progressBarLabel" class="battery-label">75%</span>
+                  </div>
                 </div>
+                <div class="battery-cap"></div>
               </div>
             </div>
           </div>
@@ -1450,11 +1431,29 @@ function _renderStats(stats) {
   }
 
   if (elements.progressBar) {
+    const bar = elements.progressBar;
     const barPalette = _getScorePalette(latestCompletion);
-    elements.progressBar.style.width = `${latestCompletion}%`;
-    elements.progressBar.style.background = `linear-gradient(90deg, ${barPalette.solid}, ${barPalette.solid})`;
-    elements.progressBar.style.boxShadow = `0 8px 20px ${barPalette.shadow}`;
-    elements.progressBar.className = 'relative h-full rounded-full shadow-lg transition-all duration-1000 ease-out';
+    const target = Math.max(0, Math.min(100, latestCompletion));
+    const prev = Number(bar.dataset.prevWidth || 0);
+
+    // keep original layout classes; only add animation helpers
+    bar.classList.add('battery-liquid', 'shadow-lg');
+    bar.style.setProperty('--fill', barPalette.solid);
+    bar.style.boxShadow = `0 8px 20px ${barPalette.shadow}`;
+    bar.style.transition = 'width 900ms cubic-bezier(0.4, 0, 0.2, 1)';
+
+    if (prev !== target) {
+      bar.style.width = `${prev}%`;
+      // force a reflow so the transition runs when width updates
+      void bar.offsetWidth;
+      requestAnimationFrame(() => {
+        bar.style.width = `${target}%`;
+      });
+    } else {
+      bar.style.width = `${target}%`;
+    }
+
+    bar.dataset.prevWidth = String(target);
   }
   if (elements.progressBarLabel) {
     const labelValue = `${formatNum(latestCompletion, 0)}%`;

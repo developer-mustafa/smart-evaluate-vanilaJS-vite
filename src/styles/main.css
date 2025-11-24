@@ -751,6 +751,99 @@ details[open] .prereq-summary-icon {
   animation: shine 2s infinite linear;
 }
 
+@keyframes battery-wave {
+  0% {
+    transform: translateX(-20%) translateY(0) skewX(-8deg);
+  }
+  50% {
+    transform: translateX(-10%) translateY(-4%) skewX(-8deg);
+  }
+  100% {
+    transform: translateX(0%) translateY(0) skewX(-8deg);
+  }
+}
+
+.battery {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.35));
+}
+.battery-cap {
+  width: 10px;
+  height: 26px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+.battery-shell {
+  position: relative;
+  flex: 1 1 auto;
+  height: 36px;
+  padding: 3px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(148, 163, 184, 0.15));
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.75),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.25),
+    0 10px 24px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+.dark .battery-shell {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(55, 65, 81, 0.3));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.45),
+    0 12px 28px rgba(0, 0, 0, 0.55);
+}
+.battery-liquid {
+  --fill: #22c55e;
+  position: relative;
+  height: 100%;
+  width: 0;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08)),
+    var(--fill);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    0 6px 16px rgba(0, 0, 0, 0.25),
+    0 10px 24px var(--fill, #22c55e);
+  overflow: hidden;
+  transition: width 900ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+.battery-liquid::before,
+.battery-liquid::after {
+  content: "";
+  position: absolute;
+  inset: -20% -40% 0 -40%;
+  background: radial-gradient(60% 40% at 50% 30%, rgba(255, 255, 255, 0.45) 0%, transparent 65%);
+  opacity: 0.32;
+  animation: battery-wave 3.2s linear infinite;
+  mix-blend-mode: screen;
+}
+.battery-liquid::after {
+  inset: -10% -30% 0 -30%;
+  opacity: 0.28;
+  animation-duration: 4.6s;
+  animation-direction: reverse;
+}
+.battery-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
 @keyframes rotate {
   from {
     transform: rotate(0deg);
