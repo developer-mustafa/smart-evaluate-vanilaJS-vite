@@ -273,7 +273,7 @@ function _getDashboardHTMLStructure() {
                     <span id="progressBarLabel" class="battery-label">75%</span>
                   </div>
                 </div>
-                <div class="battery-cap"></div>
+               
               </div>
             </div>
           </div>
@@ -1594,8 +1594,8 @@ function _renderTopGroups(groupData) {
   ];
 
   const nameFontConfig = [
-    { max: 34, min: 18 },
-    { max: 30, min: 16 },
+    { max: 34, min: 16 }, // allow first card to shrink further to avoid overflow
+    { max: 30, min: 14 }, // allow second card to shrink more on laptop widths
     { max: 28, min: 15 },
   ];
 
@@ -1805,11 +1805,11 @@ function _buildRankCard(data, rank) {
   const groupId = data.group?.id || '';
 
   return `
-  <article class="relative flex items-center justify-between gap-4 rounded-2xl border border-slate-200/70
+  <article class="relative flex items-center justify-between gap-4 rounded-2xl border border-transparent
                   bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg
-                  dark:border-slate-700/70 dark:bg-slate-900/70 cursor-pointer"
+                  dark:border-transparent dark:bg-slate-900/70 cursor-pointer"
            data-group-id="${groupId}"
-           style="box-shadow:0 10px 24px ${palette.shadow}; border-color:${palette.solid}30;">
+           style="box-shadow:0 10px 24px ${palette.shadow}; border:1px solid ${palette.solid}55;">
     <div class="flex items-start gap-3 min-w-0">
       <div class="flex flex-col items-center justify-center rounded-xl bg-slate-900/5 px-3 py-2 text-center
                   text-slate-700 shadow-sm dark:bg-white/10 dark:text-slate-100">

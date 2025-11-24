@@ -25,6 +25,7 @@ import * as exportModule from './components/export.js';
 import * as policy from './components/policy.js';
 import * as upcomingAssignments from './components/upcoming-assignments.js';
 import * as statistics from './components/statistics.js';
+import * as studentFilter from './components/student-filter.js';
 
 /**
  * Main application class. Acts as the central controller/coordinator.
@@ -49,7 +50,9 @@ class SmartGroupEvaluator {
       'student-ranking',
       'group-analysis',
       'graph-analysis',
+      'graph-analysis',
       'statistics',
+      'student-filter',
     ];
 
     console.log('SmartGroupEvaluator app instantiated.');
@@ -111,6 +114,7 @@ class SmartGroupEvaluator {
       this.components.policy = policy.init(dependencies);
       this.components.upcomingAssignments = upcomingAssignments.init(dependencies);
       this.components.statistics = statistics.init(dependencies);
+      this.components.studentFilter = studentFilter.init(dependencies);
 
       console.log('👍 All components initialized.');
     } catch (error) {
@@ -283,6 +287,8 @@ class SmartGroupEvaluator {
         return 'policy';
       case 'upcoming-assignments':
         return 'upcomingAssignments';
+      case 'student-filter':
+        return 'studentFilter';
       // ---------------------
       default:
         return pageId; // Assumes 'dashboard', 'groups', 'members', 'tasks', 'evaluation', 'statistics' match keys

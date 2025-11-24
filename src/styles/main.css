@@ -1006,6 +1006,8 @@ details[open] .prereq-content {
   word-break: break-word;
   white-space: normal;
   line-height: 1.3;
+  width: 100%;
+  max-width: 100%;
 }
 
 .elite-latest-metrics {

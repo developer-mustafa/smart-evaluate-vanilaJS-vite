@@ -297,6 +297,14 @@
             <i class="fas fa-user-graduate w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী তথ্য</span>
           </button>
+
+          <button
+            data-page="student-filter"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          >
+            <i class="fas fa-filter w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
+            <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী ফিল্টার</span>
+          </button>
         
           <button
             data-page="group-analysis"
@@ -615,6 +623,16 @@
               <div class="placeholder-content col-span-full">
                 <i class="fas fa-spinner fa-spin mr-2"></i>
                 কার্ড লোড হচ্ছে...
+              </div>
+            </div>
+          </div>
+
+          <div id="page-student-filter" class="page space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">শিক্ষার্থী ফিল্টার</h2>
+            <div id="studentFilterContainer">
+               <div class="placeholder-content">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                ফিল্টার লোড হচ্ছে...
               </div>
             </div>
           </div>
