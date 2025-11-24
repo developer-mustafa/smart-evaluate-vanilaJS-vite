@@ -96,7 +96,7 @@ export function render() {
           <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">গ্রুপ</label>
             <div class="relative">
-               <select id="sfGroup" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+               <select id="sfGroup" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                 <option value="all">সকল গ্রুপ</option>
               </select>
             </div>
@@ -106,7 +106,7 @@ export function render() {
           <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">একাডেমিক গ্রুপ</label>
             <div class="relative">
-               <select id="sfAcademic" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+               <select id="sfAcademic" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
                 <option value="all">সকল</option>
               </select>
             </div>
@@ -116,7 +116,7 @@ export function render() {
           <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">সেশন</label>
             <div class="relative">
-               <select id="sfSession" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+               <select id="sfSession" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
                 <option value="all">সকল</option>
               </select>
             </div>
@@ -126,7 +126,7 @@ export function render() {
           <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">লিঙ্গ</label>
             <div class="relative">
-               <select id="sfGender" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all">
+               <select id="sfGender" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all">
                 <option value="all">সকল</option>
                 <option value="ছেলে">ছেলে</option>
                 <option value="মেয়ে">মেয়ে</option>
@@ -138,7 +138,7 @@ export function render() {
            <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">দায়িত্ব</label>
             <div class="relative">
-               <select id="sfRole" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+               <select id="sfRole" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
                 <option value="all">সকল</option>
                 <option value="team-leader">টিম লিডার</option>
                 <option value="time-keeper">টাইম কিপার</option>
@@ -153,7 +153,7 @@ export function render() {
           <div class="relative">
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">এসাইনমেন্ট</label>
              <div class="relative">
-               <select id="sfAssignment" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all">
+               <select id="sfAssignment" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all">
                 <option value="all">গড় ফলাফল (সকল)</option>
               </select>
             </div>
@@ -483,7 +483,7 @@ function _applyFiltersAndRender() {
 
     filtered.forEach(s => {
       const tr = document.createElement('tr');
-      tr.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors';
+      tr.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer';
       
       const groupName = groupMap.get(s.groupId)?.name || '-';
       
@@ -537,6 +537,16 @@ function _applyFiltersAndRender() {
         <td class="px-6 py-3 text-center font-medium">${avgDisplay}</td>
         ${activeFilters.assignment !== 'all' ? `<td class="px-6 py-3 text-center ${specificClass}">${specificDisplay}</td>` : ''}
       `;
+      
+      // Add click event to open student details modal
+      tr.addEventListener('click', () => {
+        if (typeof window !== 'undefined' && typeof window.openStudentModalById === 'function') {
+          window.openStudentModalById(s.id);
+        } else {
+          console.warn('Student modal function not available');
+        }
+      });
+      
       tbody.appendChild(tr);
     });
   }
