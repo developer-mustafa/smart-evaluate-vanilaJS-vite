@@ -22,8 +22,8 @@ const EXTRA_FILTERS = [
   { id: 'topic_none', text: 'এখনো এই টাস্ক পারিনা (-৫)', type: 'topic' },
   { id: 'topic_understood', text: 'শুধু বুঝেছি (+৫)', type: 'topic' },
   { id: 'topic_learned_well', text: 'ভালো করে শিখেছি (+১০)', type: 'topic' },
-  { id: 'homework_done', text: 'সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি (+৫)', type: 'option' },
-  { id: 'attendance_regular', text: 'সাপ্তাহিক নিয়মিত উপস্থিতি (+১০)', type: 'option' },
+  { id: 'homework_done', text: 'সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি (+৫)', type: 'option' },
+  { id: 'attendance_regular', text: 'সাপ্তাহিক নিয়মিত উপস্থিতি (+১০)', type: 'option' },
 ];
 
 export function init(dependencies) {
@@ -51,8 +51,10 @@ async function _ensureDataLoaded() {
           dataService.loadTasks()
       ]);
       console.log('✅ Student Filter data loaded.');
-      // Re-render to show data that might have been missing
-      _applyFiltersAndRender();
+      // Re-render to show data that might have been missing (only if page is rendered)
+      if (elements.container) {
+        _applyFiltersAndRender();
+      }
   } catch (error) {
       console.error('Failed to load data for Student Filter:', error);
   }
@@ -127,7 +129,7 @@ export function render() {
                <select id="sfGender" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all">
                 <option value="all">সকল</option>
                 <option value="ছেলে">ছেলে</option>
-                <option value="মেয়ে">মেয়ে</option>
+                <option value="মেয়ে">মেয়ে</option>
               </select>
             </div>
           </div>
@@ -152,7 +154,7 @@ export function render() {
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">এসাইনমেন্ট</label>
              <div class="relative">
                <select id="sfAssignment" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all">
-                <option value="all">গড় ফলাফল (সকল)</option>
+                <option value="all">গড় ফলাফল (সকল)</option>
               </select>
             </div>
           </div>
@@ -160,7 +162,7 @@ export function render() {
 
         <!-- Extra Filters (Chips Layout) -->
         <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">অতিরিক্ত মূল্যায়ন ফিল্টার</label>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">অতিরিক্ত মূল্যায়ন ফিল্টার</label>
           <div class="flex flex-wrap gap-2">
             ${EXTRA_FILTERS.map(f => `
               <label class="group relative cursor-pointer select-none">
@@ -173,13 +175,19 @@ export function render() {
              <label class="group relative cursor-pointer select-none">
                 <input type="checkbox" value="unevaluated" class="peer sr-only sf-extra-check">
                 <div class="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium transition-all peer-checked:bg-amber-50 peer-checked:text-amber-600 peer-checked:border-amber-200 dark:peer-checked:bg-amber-900/30 dark:peer-checked:text-amber-300 dark:peer-checked:border-amber-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  অমূল্যায়িত শিক্ষার্থী
+                  অমূল্যায়িত শিক্ষার্থী
                 </div>
               </label>
-               <label class="group relative cursor-pointer select-none">
-                <input type="checkbox" value="absent" class="peer sr-only sf-extra-check">
+              <label class="group relative cursor-pointer select-none">
+                <input type="checkbox" value="absent_task" class="peer sr-only sf-extra-check">
                 <div class="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium transition-all peer-checked:bg-rose-50 peer-checked:text-rose-600 peer-checked:border-rose-200 dark:peer-checked:bg-rose-900/30 dark:peer-checked:text-rose-300 dark:peer-checked:border-rose-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  অনুপস্থিত শিক্ষার্থী
+                  টাস্ক নম্বর নেই
+                </div>
+              </label>
+              <label class="group relative cursor-pointer select-none">
+                <input type="checkbox" value="absent_mcq" class="peer sr-only sf-extra-check">
+                <div class="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium transition-all peer-checked:bg-rose-50 peer-checked:text-rose-600 peer-checked:border-rose-200 dark:peer-checked:bg-rose-900/30 dark:peer-checked:text-rose-300 dark:peer-checked:border-rose-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  MCQ নম্বর নেই
                 </div>
               </label>
           </div>
@@ -207,9 +215,9 @@ export function render() {
                 <th class="px-6 py-3 font-semibold tracking-wider">গ্রুপ</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">একাডেমিক গ্রুপ</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">সেশন</th>
-                <th class="px-6 py-3 font-semibold tracking-wider">দায়িত্ব</th>
+                <th class="px-6 py-3 font-semibold tracking-wider">দায়িত্ব</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">যোগাযোগ</th>
-                <th class="px-6 py-3 text-center font-semibold tracking-wider" id="sfScoreHeader">গড় ফলাফল</th>
+                <th class="px-6 py-3 text-center font-semibold tracking-wider" id="sfScoreHeader">গড় ফলাফল</th>
               </tr>
             </thead>
             <tbody id="sfTableBody" class="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -221,7 +229,7 @@ export function render() {
           <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-full mb-3">
              <i class="fas fa-search text-3xl opacity-50"></i>
           </div>
-          <p class="text-lg font-medium">কোনো শিক্ষার্থী পাওয়া যায়নি</p>
+          <p class="text-lg font-medium">কোনো শিক্ষার্থী পাওয়া যায়নি</p>
           <p class="text-sm opacity-75">ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন</p>
         </div>
       </div>
@@ -365,7 +373,14 @@ function _applyFiltersAndRender() {
     if (activeFilters.group !== 'all' && s.groupId !== activeFilters.group) return false;
     if (activeFilters.academicGroup !== 'all' && (s.academicGroup || '').trim() !== activeFilters.academicGroup) return false;
     if (activeFilters.session !== 'all' && s.session !== activeFilters.session) return false;
-    if (activeFilters.gender !== 'all' && (s.gender || '').toLowerCase() !== activeFilters.gender) return false;
+    
+    // Gender filter with Unicode normalization for Bengali text
+    if (activeFilters.gender !== 'all') {
+      const studentGender = (s.gender || '').trim().normalize('NFC');
+      const filterGender = activeFilters.gender.trim().normalize('NFC');
+      if (studentGender !== filterGender) return false;
+    }
+    
     if (activeFilters.role !== 'all' && s.role !== activeFilters.role) return false;
 
     // Flatten evaluations for this student
@@ -386,9 +401,30 @@ function _applyFiltersAndRender() {
       for (const filterId of activeFilters.extra) {
          if (filterId === 'unevaluated') {
              if (studentEvaluations.length > 0) return false;
-         } else if (filterId === 'absent') {
-             // Placeholder for absent logic
-             return false; 
+         } else if (filterId === 'absent_task') {
+             // Task Absent: Missing taskScore
+             if (activeFilters.assignment !== 'all') {
+                 const assignEval = studentEvaluations.find(e => e.taskId === activeFilters.assignment);
+                 if (!assignEval || !assignEval.taskScore) return true; 
+                 return false;
+             } else {
+                 if (studentEvaluations.length === 0) return true;
+                 const hasMissing = studentEvaluations.some(e => !e.taskScore);
+                 if (hasMissing) return true;
+                 return false;
+             }
+         } else if (filterId === 'absent_mcq') {
+             // MCQ Absent: Missing mcqScore
+             if (activeFilters.assignment !== 'all') {
+                 const assignEval = studentEvaluations.find(e => e.taskId === activeFilters.assignment);
+                 if (!assignEval || !assignEval.mcqScore) return true; 
+                 return false;
+             } else {
+                 if (studentEvaluations.length === 0) return true;
+                 const hasMissing = studentEvaluations.some(e => !e.mcqScore);
+                 if (hasMissing) return true;
+                 return false;
+             }
          } else {
              // Check for specific criteria in ANY evaluation
              const hasCriteria = studentEvaluations.some(e => {
@@ -483,12 +519,16 @@ function _applyFiltersAndRender() {
           }
       }
 
-      // Gender Display Logic
+      // Gender Display Logic with Color Badge
       let genderDisplay = '-';
       const gender = (s.gender || '').trim();
-      if (gender === 'ছেলে' || gender.toLowerCase() === 'male') genderDisplay = 'ছেলে';
-      else if (gender === 'মেয়ে' || gender.toLowerCase() === 'female') genderDisplay = 'মেয়ে';
-      else if (gender) genderDisplay = gender; // Fallback to whatever is there
+      if (gender === 'ছেলে' || gender.toLowerCase() === 'male') {
+        genderDisplay = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">ছেলে</span>';
+      } else if (gender === 'মেয়ে' || gender.toLowerCase() === 'female') {
+        genderDisplay = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">মেয়ে</span>';
+      } else if (gender) {
+        genderDisplay = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">${gender}</span>`;
+      }
 
       tr.innerHTML = `
         <td class="px-6 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">${s.name}</td>
@@ -519,7 +559,7 @@ function _renderAcademicBadge(group) {
     
     // Simple matching
     if (group.includes('Science') || group.includes('বিজ্ঞান')) cls = colors['Science'];
-    else if (group.includes('Business') || group.includes('ব্যবসায়')) cls = colors['Business Studies'];
+    else if (group.includes('Business') || group.includes('ব্যবসায়')) cls = colors['Business Studies'];
     else if (group.includes('Humanities') || group.includes('মানবিক')) cls = colors['Humanities'];
 
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}">${group}</span>`;
