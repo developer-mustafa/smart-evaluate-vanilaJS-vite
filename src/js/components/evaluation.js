@@ -1,7 +1,7 @@
 // js/components/evaluation.js
 
 // নির্ভরতা (Dependencies)
-let stateManager, uiManager, dataService, helpers, app, tasksComponent;
+let stateManager, uiManager, dataService, helpers, app, tasksComponent, permissionHelper;
 import { serverTimestamp } from '../config/firebase.js'; // <-- FIXED: Import serverTimestamp
 
 // DOM এলিমেন্ট
@@ -77,6 +77,7 @@ export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
+  permissionHelper = dependencies.utils.permissionHelper;
   helpers = dependencies.utils;
   app = dependencies.app;
   tasksComponent = dependencies.app.components.tasks;
@@ -451,6 +452,12 @@ function _handleCancelEvaluation() {
  * @private
  */
 async function _handleSubmitEvaluation() {
+  // Permission check
+  if (!permissionHelper?.canWrite()) {
+    uiManager.showToast('আপনার evaluation submit করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const taskId = elements.evaluationTaskSelect?.value;
   const groupId = elements.evaluationGroupSelect?.value;
   const task = stateManager.get('tasks').find((t) => t.id === taskId);
@@ -673,6 +680,12 @@ async function _loadEvaluationForEditing(evaluationId, task, group, studentsInGr
  * @private
  */
 async function _handleEditEvaluation(evaluationId) {
+  // Permission check
+  if (!permissionHelper?.canEdit()) {
+    uiManager.showToast('আপনার evaluation সম্পাদনা করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const evaluationSummary = stateManager.get('evaluations').find((e) => e.id === evaluationId);
   if (!evaluationSummary) {
     uiManager.showToast('মূল্যায়ন খুঁজে পাওয়া যায়নি।', 'error');
@@ -714,6 +727,12 @@ async function _handleEditEvaluation(evaluationId) {
  * @private
  */
 function _handleDeleteEvaluation(evaluationId) {
+  // Permission check
+  if (!permissionHelper?.canDelete()) {
+    uiManager.showToast('আপনার evaluation মুছে ফেলার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const evaluation = stateManager.get('evaluations').find((e) => e.id === evaluationId);
   if (!evaluation) {
     uiManager.showToast('মূল্যায়ন খুঁজে পাওয়া যায়নি।', 'error');

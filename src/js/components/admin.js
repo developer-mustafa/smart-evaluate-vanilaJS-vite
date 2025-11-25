@@ -1,7 +1,7 @@
 // js/components/admin.js
 
 // Dependencies
-let stateManager, uiManager, dataService, helpers, app, authService;
+let stateManager, uiManager, dataService, helpers, app, authService, permissionHelper;
 
 // DOM Elements
 const elements = {};
@@ -22,6 +22,7 @@ export function init(dependencies) {
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
   authService = dependencies.services.auth.authServiceInstance;
+  permissionHelper = dependencies.utils.permissionHelper;
   helpers = dependencies.utils;
   app = dependencies.app;
 
@@ -269,6 +270,12 @@ function _handleAddAdmin() {
  * @private
  */
 function _handleEditAdmin(adminId) {
+  // Permission check
+  if (!permissionHelper?.canEdit()) {
+    uiManager.showToast('আপনার admin সম্পাদনা করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const adminData = stateManager.get('admins').find((a) => a.id === adminId);
   if (!adminData) {
     uiManager.showToast('ব্যবহারকারী খুঁজে পাওয়া যায়নি।', 'error');
@@ -284,6 +291,12 @@ function _handleEditAdmin(adminId) {
  * @private
  */
 function _handleDeleteAdmin(adminId) {
+  // Permission check
+  if (!permissionHelper?.canDelete()) {
+    uiManager.showToast('আপনার admin মুছে ফেলার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const adminData = stateManager.get('admins').find((a) => a.id === adminId);
   if (!adminData) {
     uiManager.showToast('ব্যবহারকারী খুঁজে পাওয়া যায়নি।', 'error');

@@ -1,7 +1,7 @@
 ﻿// js/components/tasks.js
 
 // Dependencies
-let stateManager, uiManager, dataService, helpers, app;
+let stateManager, uiManager, dataService, helpers, app, permissionHelper;
 
 // DOM Elements
 const elements = {};
@@ -55,6 +55,7 @@ export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
+  permissionHelper = dependencies.utils.permissionHelper;
   helpers = dependencies.utils;
   app = dependencies.app;
 
@@ -374,7 +375,13 @@ function _renderTasksList(tasks) {
 
 /** Handles adding a new task */
 async function _handleAddTask() {
-  const name = elements.taskNameInput?.value.trim();
+  // Permission check
+  if (!permissionHelper?.canWrite()) {
+    uiManager.showToast('আপনার নতুন টাস্ক যোগ করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
+  const title = elements.taskTitleInput?.value.trim();
   const description = elements.taskDescriptionInput?.value.trim();
   const dateInput = elements.taskDateInput?.value;
   const rawTimeValue = elements.taskTimeInput?.value;
@@ -491,6 +498,12 @@ function _buildStatusOptions(selected) {
 
 /** Handles editing a task */
 function _handleEditTask(taskId) {
+  // Permission check
+  if (!permissionHelper?.canEdit()) {
+    uiManager.showToast('আপনার টাস্ক সম্পাদনা করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const task = stateManager.get('tasks').find((t) => t.id === taskId);
   if (!task) {
     uiManager.showToast('টাস্কটি পাওয়া যায়নি।', 'error');
@@ -626,6 +639,12 @@ function _handleEditTask(taskId) {
 
 /** Handles task deletion */
 async function _handleDeleteTask(taskId) {
+  // Permission check
+  if (!permissionHelper?.canDelete()) {
+    uiManager.showToast('আপনার টাস্ক মুছে ফেলার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const task = stateManager.get('tasks').find((t) => t.id === taskId);
   if (!task) {
     uiManager.showToast('টাস্কটি পাওয়া যায়নি।', 'error');

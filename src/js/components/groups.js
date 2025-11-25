@@ -1,7 +1,7 @@
 // js/components/groups.js
 
 // নির্ভরতা (Dependencies)
-let stateManager, uiManager, dataService, helpers, app;
+let stateManager, uiManager, dataService, helpers, app, permissionHelper;
 
 // DOM এলিমেন্ট
 const elements = {};
@@ -15,7 +15,8 @@ export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
-  helpers = dependencies.utils; // Use the full utils namespace
+  permissionHelper = dependencies.utils.permissionHelper;
+  helpers = dependencies.utils;
   app = dependencies.app;
 
   _cacheDOMElements();
@@ -145,6 +146,12 @@ function _renderGroupsList(groups) {
  * @private
  */
 async function _handleAddGroup() {
+  // Permission check
+  if (!permissionHelper?.canWrite()) {
+    uiManager.showToast('আপনার নতুন গ্রুপ যোগ করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const groupName = elements.groupNameInput?.value.trim();
   if (!groupName) {
     uiManager.showToast('গ্রুপের নাম লিখুন।', 'warning');
@@ -186,6 +193,12 @@ async function _handleAddGroup() {
  * @private
  */
 function _handleEditGroup(groupId) {
+  // Permission check
+  if (!permissionHelper?.canEdit()) {
+    uiManager.showToast('আপনার গ্রুপ সম্পাদনা করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const group = stateManager.get('groups').find((g) => g.id === groupId);
   if (!group) {
     uiManager.showToast('গ্রুপটি পাওয়া যায়নি।', 'error');
@@ -247,6 +260,12 @@ function _handleEditGroup(groupId) {
  * @private
  */
 function _handleDeleteGroup(groupId) {
+  // Permission check
+  if (!permissionHelper?.canDelete()) {
+    uiManager.showToast('আপনার গ্রুপ মুছে ফেলার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const group = stateManager.get('groups').find((g) => g.id === groupId);
   if (!group) {
     uiManager.showToast('গ্রুপটি পাওয়া যায়নি।', 'error');
