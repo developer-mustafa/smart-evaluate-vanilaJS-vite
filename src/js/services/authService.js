@@ -103,7 +103,7 @@ class AuthService {
       const user = userCredential.user;
       let permissions = { read: true, write: false, edit: false, delete: false };
       if (requestedType === 'admin') {
-        permissions = { read: true, write: true, edit: true, delete: false };
+        permissions = { read: true, write: true, edit: false, delete: false };
       }
       const adminData = {
         email: user.email,

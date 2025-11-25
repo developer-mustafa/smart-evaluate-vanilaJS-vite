@@ -1162,6 +1162,70 @@
             </div>
           </div>
 
+          <div id="page-all-students" class="page hidden space-y-8">
+            <!-- Header Section (Rendered Dynamically) -->
+            <div id="allStudentsHeaderPlaceholder"></div>
+
+            <!-- Filter Section -->
+            <div class="sticky top-[70px] z-20 rounded-xl border border-gray-200/60 bg-white/80 p-4 shadow-sm backdrop-blur-md dark:border-gray-700/60 dark:bg-gray-800/80 transition-all duration-300">
+              <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <!-- Search -->
+                <div class="relative flex-grow md:max-w-md">
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <i class="fas fa-search text-gray-400"></i>
+                  </div>
+                  <input
+                    id="allStudentsSearchInput"
+                    type="search"
+                    class="block w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500"
+                    placeholder="নাম, রোল বা কন্টাক্ট দিয়ে খুঁজুন..."
+                  />
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div class="relative min-w-[180px]">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <i class="fas fa-layer-group text-gray-400"></i>
+                    </div>
+                    <select
+                      id="cardsFilterGroup"
+                      class="block w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="all">সকল গ্রুপ</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                    </div>
+                  </div>
+
+                  <div class="relative min-w-[180px]">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <i class="fas fa-graduation-cap text-gray-400"></i>
+                    </div>
+                    <select
+                      id="cardsFilterAcademicGroup"
+                      class="block w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="all">সকল একাডেমিক গ্রুপ</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div id="allStudentsCards" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div class="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"></div>
+                <p class="mt-4 text-gray-500 dark:text-gray-400">শিক্ষার্থী লোড হচ্ছে...</p>
+              </div>
+            </div>
+          </div>
+
           <div id="page-settings" class="page private-tab-content space-y-6 hidden">
             <div id="settingsContent"></div>
           </div>

@@ -1,7 +1,7 @@
 ﻿﻿// js/components/members.js
 
 // নির্ভরতা (Dependencies)
-let stateManager, uiManager, dataService, helpers, app;
+let stateManager, uiManager, dataService, helpers, app, permissionHelper;
 
 // DOM এলিমেন্ট (উভয় পেজের জন্য)
 const elements = {
@@ -281,6 +281,7 @@ export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
+  permissionHelper = dependencies.utils.permissionHelper;
   helpers = dependencies.utils; // The full helpers object
   app = dependencies.app;
 
@@ -732,173 +733,6 @@ function _renderStudentCardsList() {
   const groups = stateManager.get('groups') || [];
   const groupsMap = new Map(groups.map((g) => [g.id, g]));
   const groupColors = _getGroupColorClasses(groups);
-  const allStudents = stateManager.get('students') || [];
-  const groupStudentCountMap = new Map();
-  allStudents.forEach((student) => {
-    const key = student.groupId || '__ungrouped';
-    groupStudentCountMap.set(key, (groupStudentCountMap.get(key) || 0) + 1);
-  });
-
-  const totalStudents = filteredStudents.length;
-  const groupIds = new Set();
-  const academicCounts = { science: 0, humanities: 0, business: 0, other: 0 };
-  let contactable = 0;
-  let roleAssigned = 0;
-  let maleCount = 0;
-  let femaleCount = 0;
-
-  filteredStudents.forEach((student) => {
-    const groupId = student.groupId;
-    if (groupId) groupIds.add(groupId);
-    const key = _getAcademicKey(student.academicGroup);
-    academicCounts[key] = (academicCounts[key] || 0) + 1;
-    if (student.contact && String(student.contact).trim()) contactable++;
-    if (student.role) roleAssigned++;
-    const genderRaw = (student.gender || '').trim();
-    if (genderRaw) {
-      const normalized = genderRaw.normalize('NFC').replace(/\s+/g, '').toLowerCase();
-      const banglaAligned = normalized.replace(/য়/g, 'য়'); // keep both মেয়ে এবং মেয়ে একীভূত
-      const isMale =
-        banglaAligned.includes('ছেলে') ||
-        normalized.includes('male') ||
-        normalized.includes('boy') ||
-        normalized === 'm';
-      const isFemale =
-        banglaAligned.includes('মেয়ে') ||
-        normalized.includes('female') ||
-        normalized.includes('girl') ||
-        normalized === 'f';
-
-      if (isMale) maleCount++;
-      else if (isFemale) femaleCount++;
-    }
-  });
-
-  const formatNumber = (value, fractionDigits = 0) => {
-    const numeric = Number.isFinite(value) ? value : 0;
-    const formatted = fractionDigits > 0 ? numeric.toFixed(fractionDigits) : Math.round(numeric).toString();
-    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(formatted) : formatted;
-  };
-
-  const contactRate = totalStudents > 0 ? (contactable / totalStudents) * 100 : 0;
-  const roleRate = totalStudents > 0 ? (roleAssigned / totalStudents) * 100 : 0;
-
-  const academicLabels = {
-    science: 'বিজ্ঞান শাখা',
-    humanities: 'মানবিক শাখা',
-    business: 'ব্যবসায় শিক্ষা',
-    other: 'অন্যান্য',
-  };
-
-  const academicChips = Object.entries(academicCounts)
-    .filter(([, count]) => count > 0)
-    .map(
-      ([key, count]) =>
-        `<span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm"><i class="fas fa-folder-open"></i> ${
-          academicLabels[key]
-        }: ${formatNumber(count)}</span>`
-    )
-    .join('');
-
-  const summaryStats = [
-    {
-      icon: 'fa-users',
-      accent: 'from-sky-500/30 via-transparent to-transparent',
-      heading: 'মোট শিক্ষার্থী',
-      value: formatNumber(totalStudents),
-      description: 'ডিরেক্টরিতে রেকর্ডকৃত সক্রিয় সদস্য সংখ্যা।',
-    },
-    {
-      icon: 'fa-layer-group',
-      accent: 'from-emerald-500/30 via-transparent to-transparent',
-      heading: 'সক্রিয় গ্রুপ',
-      value: formatNumber(groupIds.size),
-      description: 'দলভিত্তিক ব্যবস্থাপনায় যুক্ত মোট গ্রুপ।',
-    },
-    {
-      icon: 'fa-phone-volume',
-      accent: 'from-amber-500/30 via-transparent to-transparent',
-      heading: 'যোগাযোগযোগ্য সদস্য',
-      value: formatNumber(contactable),
-      description: `${formatNumber(contactRate, 0)}% শিক্ষার্থীর যোগাযোগ তথ্য প্রস্তুত।`,
-    },
-    {
-      icon: 'fa-id-badge',
-      accent: 'from-indigo-500/30 via-transparent to-transparent',
-      heading: 'ভূমিকায় নিযুক্ত',
-      value: formatNumber(roleAssigned),
-      description: `${formatNumber(roleRate, 0)}% শিক্ষার্থী দায়িত্বে যুক্ত।`,
-    },
-  ];
-
-  const summaryCardsMarkup = summaryStats
-    .map(
-      ({ icon, accent, heading, value, description }) => `
-      <article class="relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-5 shadow-lg backdrop-blur">
-        <div class="absolute inset-0 bg-gradient-to-br ${accent}"></div>
-        <div class="relative space-y-3">
-          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner">
-            <i class="fas ${icon}"></i>
-          </span>
-          <div>
-            <p class="text-sm font-semibold text-white/80">${heading}</p>
-            <p class="mt-1 text-3xl font-bold leading-tight">${value}</p>
-          </div>
-          <p class="text-sm leading-relaxed text-white/75">${description}</p>
-        </div>
-      </article>
-    `
-    )
-    .join('');
-
-  const summary = `
-    <section class="col-span-full relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white shadow-2xl">
-      <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_rgba(125,211,252,0.35),_transparent_55%)]"></div>
-      <div class="absolute -left-32 -bottom-32 h-64 w-64 rounded-full bg-sky-500/30 blur-3xl"></div>
-      <div class="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-indigo-500/30 blur-3xl"></div>
-      <div class="relative space-y-10 p-6 md:p-10">
-        <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-          <div class="space-y-4">
-            <div class="flex items-center gap-3">
-              <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-lg">
-                <i class="fas fa-address-card text-xl"></i>
-              </span>
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.4em] text-white/70">Student Directory</p>
-                <h2 class="text-3xl md:text-4xl font-bold leading-tight">শিক্ষার্থী তথ্য</h2>
-              </div>
-            </div>
-            <p class="max-w-3xl text-sm leading-relaxed text-white/75 md:text-base">দলভিত্তিক শিক্ষার্থীদের তথ্য এক নজরে দেখতে কার্ড ভিউ ব্যবহার করুন। গ্রুপ, একাডেমিক বিভাগ কিংবা নাম-রোল দিয়ে ফিল্টার করলেই তথ্য রিয়েল-টাইমে হালনাগাদ হয়।</p>
-            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/80">
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 shadow-sm backdrop-blur"><i class="fas fa-bolt"></i> লাইভ ডেটা সিঙ্ক</span>
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 shadow-sm backdrop-blur"><i class="fas fa-layer-group"></i> ${formatNumber(
-                groupIds.size
-              )} টি গ্রুপ</span>
-            </div>
-          </div>
-          <div class="flex flex-col items-start gap-3 rounded-2xl border border-white/15 bg-white/10 px-6 py-5 shadow-lg backdrop-blur">
-            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/25 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-50">
-              <i class="fas fa-gauge-high"></i> দ্রুত বিশ্লেষণ
-            </span>
-            <p class="text-4xl font-bold leading-none">${formatNumber(totalStudents)} জন</p>
-            <p class="text-sm leading-relaxed text-white/75">বর্তমান সেশনে রেকর্ডকৃত মোট শিক্ষার্থী</p>
-          </div>
-        </div>
-        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          ${summaryCardsMarkup}
-        </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/85">
-          <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-male"></i> ছেলে: ${formatNumber(
-            maleCount
-          )}</span>
-          <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm border border-white/20"><i class="fas fa-female"></i> মেয়ে: ${formatNumber(
-            femaleCount
-          )}</span>
-          ${academicChips}
-        </div>
-      </div>
-    </section>
-  `;
 
   const cards = filteredStudents
     .map((student) => {
@@ -920,7 +754,6 @@ function _renderStudentCardsList() {
       const contactBlock = contactText
         ? `<div class="flex items-center gap-2 rounded-xl bg-gray-100/80 px-3 py-2 text-xs text-gray-600 shadow-sm dark:bg-gray-800/70 dark:text-gray-200"><i class="fas fa-phone text-emerald-500"></i><span>${contactText}</span></div>`
         : '';
-      const groupMemberCount = groupStudentCountMap.get(student.groupId || '__ungrouped') || 0;
 
       return `
   <article
@@ -1035,6 +868,12 @@ function _applyFilters(filters) {
  * @private
  */
 async function _handleAddStudent() {
+  // Permission check
+  if (!permissionHelper?.canWrite()) {
+    uiManager.showToast('আপনার নতুন শিক্ষার্থী যোগ করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const name = elements.studentNameInput?.value.trim();
   const roll = elements.studentRollInput?.value.trim();
   const gender = elements.studentGenderInput?.value;
@@ -1095,9 +934,15 @@ async function _handleAddStudent() {
  * @private
  */
 function _handleEditStudent(studentId) {
+  // Permission check
+  if (!permissionHelper?.canEdit()) {
+    uiManager.showToast('আপনার শিক্ষার্থী সম্পাদনা করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const student = stateManager.get('students').find((s) => s.id === studentId);
   if (!student) {
-    uiManager.showToast('শিক্ষার্থী পাওয়া যায়নি।', 'error');
+    uiManager.showToast('শিক্ষার্থী পাওয়া যায়নি।', 'error');
     return;
   }
 
@@ -1212,9 +1057,15 @@ function _handleEditStudent(studentId) {
  * @private
  */
 function _handleDeleteStudent(studentId) {
+  // Permission check
+  if (!permissionHelper?.canDelete()) {
+    uiManager.showToast('আপনার শিক্ষার্থী মুছে ফেলার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const student = stateManager.get('students').find((s) => s.id === studentId);
   if (!student) {
-    uiManager.showToast('শিক্ষার্থী পাওয়া যায়নি।', 'error');
+    uiManager.showToast('শিক্ষার্থী পাওয়া যায়নি।', 'error');
     return;
   }
 
@@ -1274,6 +1125,12 @@ function _handleFileSelect() {
 }
 
 function _handleProcessImport() {
+  // Permission check
+  if (!permissionHelper?.canWrite()) {
+    uiManager.showToast('আপনার CSV import করার অনুমতি নেই।', 'warning');
+    return;
+  }
+
   const file = elements.csvFileInput?.files[0];
   if (!file) {
     uiManager.showToast('অনুগ্রহ করে একটি CSV ফাইল নির্বাচন করুন।', 'warning');

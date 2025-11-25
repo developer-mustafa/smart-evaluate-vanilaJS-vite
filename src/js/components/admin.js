@@ -1,7 +1,7 @@
 // js/components/admin.js
 
 // Dependencies
-let stateManager, uiManager, dataService, helpers, app;
+let stateManager, uiManager, dataService, helpers, app, authService;
 
 // DOM Elements
 const elements = {};
@@ -21,6 +21,7 @@ export function init(dependencies) {
   stateManager = dependencies.managers.stateManager;
   uiManager = dependencies.managers.uiManager;
   dataService = dependencies.services.dataService;
+  authService = dependencies.services.auth.authServiceInstance;
   helpers = dependencies.utils;
   app = dependencies.app;
 
@@ -362,7 +363,7 @@ async function _saveAdminHandler() {
       type === 'super-admin'
         ? { read: true, write: true, edit: true, delete: true }
         : type === 'admin'
-        ? permissions
+        ? { read: permissions.read, write: permissions.write, edit: false, delete: false } // Admin: only read & write
         : { read: true, write: false, edit: false, delete: false }, // 'user' default
   };
 
@@ -385,9 +386,23 @@ async function _saveAdminHandler() {
       }
     } else {
       // --- Add New Admin ---
-      // This is insecure client-side. Use authService.registerWithEmail
-      // which creates both auth user and firestore doc.
-      // We use the email/password to create the AUTH user, and the type/permissions for the FIRESTORE doc.
+      // IMPORTANT: Creating a new Firebase Auth user client-side will automatically sign in as that user,
+      // logging out the current admin. This is a Firebase limitation.
+      // Proper solution: Use Firebase Admin SDK (server-side) via Cloud Function.
+      
+      // Show warning to user
+      const confirmCreate = confirm(
+        `⚠️ গুরুত্বপূর্ণ নোটিশ:\n\n` +
+        `নতুন admin/user তৈরি করলে আপনি স্বয়ংক্রিয়ভাবে লগআউট হয়ে যাবেন।\n` +
+        `এটি Firebase এর একটি সীমাবদ্ধতা।\n\n` +
+        `আপনি কি এগিয়ে যেতে চান?`
+      );
+      
+      if (!confirmCreate) {
+        uiManager.hideLoading();
+        return;
+      }
+      
       await authService.registerWithEmail(email, password, type);
       // registerWithEmail already creates the firestore doc with default permissions for 'admin'/'user'
       // If super-admin, we might need to update permissions *after* creation
@@ -400,7 +415,7 @@ async function _saveAdminHandler() {
         }
       }
       // authService.register shows its own success toast
-      uiManager.showToast(`ব্যবহারকারী ${email} সফলভাবে তৈরি হয়েছে।`, 'success');
+      uiManager.showToast(`ব্যবহারকারী ${email} সফলভাবে তৈরি হয়েছে। আপনি স্বয়ংক্রিয়ভাবে লগআউট হয়েছেন।`, 'warning', 5000);
     }
 
     await app.refreshAllData(); // Refresh state
