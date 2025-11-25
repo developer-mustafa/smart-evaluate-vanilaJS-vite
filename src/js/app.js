@@ -252,6 +252,8 @@ class SmartGroupEvaluator {
         if (typeof renderFunction === 'function') {
           console.log(`Rendering component "${componentKey}" for page: ${pageId}`);
           renderFunction();
+          // Re-apply settings after render because render might have rebuilt the DOM
+          window.smartEvaluator?.components.settings?.applySettings();
         } else {
           console.warn(`No suitable render function found on component "${componentKey}" for page: ${pageId}`);
         }
