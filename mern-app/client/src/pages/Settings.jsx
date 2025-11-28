@@ -1,17 +1,20 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebarVisibility, toggleSidebarType, toggleDashboardSection, resetSettings } from '../store/settingsSlice';
-import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Switch } from "../components/ui/switch"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
+import { Badge } from "../components/ui/badge"
+import { Button } from "../components/ui/button"
+import { Label } from "../components/ui/label"
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
+import { useTheme } from '../contexts/ThemeContext';
+import { THEME_COLORS } from '../config/themeConfig';
 
 export default function Settings() {
   const dispatch = useDispatch();
-  const { sidebar, dashboardSections } = useSelector((state) => state.settings);
+  const { sidebar, dashboardSections, colorTheme } = useSelector((state) => state.settings);
   const { user } = useSelector((state) => state.auth);
+  const { themeMode, setTheme, setColor } = useTheme();
 
   if (!user || (user.role !== 'admin' && user.role !== 'super-admin')) {
     return (
@@ -157,6 +160,76 @@ export default function Settings() {
                   />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Appearance Settings */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <i className="fas fa-palette"></i>
+              </div>
+              <div>
+                <CardTitle>থিম এবং রূপরেখা</CardTitle>
+                <CardDescription>লাইট/ডার্ক মোড এবং রঙ থিম নির্বাচন করুন</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Theme Mode */}
+              <div>
+                <Label className="font-semibold text-base mb-3 block">থিম মোড</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  {['light', 'dark', 'system'].map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setTheme(mode)}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        themeMode === mode
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-zinc-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <i className={`fas ${
+                          mode === 'light' ? 'fa-sun' :
+                          mode === 'dark' ? 'fa-moon' :
+                          'fa-circle-half-stroke'
+                        } text-xl ${themeMode === mode ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}></i>
+                        <span className="text-sm font-medium">
+                          {mode === 'light' ? 'লাইট' : mode === 'dark' ? 'ডার্ক' : 'সিস্টেম'}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Color Theme */}
+              <div>
+                <Label className="font-semibold text-base mb-3 block">রঙ থিম</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(THEME_COLORS).map(([key, theme]) => (
+                    <button
+                      key={key}
+                      onClick={() => setColor(key)}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        colorTheme === key
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex gap-1.5 h-6">
+                          <div className="flex-1 rounded" style={{ backgroundColor: theme.preview.primary }}></div>
+                          <div className="flex-1 rounded" style={{ backgroundColor: theme.preview.secondary }}></div>
+                          <div className="flex-1 rounded" style={{ backgroundColor: theme.preview.accent }}></div>
+                        </div>
+                        <span className="text-sm font-medium block text-center">{theme.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
           

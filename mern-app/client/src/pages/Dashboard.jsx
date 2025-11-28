@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { useGetGroupsQuery, useGetMembersQuery, useGetTasksQuery, useGetEvaluationsQuery } from '../services/api';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
+import { Badge } from "../components/ui/badge"
 import GroupRankingCard from '../components/GroupRankingCard';
 import ElitePodiumCard from '../components/ElitePodiumCard';
 import { toBanglaNumber } from '../utils/rankingUtils';
@@ -254,7 +254,7 @@ export default function Dashboard() {
             { title: 'মেয়ে', value: femaleStudents, icon: 'fa-female', color: 'rose', sub: `${toBanglaNumber(femalePercentage)}%` },
             { title: 'মোট টাস্ক', value: totalTasks, icon: 'fa-tasks', color: 'teal', sub: 'নির্ধারিত' },
             { title: 'বাকি মূল্যায়ন', value: pendingEvaluations, icon: 'fa-hourglass-half', color: 'red', sub: 'অসম্পন্ন' }].map((stat, idx) => (
-            <Card key={idx} className="relative overflow-hidden hover:shadow-md transition-shadow bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <Card key={idx} className="relative overflow-hidden hover:shadow-md transition-shadow bg-card border-border">
               <div className={`absolute inset-0 bg-gradient-to-br from-${stat.color}-500/5 via-transparent to-transparent dark:from-${stat.color}-500/10`}></div>
               <CardContent className="p-2.5">
                 <div className="flex items-center justify-between gap-2">
@@ -279,8 +279,8 @@ export default function Dashboard() {
 
       {/* Academic Group Performance */}
       {dashboardSections.academicStats && top3AcademicGroups.length > 0 && (
-        <section className="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition hover:shadow-md">
-          <div className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md">
+          <div className="border-b border-border px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">একাডেমিক গ্রুপ পারফরম্যান্স</h3>
@@ -295,12 +295,12 @@ export default function Dashboard() {
               {top3AcademicGroups.map((data, idx) => {
                 const palette = getScorePalette(data.averageScore);
                 return (
-                  <article key={idx} className="relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm transition hover:shadow-md">
+                  <article key={idx} className="relative overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm transition hover:shadow-md">
                     <div className={`absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-40 dark:opacity-20`}></div>
                     <div className="relative space-y-2">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 truncate" title={data.name}>{data.name}</h4>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 shadow-sm border border-zinc-100 dark:border-zinc-700">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-card/80 px-2 py-0.5 text-[10px] font-bold text-foreground shadow-sm border border-border">
                           <i className="fas fa-signal text-[8px]"></i> {toBanglaNumber(data.averageScore.toFixed(1))}%
                         </span>
                       </div>
@@ -326,8 +326,8 @@ export default function Dashboard() {
 
       {/* Elite Groups (Replaces Academic Group Performance) */}
       {dashboardSections.topGroups && top3Groups.length > 0 && (
-        <section className="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition hover:shadow-md">
-          <div className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md">
+          <div className="border-b border-border px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">এলিট গ্রুপ</h3>
@@ -361,10 +361,10 @@ export default function Dashboard() {
         <section className="relative overflow-hidden rounded-3xl border border-zinc-300/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-200 text-zinc-900 shadow-lg dark:border-zinc-700/60 dark:bg-gradient-to-br dark:from-zinc-900 dark:via-zinc-950 dark:to-black dark:text-zinc-100">
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(99,102,241,0.35),transparent_60%)]"></div>
           <div className="relative p-4 space-y-4">
-            <div className="relative overflow-hidden rounded-3xl border border-zinc-300/70 bg-white/70 backdrop-blur shadow-sm p-4 dark:border-zinc-700/70 dark:bg-zinc-900/50">
+            <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/70 backdrop-blur shadow-sm p-4">
               <div className="grid gap-4 lg:grid-cols-2 items-stretch">
                 {/* Progress Card */}
-                <Card className="bg-white/50 backdrop-blur dark:bg-zinc-900/50 h-full border-0 shadow-none">
+                <Card className="bg-card/50 backdrop-blur h-full border-0 shadow-none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                       <i className="fas fa-chart-simple text-indigo-600 dark:text-indigo-400"></i>
@@ -440,7 +440,7 @@ export default function Dashboard() {
                   <CardContent className="relative z-10">
                     {upcomingTask ? (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3 bg-white/60 dark:bg-zinc-800/60 p-3 rounded-xl border border-white/50 dark:border-zinc-700/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-3 bg-card/60 p-3 rounded-xl border border-border/50 backdrop-blur-sm">
                           <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                             <i className="fas fa-clock text-lg"></i>
                           </div>
@@ -452,7 +452,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-white/60 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-white/50 dark:border-zinc-700/50 text-center">
+                          <div className="bg-card/60 p-2.5 rounded-xl border border-border/50 text-center">
                             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mb-0.5">সময় বাকি</p>
                             <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
                               {(() => {
@@ -462,7 +462,7 @@ export default function Dashboard() {
                               })()}
                             </p>
                           </div>
-                          <div className="bg-white/60 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-white/50 dark:border-zinc-700/50 text-center">
+                          <div className="bg-card/60 p-2.5 rounded-xl border border-border/50 text-center">
                             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mb-0.5">মার্কস</p>
                             <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                               {toBanglaNumber(upcomingTask.totalMarks || 100)}
@@ -473,7 +473,7 @@ export default function Dashboard() {
                     ) : (
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="h-20 w-20 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-white dark:bg-zinc-800 shadow-sm">
+                          <div className="h-20 w-20 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-card shadow-sm">
                             <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{toBanglaNumber(latestAssignmentStats.average)}</span>
                           </div>
                           <span className="text-xs font-bold text-emerald-800 dark:text-emerald-200">গড় স্কোর</span>

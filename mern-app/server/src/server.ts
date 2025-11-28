@@ -31,6 +31,11 @@ app.use(cors({
     if (origin === config.clientUrl) {
       return callback(null, true);
     }
+
+    // Allow any Vercel deployment
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
     
     callback(new Error('Not allowed by CORS'));
   },

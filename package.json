@@ -4,8 +4,8 @@
   "description": "Smart Group Evaluator front-end",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "cd mern-app/client && npm run dev",
+    "build": "cd mern-app/client && npm install && npm run build && cd ../.. && rm -rf dist && cp -r mern-app/client/dist dist",
     "preview": "vite preview"
   },
   "keywords": [],

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useGetMembersQuery } from '../services/api';
 import MemberTable from '../components/members/MemberTable';
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "../components/ui/input"
+import { Card, CardContent } from "../components/ui/card"
 
 export default function StudentsDirectory() {
   const [filters, setFilters] = useState({ groupId: '', search: '' });

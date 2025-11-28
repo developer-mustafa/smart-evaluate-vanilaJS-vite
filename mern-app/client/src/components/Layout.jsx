@@ -1,9 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
-
-import { Badge } from "@/components/ui/badge"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "./ui/sidebar";
+import { Separator } from "./ui/separator";
+import { Badge } from "./ui/badge";
 
 export default function Layout() {
   return (
@@ -14,7 +13,7 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white hidden md:block">স্মার্ট ইভ্যালুয়েট সিস্টেম</h1>
+            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white hidden md:block">স্মার্ট ইভ্যালুয়েট সিস্টেম</h1>
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs font-semibold">
             <Badge variant="outline" className="bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-100 border-emerald-200 dark:border-emerald-700">টাস্ক স্কোর</Badge>

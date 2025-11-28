@@ -15,14 +15,14 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "./ui/sidebar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "./ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 export function AppSidebar() {
   const location = useLocation();

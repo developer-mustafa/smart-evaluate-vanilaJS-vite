@@ -75,7 +75,7 @@ const CircularMeter = ({ percent, palette, size = 72 }) => {
           filter: filter,
         }}
       />
-      <div className="absolute inset-[18%] rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center shadow-inner">
+      <div className="absolute inset-[18%] rounded-full bg-card flex items-center justify-center shadow-inner">
         <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
           {toBanglaNumber(clamped.toFixed(2))}%
         </span>
@@ -227,7 +227,7 @@ export default function Ranking() {
   const activePalette = topItem ? getScorePalette(topItem.efficiency) : getScorePalette(70);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-background p-4 md:p-8 font-sans transition-colors duration-300">
       
       {/* Header Section */}
       <div className="max-w-5xl mx-auto mb-6">
@@ -245,10 +245,10 @@ export default function Ranking() {
         
         {/* Tab Bar & Search */}
         <div 
-          className="rounded-2xl p-3 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all duration-300"
+          className="rounded-2xl p-3 bg-card shadow-sm border border-border flex flex-col md:flex-row gap-4 items-center justify-between transition-all duration-300"
         >
           {/* Tabs */}
-          <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-700">
+          <div className="flex p-1 bg-muted rounded-full border border-border">
             <button
               onClick={() => setActiveTab('students')}
               className={'px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ' + (
@@ -281,7 +281,7 @@ export default function Ranking() {
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
               disabled={activeTab !== 'students'}
-              className="px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-48 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
+              className="px-4 py-2 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-48 text-sm text-foreground placeholder-muted-foreground"
             />
             <input
               type="text"
@@ -289,7 +289,7 @@ export default function Ranking() {
               value={searchRoll}
               onChange={(e) => setSearchRoll(e.target.value)}
               disabled={activeTab !== 'students'}
-              className="px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-32 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
+              className="px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-32 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
             />
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function Ranking() {
                   <div 
                     key={student._id}
                     onClick={() => setSelectedStudent(student)}
-                    className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-zinc-200 dark:border-zinc-800 overflow-hidden cursor-pointer"
+                    className="group relative bg-card rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-border overflow-hidden cursor-pointer"
                   >
                     {/* Accent Background Glow */}
                     <div 
@@ -317,7 +317,7 @@ export default function Ranking() {
                     
                     <div className="flex items-center gap-4 md:gap-6 min-w-0 z-10">
                       {/* Rank Chip */}
-                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700 shadow-sm shrink-0">
+                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-muted rounded-xl border border-border shadow-sm shrink-0">
                         <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{toBanglaRank(student.rank).split(' ')[0]}</span>
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">র‍্যাঙ্ক</span>
                       </div>
@@ -363,7 +363,7 @@ export default function Ranking() {
                   <div 
                     key={group._id}
                     onClick={() => setSelectedGroup(group)}
-                    className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-zinc-200 dark:border-zinc-800 overflow-hidden cursor-pointer"
+                    className="group relative bg-card rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-border overflow-hidden cursor-pointer"
                   >
                     <div 
                       className="absolute inset-0 opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"

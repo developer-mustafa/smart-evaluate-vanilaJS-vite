@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGetTasksQuery } from '../services/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { toBanglaNumber } from '../utils/rankingUtils';
 
 export default function Assignments() {

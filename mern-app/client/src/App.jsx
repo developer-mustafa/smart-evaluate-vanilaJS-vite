@@ -2,22 +2,26 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { Suspense, lazy } from 'react';
+import LoadingFallback from './components/LoadingFallback';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Groups from './pages/Groups';
-import Members from './pages/Members';
-import Tasks from './pages/Tasks';
-import Evaluations from './pages/Evaluations';
-import Ranking from './pages/Ranking';
-import Statistics from './pages/Statistics';
-import Settings from './pages/Settings';
-import StudentFilter from './pages/StudentFilter';
-import Analysis from './pages/Analysis';
-import PlaceholderPage from './pages/PlaceholderPage';
-import StudentsDirectory from './pages/StudentsDirectory';
-import Assignments from './pages/Assignments';
+
+// Lazy load only heavy pages - keep Dashboard loaded for better UX
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Groups = lazy(() => import('./pages/Groups'));
+const Members = lazy(() => import('./pages/Members'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Evaluations = lazy(() => import('./pages/Evaluations'));
+const Ranking = lazy(() => import('./pages/Ranking'));
+const Statistics = lazy(() => import('./pages/Statistics'));
+const Settings = lazy(() => import('./pages/Settings'));
+const StudentFilter = lazy(() => import('./pages/StudentFilter'));
+const Analysis = lazy(() => import('./pages/Analysis'));
+const PlaceholderPage = lazy(() => import('./pages/PlaceholderPage'));
+const StudentsDirectory = lazy(() => import('./pages/StudentsDirectory'));
+const Assignments = lazy(() => import('./pages/Assignments'));
 
 export default function App() {
   return (
@@ -28,46 +32,110 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
-              <Route path="groups" element={<Groups />} />
-              <Route path="members" element={<Members />} />
-              <Route path="tasks" element={<Tasks />} />
-              <Route path="evaluations" element={<ProtectedRoute requireAdmin><Evaluations /></ProtectedRoute>} />
-              <Route path="ranking" element={<Ranking />} />
-              <Route path="statistics" element={<Statistics />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="student-filter" element={<StudentFilter />} />
+              <Route index element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Dashboard />
+                </Suspense>
+              } />
+              <Route path="groups" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Groups />
+                </Suspense>
+              } />
+              <Route path="members" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Members />
+                </Suspense>
+              } />
+              <Route path="tasks" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Tasks />
+                </Suspense>
+              } />
+              <Route path="evaluations" element={
+                <ProtectedRoute requireAdmin>
+                  <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                    <Evaluations />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="ranking" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Ranking />
+                </Suspense>
+              } />
+              <Route path="statistics" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Statistics />
+                </Suspense>
+              } />
+              <Route path="settings" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Settings />
+                </Suspense>
+              } />
+              <Route path="student-filter" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <StudentFilter />
+                </Suspense>
+              } />
               
               {/* Analysis Routes */}
-              <Route path="analysis" element={<Analysis />} />
-              <Route path="group-analysis" element={<Analysis />} />
-              <Route path="graph-analysis" element={<Analysis />} />
+              <Route path="analysis" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Analysis />
+                </Suspense>
+              } />
+              <Route path="group-analysis" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Analysis />
+                </Suspense>
+              } />
+              <Route path="graph-analysis" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Analysis />
+                </Suspense>
+              } />
               
               {/* Placeholder Routes for Missing Pages */}
-              <Route path="assignments" element={<Assignments />} />
+              <Route path="assignments" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <Assignments />
+                </Suspense>
+              } />
               <Route path="upcoming-assignments" element={<Navigate to="/assignments" replace />} />
-              <Route path="students" element={<StudentsDirectory />} />
+              <Route path="students" element={
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <StudentsDirectory />
+                </Suspense>
+              } />
               <Route path="group-policy" element={
-                <PlaceholderPage 
-                  title="গ্রুপ পলিসি" 
-                  icon="fas fa-book" 
-                  description="গ্রুপ পরিচালনার নীতিমালা শীঘ্রই এখানে দেখা যাবে।" 
-                />
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <PlaceholderPage 
+                    title="গ্রুপ পলিসি" 
+                    icon="fas fa-book" 
+                    description="গ্রুপ পরিচালনার নীতিমালা শীঘ্রই এখানে দেখা যাবে।" 
+                  />
+                </Suspense>
               } />
               <Route path="export" element={
-                <PlaceholderPage 
-                  title="এক্সপোর্ট" 
-                  icon="fas fa-file-export" 
-                  description="ডাটা এক্সপোর্ট করার সুবিধা শীঘ্রই চালু হবে।" 
-                />
+                <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                  <PlaceholderPage 
+                    title="এক্সপোর্ট" 
+                    icon="fas fa-file-export" 
+                    description="ডাটা এক্সপোর্ট করার সুবিধা শীঘ্রই চালু হবে।" 
+                  />
+                </Suspense>
               } />
               <Route path="admin-management" element={
                 <ProtectedRoute requireAdmin>
-                  <PlaceholderPage 
-                    title="অ্যাডমিন ম্যানেজমেন্ট" 
-                    icon="fas fa-user-shield" 
-                    description="অ্যাডমিন এবং অনুমতি ব্যবস্থাপনা শীঘ্রই এখানে যুক্ত করা হবে।" 
-                  />
+                  <Suspense fallback={<LoadingFallback type="skeleton" />}>
+                    <PlaceholderPage 
+                      title="অ্যাডমিন ম্যানেজমেন্ট" 
+                      icon="fas fa-user-shield" 
+                      description="অ্যাডমিন এবং অনুমতি ব্যবস্থাপনা শীঘ্রই এখানে যুক্ত করা হবে।" 
+                    />
+                  </Suspense>
                 </ProtectedRoute>
               } />
             </Route>

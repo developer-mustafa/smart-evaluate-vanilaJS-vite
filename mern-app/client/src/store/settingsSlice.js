@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const DEFAULT_SETTINGS = {
+  colorTheme: 'zinc',
   dashboardSections: {
     hero: true,
     stats: true,
@@ -34,6 +35,7 @@ const loadSettings = () => {
       delete mergedSidebar['/upcoming-assignments'];
 
       return {
+        colorTheme: parsed.colorTheme || DEFAULT_SETTINGS.colorTheme,
         dashboardSections: { ...DEFAULT_SETTINGS.dashboardSections, ...parsed.dashboardSections },
         sidebar: mergedSidebar
       };
@@ -71,7 +73,12 @@ const settingsSlice = createSlice({
         localStorage.setItem('app_settings_v2', JSON.stringify(state));
       }
     },
+    setColorTheme: (state, action) => {
+      state.colorTheme = action.payload;
+      localStorage.setItem('app_settings_v2', JSON.stringify(state));
+    },
     resetSettings: (state) => {
+      state.colorTheme = DEFAULT_SETTINGS.colorTheme;
       state.dashboardSections = DEFAULT_SETTINGS.dashboardSections;
       state.sidebar = DEFAULT_SETTINGS.sidebar;
       localStorage.setItem('app_settings_v2', JSON.stringify(state));
@@ -79,5 +86,5 @@ const settingsSlice = createSlice({
   }
 });
 
-export const { toggleSidebarVisibility, toggleSidebarType, toggleDashboardSection, resetSettings } = settingsSlice.actions;
+export const { toggleSidebarVisibility, toggleSidebarType, toggleDashboardSection, setColorTheme, resetSettings } = settingsSlice.actions;
 export default settingsSlice.reducer;
