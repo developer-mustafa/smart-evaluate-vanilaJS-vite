@@ -453,7 +453,9 @@ function _applyFiltersAndRender() {
   const tbody = elements.container.querySelector('#sfTableBody');
   const countEl = elements.container.querySelector('#sfResultCount');
   const emptyState = elements.container.querySelector('#sfEmptyState');
-  const tableContainer = elements.container.querySelector('table').parentElement;
+    const table = elements.container.querySelector('table');
+    if (!table) return;
+    const tableContainer = table.parentElement;
 
   if (tbody) tbody.innerHTML = '';
   if (countEl) countEl.textContent = `ফলাফল: ${helpers.convertToBanglaNumber(filtered.length)} জন`;

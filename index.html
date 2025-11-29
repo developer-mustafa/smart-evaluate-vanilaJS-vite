@@ -244,15 +244,7 @@
           <i class="fas fa-moon text-base sm:text-lg"></i>
         </button>
 
-        <div class="flex items-center gap-2 mt-4">
-          <select id="exportAssignmentFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
-            <option value="all">সকল মূল্যায়ন</option>
-          </select>
-          <button id="exportGroupFullDetailsPDFBtn" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
-            <i class="fas fa-file-pdf"></i>
-            Group Wise Full Details Result (PDF)
-          </button>
-        </div>
+
 
         <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           <div id="userInfo" class="hidden text-right">
@@ -1091,11 +1083,11 @@
                   রিপোর্ট এক্সপোর্ট
                 </div>
                 <div class="card-body space-y-2">
-                  <div class="flex items-center gap-2">
-                    <select id="exportAssignmentFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                  <div class="flex flex-col gap-3">
+                    <select id="exportAssignmentFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                       <option value="all">সকল মূল্যায়ন</option>
                     </select>
-                    <button id="exportGroupFullDetailsPDFBtn" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                    <button id="exportGroupFullDetailsPDFBtn" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                       <i class="fas fa-file-pdf"></i>
                       Group Wise Full Details Result (PDF)
                     </button>

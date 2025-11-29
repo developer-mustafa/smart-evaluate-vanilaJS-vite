@@ -357,7 +357,8 @@ function _getDashboardHTMLStructure() {
             <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-emerald-300/60 
               bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-300 
               shadow-[0_6px_16px_rgba(16,185,129,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
-              dark:border-emerald-300/30 dark:from-emerald-900/40 dark:via-slate-900 dark:to-emerald-900/10 flex items-center justify-center">
+              dark:border-emerald-300/30 dark:from-emerald-900/40 dark:via-slate-900 dark:to-emerald-900/10 flex items-center justify-center"
+              id="latestAssignmentCircle">
               <p id="latestAssignmentAverage" class="text-2xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-100">-</p>
             </div>
             <p class="text-[0.8rem] sm:text-sm font-bold text-emerald-800 dark:text-white/80 text-center">
@@ -370,7 +371,8 @@ function _getDashboardHTMLStructure() {
             <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-sky-300/60 
               bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 
               shadow-[0_6px_16px_rgba(14,165,233,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
-              dark:border-sky-300/30 dark:from-sky-900/40 dark:via-slate-900 dark:to-sky-900/10 flex items-center justify-center">
+              dark:border-sky-300/30 dark:from-sky-900/40 dark:via-slate-900 dark:to-sky-900/10 flex items-center justify-center"
+              id="overallProgressCircle">
               <p id="overallProgress" class="text-2xl sm:text-3xl font-bold text-sky-900 dark:text-sky-100">-</p>
             </div>
             <p class="text-[0.8rem] sm:text-sm font-bold text-sky-800 dark:text-white/80 text-center">
@@ -771,9 +773,6 @@ function _cacheInnerDOMElements() {
     'topGroupsContainer',
     'academicGroupStatsList',
     'groupsRankingList',
-    'assignmentOverviewList',
-    'assignmentOverviewLatestTitle',
-    'assignmentOverviewLatestDate',
   ];
   idsToCache.forEach((id) => {
     elements[id] = elements.page.querySelector(`#${id}`);
