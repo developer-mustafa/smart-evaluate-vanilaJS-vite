@@ -866,9 +866,13 @@ export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
   `;
 
   // 2. Members Table
+  // 2. Members Table
   const memberRows = members.map((m, idx) => `
     <tr class="border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
-      <td class="px-3 py-2 font-medium">${m.name}</td>
+      <td class="px-3 py-2 font-medium">
+        ${m.name}
+        <div class="text-[10px] text-gray-500">${m.academicGroup || ''}</div>
+      </td>
       <td class="px-3 py-2 text-center">${_bn(m.roll)}</td>
       <td class="px-3 py-2 text-center text-xs">
         <span class="px-2 py-0.5 rounded-full border ${_roleBadgeClass(m.role)}">
@@ -876,7 +880,10 @@ export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
         </span>
       </td>
       <td class="px-3 py-2 text-center">${_bn(m.evaluationCount)}</td>
-      <td class="px-3 py-2 text-center">${m.avgTaskScore ? m.avgTaskScore.toFixed(1) : '-'}</td>
+      <td class="px-3 py-2 text-center text-gray-600">${m.avgTaskScore ? m.avgTaskScore.toFixed(1) : '-'}</td>
+      <td class="px-3 py-2 text-center text-gray-600">${m.avgTeamScore ? m.avgTeamScore.toFixed(1) : '-'}</td>
+      <td class="px-3 py-2 text-center text-gray-600">${m.avgAdditionalScore ? m.avgAdditionalScore.toFixed(1) : '-'}</td>
+      <td class="px-3 py-2 text-center text-gray-600">${m.avgMcqScore ? m.avgMcqScore.toFixed(1) : '-'}</td>
       <td class="px-3 py-2 text-center font-bold text-indigo-700">${m.avgTotalScore ? m.avgTotalScore.toFixed(1) : '-'}</td>
     </tr>
   `).join('');
@@ -892,6 +899,9 @@ export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
             <th class="px-3 py-2 text-center">দায়িত্ব</th>
             <th class="px-3 py-2 text-center">মূল্যায়ন</th>
             <th class="px-3 py-2 text-center">টাস্ক স্কোর</th>
+            <th class="px-3 py-2 text-center">টিম স্কোর</th>
+            <th class="px-3 py-2 text-center">অতিরিক্ত স্কোর</th>
+            <th class="px-3 py-2 text-center">MCQ স্কোর</th>
             <th class="px-3 py-2 text-center">গড় স্কোর</th>
           </tr>
         </thead>
