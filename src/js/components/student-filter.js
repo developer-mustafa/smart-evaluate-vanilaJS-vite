@@ -1,4 +1,9 @@
 // js/components/student-filter.js
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// Register the plugin
+Chart.register(ChartDataLabels);
 
 let stateManager, uiManager, dataService, helpers, app;
 
@@ -110,6 +115,7 @@ export function render() {
                 <option value="all">সকল</option>
               </select>
             </div>
+
           </div>
 
            <!-- Session -->
@@ -189,18 +195,48 @@ export function render() {
         </div>
       </div>
 
-      <!-- Main Content (Table) -->
+      <!-- Main Content (Table & Chart) -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm">
-          <div class="flex items-center gap-2">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-              <i class="fas fa-list-ul"></i>
-            </span>
-            <h3 class="font-bold text-gray-800 dark:text-gray-200" id="sfResultCount">ফলাফল: ...</h3>
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div class="flex items-center gap-2">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <i class="fas fa-list-ul"></i>
+              </span>
+              <h3 class="font-bold text-gray-800 dark:text-gray-200" id="sfResultCount">ফলাফল: ...</h3>
+            </div>
+            
+             <!-- Color Legend (Header) -->
+            <div id="sfChartLegend" class="hidden flex-wrap gap-2 sm:ml-2">
+              <span class="inline-flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-600 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span> বিজ্ঞান
+              </span>
+              <span class="inline-flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-600 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span> মানবিক
+              </span>
+              <span class="inline-flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-600 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span> ব্যবসায়
+              </span>
+            </div>
           </div>
-          <button id="sfExportBtn" class="btn btn-sm btn-success hidden shadow-sm"><i class="fas fa-file-excel mr-1"></i> এক্সপোর্ট</button>
+          
+          <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+             <!-- View Toggle -->
+            <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button id="sfViewTable" class="px-3 py-1.5 rounded-md text-xs font-bold bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all flex items-center gap-1.5">
+                <i class="fas fa-table"></i> টেবিল
+              </button>
+              <button id="sfViewChart" class="px-3 py-1.5 rounded-md text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center gap-1.5">
+                <i class="fas fa-chart-bar"></i> চার্ট
+              </button>
+            </div>
+
+            <button id="sfExportBtn" class="btn btn-sm btn-success hidden shadow-sm"><i class="fas fa-file-excel mr-1"></i> এক্সপোর্ট</button>
+          </div>
         </div>
-        <div class="overflow-x-auto">
+
+        <!-- Table View -->
+        <div id="sfTableContainer" class="overflow-x-auto transition-all duration-300">
           <table class="w-full text-sm text-left">
             <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/30 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
               <tr>
@@ -220,6 +256,12 @@ export function render() {
             </tbody>
           </table>
         </div>
+
+        <!-- Chart View -->
+        <div id="sfChartContainer" class="hidden p-4 sm:p-6 w-full h-[500px] sm:h-[600px] bg-white dark:bg-gray-800 transition-all duration-300">
+             <canvas id="sfChartCanvas"></canvas>
+        </div>
+
         <div id="sfEmptyState" class="hidden py-12 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
           <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-full mb-3">
              <i class="fas fa-search text-3xl opacity-50"></i>
@@ -292,6 +334,24 @@ function _populateFilterOptions() {
 function _attachEventListeners() {
   const container = elements.container;
   
+  // View Toggle
+  const btnTable = container.querySelector('#sfViewTable');
+  const btnChart = container.querySelector('#sfViewChart');
+  
+  if (btnTable && btnChart) {
+    btnTable.addEventListener('click', () => {
+      activeFilters.viewMode = 'table';
+      _updateViewToggleUI();
+      _applyFiltersAndRender();
+    });
+    
+    btnChart.addEventListener('click', () => {
+      activeFilters.viewMode = 'chart';
+      _updateViewToggleUI();
+      _applyFiltersAndRender();
+    });
+  }
+
   // Selects
   ['sfGroup', 'sfAcademic', 'sfSession', 'sfGender', 'sfRole', 'sfAssignment'].forEach(id => {
     const el = container.querySelector(`#${id}`);
@@ -333,6 +393,7 @@ function _attachEventListeners() {
         role: 'all',
         assignment: 'all',
         extra: [],
+        viewMode: activeFilters.viewMode || 'table' // Preserve view mode
       };
       
       // Reset UI controls
@@ -353,6 +414,36 @@ function _attachEventListeners() {
       refreshBtn.addEventListener('click', () => {
           _ensureDataLoaded();
       });
+  }
+}
+
+function _updateViewToggleUI() {
+  const container = elements.container;
+  const btnTable = container.querySelector('#sfViewTable');
+  const btnChart = container.querySelector('#sfViewChart');
+  const tableContainer = container.querySelector('#sfTableContainer');
+  const chartContainer = container.querySelector('#sfChartContainer');
+  const chartLegend = container.querySelector('#sfChartLegend');
+  
+  const isChart = activeFilters.viewMode === 'chart';
+  
+  // Update Buttons
+  if (isChart) {
+    btnTable.className = 'px-3 py-1.5 rounded-md text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center gap-1.5';
+    btnChart.className = 'px-3 py-1.5 rounded-md text-xs font-bold bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all flex items-center gap-1.5';
+    
+    tableContainer.classList.add('hidden');
+    chartContainer.classList.remove('hidden');
+    if (chartLegend) chartLegend.classList.remove('hidden');
+    if (chartLegend) chartLegend.classList.add('flex');
+  } else {
+    btnTable.className = 'px-3 py-1.5 rounded-md text-xs font-bold bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all flex items-center gap-1.5';
+    btnChart.className = 'px-3 py-1.5 rounded-md text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center gap-1.5';
+    
+    tableContainer.classList.remove('hidden');
+    chartContainer.classList.add('hidden');
+    if (chartLegend) chartLegend.classList.add('hidden');
+    if (chartLegend) chartLegend.classList.remove('flex');
   }
 }
 
@@ -453,19 +544,33 @@ function _applyFiltersAndRender() {
   const tbody = elements.container.querySelector('#sfTableBody');
   const countEl = elements.container.querySelector('#sfResultCount');
   const emptyState = elements.container.querySelector('#sfEmptyState');
-    const table = elements.container.querySelector('table');
-    if (!table) return;
-    const tableContainer = table.parentElement;
+  const tableContainer = elements.container.querySelector('#sfTableContainer');
+  const chartContainer = elements.container.querySelector('#sfChartContainer');
 
-  if (tbody) tbody.innerHTML = '';
   if (countEl) countEl.textContent = `ফলাফল: ${helpers.convertToBanglaNumber(filtered.length)} জন`;
 
   if (filtered.length === 0) {
     if (tableContainer) tableContainer.classList.add('hidden');
+    if (chartContainer) chartContainer.classList.add('hidden');
     if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  
+  if (emptyState) emptyState.classList.add('hidden');
+
+  // Handle View Mode
+  if (activeFilters.viewMode === 'chart') {
+      if (tableContainer) tableContainer.classList.add('hidden');
+      if (chartContainer) chartContainer.classList.remove('hidden');
+      _renderChart(filtered, evaluations);
+      return; // Skip table rendering
   } else {
-    if (tableContainer) tableContainer.classList.remove('hidden');
-    if (emptyState) emptyState.classList.add('hidden');
+      if (tableContainer) tableContainer.classList.remove('hidden');
+      if (chartContainer) chartContainer.classList.add('hidden');
+      // Continue to table rendering...
+  }
+
+  if (tbody) tbody.innerHTML = '';
 
     // Update Header for Specific Assignment
     const thead = elements.container.querySelector('thead tr');
@@ -551,7 +656,144 @@ function _applyFiltersAndRender() {
       
       tbody.appendChild(tr);
     });
-  }
+}
+
+let sfChartInstance = null;
+
+function _renderChart(students, evaluations) {
+    const ctx = document.getElementById('sfChartCanvas');
+    if (!ctx) return;
+
+    // Prepare Data
+    const chartData = students.map(s => {
+        // Calculate Score
+        const studentEvaluations = [];
+        evaluations.forEach(evalDoc => {
+            if (evalDoc.scores && evalDoc.scores[s.id]) {
+                studentEvaluations.push({
+                    taskId: evalDoc.taskId,
+                    ...evalDoc.scores[s.id]
+                });
+            }
+        });
+
+        let score = 0;
+        if (activeFilters.assignment !== 'all') {
+             const assignEval = studentEvaluations.find(e => e.taskId === activeFilters.assignment);
+             score = assignEval ? (Number(assignEval.totalScore) || 0) : 0;
+        } else {
+             const totalScore = studentEvaluations.reduce((sum, e) => sum + (Number(e.totalScore) || 0), 0);
+             score = studentEvaluations.length ? (totalScore / studentEvaluations.length) : 0;
+        }
+
+        return {
+            name: s.name,
+            roll: s.roll,
+            academicGroup: s.academicGroup,
+            score: Number(score.toFixed(1))
+        };
+    });
+
+    // Sort by Score Descending (Ranking)
+    chartData.sort((a, b) => b.score - a.score);
+
+    const labels = chartData.map(d => d.name); // Just name for cleaner look, or `${d.name} (${d.roll})`
+    const dataPoints = chartData.map(d => d.score);
+    const backgroundColors = chartData.map(d => _getAcademicColor(d.academicGroup));
+
+    if (sfChartInstance) {
+        sfChartInstance.destroy();
+    }
+
+    sfChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: activeFilters.assignment !== 'all' ? 'এসাইনমেন্ট নম্বর' : 'গড় ফলাফল',
+                data: dataPoints,
+                backgroundColor: backgroundColors,
+                borderRadius: 6,
+                borderSkipped: false,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'x', // Vertical bars
+            plugins: {
+                legend: {
+                    display: false // Hide legend as colors are dynamic per bar
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const d = chartData[context.dataIndex];
+                            return `${d.name} (${d.roll}) - ${helpers.convertToBanglaNumber(d.score)}`;
+                        }
+                    }
+                },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: (value) => helpers.convertToBanglaNumber(value),
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: '#6b7280' // gray-500
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        borderDash: [5, 5]
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Noto Sans Bengali', sans-serif"
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 90,
+                        minRotation: 45,
+                        font: {
+                            size: 10,
+                            family: "'Noto Sans Bengali', sans-serif"
+                        }
+                    }
+                }
+            },
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const student = students.find(s => s.name === chartData[index].name && s.roll === chartData[index].roll); // Match back to student
+                    if (student && typeof window !== 'undefined' && typeof window.openStudentModalById === 'function') {
+                        window.openStudentModalById(student.id);
+                    }
+                }
+            }
+        }
+    });
+}
+
+function _getAcademicColor(group) {
+    const g = (group || '').toString().trim().toLowerCase();
+    if (/science|বিজ্ঞান/.test(g)) return 'rgba(168, 85, 247, 0.7)'; // Purple
+    if (/arts|মানবিক/.test(g)) return 'rgba(249, 115, 22, 0.7)'; // Orange
+    if (/commerce|ব্যবসা|কমার্স/.test(g)) return 'rgba(59, 130, 246, 0.7)'; // Blue
+    if (/vocational|ভোকেশনাল/.test(g)) return 'rgba(6, 182, 212, 0.7)'; // Cyan
+    return 'rgba(107, 114, 128, 0.7)'; // Gray
 }
 
 function _renderAcademicBadge(group) {
