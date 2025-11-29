@@ -1,9 +1,0 @@
-User-agent: *
-Allow: /
-
-# Disallow admin-only pages from search engines
-Disallow: /admin-management
-Disallow: /settings
-
-# Sitemap
-Sitemap: https://yoursite.com/sitemap.xml

@@ -2753,7 +2753,7 @@ function printGroupAnalysis() {
  * Generates the "Group Wise Full Details Result" PDF.
  * Retrieves data from stateManager and calls the utility function.
  */
-async function generateGroupWiseFullDetailsPDF(filterTaskId = 'all') {
+async function generateGroupWiseFullDetailsPDF(filterTaskId = 'all', filterGroupId = null) {
   uiManager.showLoading('PDF তৈরি হচ্ছে...');
   try {
     const groups = stateManager.get('groups') || [];
@@ -2772,7 +2772,8 @@ async function generateGroupWiseFullDetailsPDF(filterTaskId = 'all') {
       tasks,
       evaluations,
       uiManager,
-      filterTaskId
+      filterTaskId,
+      filterGroupId
     );
   } catch (error) {
     console.error('Error generating group wise full details PDF:', error);

@@ -566,12 +566,17 @@ export async function generateAssignmentResultPDF(assignmentIndex, groups, stude
  * Generates "Group Wise Full Details Result PDF"
  * Professional report with detailed metrics for every student in every group.
  */
-export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, evaluations, uiManager, filterTaskId = 'all') {
+export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, evaluations, uiManager, filterTaskId = 'all', filterGroupId = null) {
   const date = new Date().toLocaleDateString('bn-BD');
   let contentHtml = '';
 
   // Sort groups by name
-  const sortedGroups = [...groups].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'bn'));
+  let sortedGroups = [...groups].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'bn'));
+
+  // Filter by group if specified
+  if (filterGroupId) {
+    sortedGroups = sortedGroups.filter(g => String(g.id) === String(filterGroupId));
+  }
 
   // Determine if a specific task is selected
   const isSingleTask = filterTaskId !== 'all';

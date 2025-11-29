@@ -7,7 +7,7 @@
   if (window.__GDM_MODAL_INIT__) return;
   window.__GDM_MODAL_INIT__ = true;
 
-  const UI = { els: {}, bound: false };
+  const UI = { els: {}, bound: false, state: { currentGroupId: null } };
 
   // ---------- tiny helpers ----------
   const byId = (id) => document.getElementById(id);
@@ -145,6 +145,7 @@
   // ---------- render ----------
   function renderGroupModal(groupId) {
     try {
+      UI.state.currentGroupId = groupId;
       const state = getState();
       const group = state.groups.find((g) => String(g?.id) === String(groupId));
       if (!group) return;
@@ -318,6 +319,42 @@
 
     UI.els.btnMembers?.addEventListener('click', () => setMode('members'));
     UI.els.btnEvals?.addEventListener('click', () => setMode('evals'));
+
+    UI.els.btnPrint?.addEventListener('click', () => {
+      const app = window.smartEvaluator;
+      if (!app?.components?.analysis?.generateGroupWiseFullDetailsPDF) {
+        console.warn('PDF generator not found');
+        return;
+      }
+      
+      const groupId = UI.state.currentGroupId;
+      if (!groupId) return;
+
+      // Get selected assignment ID if in members mode and assignment is selected
+      let filterTaskId = 'all';
+      const sel = UI.els.assignSelect; // We need to cache this or query it
+      if (sel && sel.value) {
+         // The value is the index in the 'assigns' array. We need to reconstruct the logic or store the task ID.
+         // Wait, the select value is the index. We need to get the task ID from the 'perEval' list.
+         // Since we don't have easy access to 'perEval' here without re-computing, let's re-compute or just print 'all' for now.
+         // Actually, the user might want to print what they see.
+         // But 'generateGroupWiseFullDetailsPDF' takes a taskId.
+         // Let's try to get the taskId from the selected option or state.
+         // Re-computing is safer.
+         const state = getState();
+         const { perEval } = computeGroupPerformance(groupId, state);
+         const assigns = perEval.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+         const idx = parseInt(sel.value, 10) || 0;
+         const selectedEval = assigns[idx];
+         if (selectedEval && selectedEval.task) {
+           filterTaskId = selectedEval.task.id;
+         }
+      }
+
+      app.managers.uiManager.showToast('PDF তৈরি হচ্ছে...', 'info');
+      const { groups, students, tasks, evaluations } = getState();
+      app.components.analysis.generateGroupWiseFullDetailsPDF(filterTaskId, groupId);
+    });
   }
 
   // ---------- init ----------
@@ -325,8 +362,10 @@
     UI.els.modal     = byId('groupDetailModal');
     UI.els.btnMembers= byId('gdmBtnMembers');
     UI.els.btnEvals  = byId('gdmBtnEvals');
+    UI.els.btnPrint  = byId('gdmBtnPrint');
     UI.els.members   = byId('gdmMembersWrap');
     UI.els.evals     = byId('gdmEvalsWrap');
+    UI.els.assignSelect = byId('gdmAssignSelect');
 
     if (!UI.els.modal) {
       console.warn('[GDM] modal node missing; script loaded but no #groupDetailModal.');
