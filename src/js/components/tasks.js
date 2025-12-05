@@ -76,7 +76,11 @@ export function init(dependencies) {
 export function render() {
   if (!elements.page) return;
   const tasks = stateManager.get('tasks');
-  _renderTasksList(tasks);
+  
+  // Filter for only upcoming tasks
+  const upcomingTasks = tasks.filter(task => _getTaskStatus(task) === 'upcoming');
+  
+  _renderTasksList(upcomingTasks);
   // Reset add form breakdown fields to default when page renders
   _setBreakdownInputs(DEFAULT_SCORE_BREAKDOWN, ''); // '' prefix for add form
 }
