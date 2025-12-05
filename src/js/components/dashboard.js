@@ -9,6 +9,7 @@ const DEFAULT_ASSIGNMENT_HOUR = 11;
 const DEFAULT_ASSIGNMENT_MINUTE = 55;
 const DEFAULT_ASSIGNMENT_SECOND = 0;
 const MIN_EVALUATIONS_FOR_RANKING = 1;
+let currentFilterValue = 'latest'; // Persist filter state
 const KNOWN_TASK_TIME_KEYS = [
   'time',
   'scheduledTime',
@@ -74,6 +75,9 @@ export function render() {
     _renderTopGroups(stats.groupPerformanceData);
     _renderAcademicGroups(stats.academicGroupStats);
     _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+
+    // Populate Assignment Filter
+    _populateAssignmentFilter(tasks);
 
     console.log('✅ Dashboard rendered successfully.');
   } catch (error) {
@@ -173,6 +177,8 @@ function _getDashboardHTMLStructure() {
             <p class="text-2xl font-black tracking-tight text-slate-900 dark:text-white text-center md:text-left">
               স্মার্ট ইভ্যালুয়েট সিস্টেম
             </p>
+             <!-- Assignment Filter -->
+           
           </div>
 
           <!-- Score chips -->
@@ -210,6 +216,8 @@ function _getDashboardHTMLStructure() {
               dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">MCQ স্কোর</span>
           </div>
 
+          
+
           <!-- Right: image preview -->
           <div class="w-full md:w-auto">
             <div class="glow-ring relative mx-auto h-28 w-28 sm:h-32 sm:w-32">
@@ -222,7 +230,20 @@ function _getDashboardHTMLStructure() {
             </div>
           </div>
 
+          
+
         </div>
+         <div class="relative">
+                <select id="dashboardAssignmentFilter" 
+                  class="appearance-none bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 
+                  text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg py-1 pl-2 pr-6 
+                  focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer backdrop-blur-sm transition-colors hover:bg-white/80 dark:hover:bg-slate-800/80">
+                  <option value="latest">সর্বশেষ এসাইনমেন্ট</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-500 dark:text-slate-400">
+                  <i class="fas fa-chevron-down text-[10px]"></i>
+                </div>
+            </div>
       </div>
     </section>
 
@@ -240,7 +261,7 @@ function _getDashboardHTMLStructure() {
             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-slate-900 
               ring-1 ring-slate-200 shadow-sm dark:bg-white/10 dark:text-white">
               <i class="fas fa-people-group text-indigo-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"></i>
-              সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান তথ্য
+              <span id="assignmentStatusTitle">সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান তথ্য</span>
             </span>
            
           </div>
@@ -268,10 +289,9 @@ function _getDashboardHTMLStructure() {
             <!-- Col 2: Progress bar -->
             <div>
               <div class="battery">
-                <div class="battery-shell">
-                  <div id="progressBar" class="battery-liquid">
-                    <span id="progressBarLabel" class="battery-label">75%</span>
-                  </div>
+                <div class="battery-shell relative w-full h-full">
+                  <div id="progressBar" class="battery-liquid h-full" style="width: 0%"></div>
+                  <span id="progressBarLabel" class="battery-label absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-900 dark:text-white z-10 drop-shadow-md">0%</span>
                 </div>
                
               </div>
@@ -339,7 +359,7 @@ function _getDashboardHTMLStructure() {
         <!-- Header -->
         <div class="mb-2 sm:mb-3 ">
           <p class="text-xs font-bold text-slate-700 dark:text-white/60" lang="bn" >
-            সর্বশেষ এসাইনমেন্ট    <span class="text-xs text-slate-700 dark:text-white/60">
+            <span id="latestAssignmentLabel">সর্বশেষ এসাইনমেন্ট</span>    <span class="text-xs text-slate-700 dark:text-white/60">
             অনুষ্ঠিত: <span id="latestAssignmentUpdated">-</span>
           </span>
           </p>
@@ -777,11 +797,169 @@ function _cacheInnerDOMElements() {
     'topGroupsContainer',
     'academicGroupStatsList',
     'groupsRankingList',
+    'dashboardAssignmentFilter', // Cache the filter
+    'assignmentStatusTitle',
+    'latestAssignmentLabel',
   ];
   idsToCache.forEach((id) => {
     elements[id] = elements.page.querySelector(`#${id}`);
     if (!elements[id]) console.warn(`Dashboard: Element #${id} not found.`);
   });
+}
+
+// --- Filter Logic ---
+
+function _populateAssignmentFilter(tasks) {
+  if (!elements.dashboardAssignmentFilter) return;
+
+  // Clear existing options except the first one
+  while (elements.dashboardAssignmentFilter.options.length > 1) {
+    elements.dashboardAssignmentFilter.remove(1);
+  }
+
+  // Sort tasks by date (newest first)
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const tsA = _getTaskScheduleTimestamp(a);
+    const tsB = _getTaskScheduleTimestamp(b);
+    return tsB - tsA;
+  });
+
+  sortedTasks.forEach(task => {
+    const option = document.createElement('option');
+    option.value = task.id;
+    option.textContent = task.name;
+    elements.dashboardAssignmentFilter.appendChild(option);
+  });
+
+  // Restore persisted value
+  elements.dashboardAssignmentFilter.value = currentFilterValue;
+
+  // Trigger update immediately to ensure UI matches state
+  _updateDashboardForTask(currentFilterValue);
+
+  // Attach listener
+  elements.dashboardAssignmentFilter.addEventListener('change', (e) => {
+    currentFilterValue = e.target.value; // Update persisted state
+    _updateDashboardForTask(e.target.value);
+  });
+}
+
+function _updateDashboardForTask(taskId) {
+  console.log('🔄 Filter changed to:', taskId);
+  const { groups, students, tasks, evaluations } = stateManager.getState();
+  
+  let targetTask = null;
+  let summary = null;
+
+  if (taskId === 'latest') {
+    // Re-calculate for latest
+    const stats = _calculateStats(groups, students, tasks, evaluations);
+    summary = stats.latestAssignmentSummary;
+    targetTask = summary ? tasks.find(t => t.id === summary.taskId) : null;
+  } else {
+    // Calculate for specific task
+    targetTask = tasks.find(t => String(t.id) === String(taskId));
+    if (targetTask) {
+       // CRITICAL FIX: Filter evaluations for this specific task so the calculator doesn't pick up a newer task's evaluation
+       const targetEvaluations = evaluations.filter(e => String(e.taskId) === String(targetTask.id));
+       summary = _calculateLatestAssignmentSummary(groups, students, [targetTask], targetEvaluations);
+    }
+  }
+
+  if (!targetTask) return;
+
+  // Fallback summary if calculation returns null (e.g. no timestamp or no evaluations)
+  if (!summary) {
+      summary = {
+          taskId: targetTask.id,
+          taskTitle: targetTask.name,
+          evaluated: 0, // Correct key
+          total: students.length, // Correct key
+          evaluatedGroupCount: 0,
+      };
+  }
+
+  // Update UI Elements
+  if (elements.latestTaskTitle) elements.latestTaskTitle.textContent = targetTask.name;
+  if (elements.latestTaskTitle) elements.latestTaskTitle.title = targetTask.name;
+  
+  // Update Status Title
+  if (elements.assignmentStatusTitle) {
+      if (taskId === 'latest') {
+          elements.assignmentStatusTitle.textContent = 'সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান তথ্য';
+          if (elements.latestAssignmentLabel) elements.latestAssignmentLabel.textContent = 'সর্বশেষ এসাইনমেন্ট';
+      } else {
+          elements.assignmentStatusTitle.textContent = 'এসাইনমেন্ট ফলাফল প্রদান তথ্য';
+          if (elements.latestAssignmentLabel) elements.latestAssignmentLabel.textContent = 'এসাইনমেন্ট';
+      }
+  }
+
+  if (elements.latestAssignmentUpdated) {
+    const ts = _getTaskScheduleTimestamp(targetTask);
+    elements.latestAssignmentUpdated.textContent = _formatDateTime(ts);
+  }
+
+  // Update Progress Bar
+  // Switch to Student-based progress as it's more reliable (Group stats might be 0 if groupId is missing)
+  const totalEvaluationsNeeded = summary.total !== undefined ? summary.total : (summary.totalStudentCount || students.length);
+  const evaluatedCount = summary.evaluated !== undefined ? summary.evaluated : (summary.evaluatedStudentCount || 0);
+  
+  const progressPercent = totalEvaluationsNeeded > 0 ? Math.round((evaluatedCount / totalEvaluationsNeeded) * 100) : 0;
+  
+  console.log('📊 Progress Update (Student-based):', { 
+      task: targetTask.name, 
+      evaluated: evaluatedCount, 
+      total: totalEvaluationsNeeded, 
+      percent: progressPercent 
+  });
+
+  if (elements.progressBar) {
+      elements.progressBar.style.width = `${progressPercent}%`;
+      // Force a reflow to ensure animation triggers if needed (though usually not required for simple width change)
+      // elements.progressBar.offsetHeight; 
+  }
+  if (elements.progressBarLabel) {
+      elements.progressBarLabel.textContent = `${helpers.convertToBanglaNumber(progressPercent)}%`;
+  }
+
+  // Update Student Stats
+  // FIX: Use 'evaluated' and 'total' keys as returned by _calculateLatestAssignmentSummary
+  const evaluatedStudentCount = summary.evaluated !== undefined ? summary.evaluated : (summary.evaluatedStudentCount || 0);
+  const totalStudentCount = summary.total !== undefined ? summary.total : (summary.totalStudentCount || 0);
+  
+  if (elements.latestAssignmentEvaluated) elements.latestAssignmentEvaluated.textContent = helpers.convertToBanglaNumber(evaluatedStudentCount);
+  if (elements.latestAssignmentPending) elements.latestAssignmentPending.textContent = helpers.convertToBanglaNumber(totalStudentCount - evaluatedStudentCount);
+  if (elements.latestAssignmentStudentTotal) elements.latestAssignmentStudentTotal.textContent = helpers.convertToBanglaNumber(totalStudentCount);
+
+  // Update Group Stats
+  const evaluatedGroupCount = summary.evaluatedGroupCount || 0;
+  // Note: summary.totalGroupCount might differ from groups.length if assignment is scoped. 
+  // But for consistency with "Latest" logic which often uses global groups count for "Total", we'll stick to groups.length or summary.totalGroupCount if available.
+  // The original code used groups.length for total.
+  const totalGroupCount = groups.length; 
+  
+  if (elements.latestAssignmentGroupEvaluated) elements.latestAssignmentGroupEvaluated.textContent = helpers.convertToBanglaNumber(evaluatedGroupCount);
+  if (elements.latestAssignmentGroupPending) elements.latestAssignmentGroupPending.textContent = helpers.convertToBanglaNumber(totalGroupCount - evaluatedGroupCount);
+  if (elements.latestAssignmentGroupTotal) elements.latestAssignmentGroupTotal.textContent = helpers.convertToBanglaNumber(totalGroupCount);
+
+  // Update Average & Overall
+  // Note: For specific assignment, "Overall Progress" might just be that assignment's average or kept as global. 
+  // The user request implies seeing data for *that* assignment.
+  // Let's calculate the average for this specific assignment.
+  
+  const assignmentAverageStats = _calculateAssignmentAverageStats([targetTask], evaluations);
+  const avg = assignmentAverageStats.assignmentAverageMap.get(targetTask.id) || 0;
+  
+  if (elements.latestAssignmentAverage) elements.latestAssignmentAverage.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
+  
+  // For "Overall Progress" circle in the context of a single assignment, it usually mirrors the assignment average 
+  // OR we can keep it as the global overall. 
+  // However, the UI groups them under the assignment card. Let's make it reflect the assignment's completion or score?
+  // The design labels it "সামগ্রিক ‍উন্নতি" (Overall Improvement). 
+  // If we filter by assignment, maybe this should show the assignment's average score vs total possible?
+  // Or just keep it as the assignment average for consistency with the "Latest" view logic.
+  if (elements.overallProgress) elements.overallProgress.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
+
 }
 
 // --- Calculation Logic ---
