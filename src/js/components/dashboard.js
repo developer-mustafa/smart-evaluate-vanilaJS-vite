@@ -287,8 +287,8 @@ function _getDashboardHTMLStructure() {
             </div>
 
             <!-- Col 2: Progress bar -->
-            <div>
-              <div class="battery">
+            <div class="w-full">
+              <div class="battery w-full">
                 <div class="battery-shell relative w-full h-full">
                   <div id="progressBar" class="battery-liquid h-full" style="width: 0%"></div>
                   <span id="progressBarLabel" class="battery-label absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-900 dark:text-white z-10 drop-shadow-md">0%</span>
@@ -831,11 +831,26 @@ function _populateAssignmentFilter(tasks) {
     elements.dashboardAssignmentFilter.appendChild(option);
   });
 
-  // Restore persisted value
-  elements.dashboardAssignmentFilter.value = currentFilterValue;
-
-  // Trigger update immediately to ensure UI matches state
-  _updateDashboardForTask(currentFilterValue);
+  // Restore persisted value OR check for forced assignment
+  const dashboardConfig = stateManager.getDashboardConfig();
+  
+  if (dashboardConfig.isForced && dashboardConfig.forceAssignmentId) {
+      // Force the selection
+      elements.dashboardAssignmentFilter.value = dashboardConfig.forceAssignmentId;
+      elements.dashboardAssignmentFilter.disabled = true; // Optional: Disable it so they can't change it
+      
+      // Add a visual indicator or title change?
+      // Maybe just log it for now
+      console.log('🔒 Dashboard forced to assignment:', dashboardConfig.forceAssignmentId);
+      
+      // Trigger update
+      _updateDashboardForTask(dashboardConfig.forceAssignmentId);
+  } else {
+      // Normal behavior
+      elements.dashboardAssignmentFilter.disabled = false;
+      elements.dashboardAssignmentFilter.value = currentFilterValue;
+      _updateDashboardForTask(currentFilterValue);
+  }
 
   // Attach listener
   elements.dashboardAssignmentFilter.addEventListener('change', (e) => {
@@ -850,19 +865,48 @@ function _updateDashboardForTask(taskId) {
   
   let targetTask = null;
   let summary = null;
+  let filteredEvaluations = evaluations;
 
   if (taskId === 'latest') {
-    // Re-calculate for latest
-    const stats = _calculateStats(groups, students, tasks, evaluations);
-    summary = stats.latestAssignmentSummary;
-    targetTask = summary ? tasks.find(t => t.id === summary.taskId) : null;
+    // Find the latest task first
+    const fullStats = _calculateStats(groups, students, tasks, evaluations);
+    const latestSummary = fullStats.latestAssignmentSummary;
+    
+    if (latestSummary && latestSummary.taskId) {
+        targetTask = tasks.find(t => t.id === latestSummary.taskId);
+        if (targetTask) {
+            // Filter evaluations for the latest task
+            filteredEvaluations = evaluations.filter(e => String(e.taskId) === String(targetTask.id));
+            
+            // Calculate stats based ONLY on this latest task's evaluations
+            const stats = _calculateStats(groups, students, tasks, filteredEvaluations);
+            summary = stats.latestAssignmentSummary;
+
+            // Re-render dynamic sections with filtered stats
+            _renderTopGroups(stats.groupPerformanceData);
+            _renderAcademicGroups(stats.academicGroupStats);
+            _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+        }
+    } else {
+        // Fallback if no latest task found (e.g. no data)
+        _renderTopGroups([]);
+        _renderAcademicGroups({});
+        _renderGroupsRanking([], null);
+    }
   } else {
-    // Calculate for specific task
+    // Filter for specific task
     targetTask = tasks.find(t => String(t.id) === String(taskId));
     if (targetTask) {
-       // CRITICAL FIX: Filter evaluations for this specific task so the calculator doesn't pick up a newer task's evaluation
-       const targetEvaluations = evaluations.filter(e => String(e.taskId) === String(targetTask.id));
-       summary = _calculateLatestAssignmentSummary(groups, students, [targetTask], targetEvaluations);
+       filteredEvaluations = evaluations.filter(e => String(e.taskId) === String(targetTask.id));
+       
+       // Calculate stats based ONLY on this task's evaluations
+       const stats = _calculateStats(groups, students, tasks, filteredEvaluations);
+       summary = stats.latestAssignmentSummary; // This will effectively be the summary for the target task
+
+       // Re-render dynamic sections with filtered stats
+       _renderTopGroups(stats.groupPerformanceData);
+       _renderAcademicGroups(stats.academicGroupStats);
+       _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
     }
   }
 
@@ -889,7 +933,14 @@ function _updateDashboardForTask(taskId) {
           elements.assignmentStatusTitle.textContent = 'সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান তথ্য';
           if (elements.latestAssignmentLabel) elements.latestAssignmentLabel.textContent = 'সর্বশেষ এসাইনমেন্ট';
       } else {
-          elements.assignmentStatusTitle.textContent = 'এসাইনমেন্ট ফলাফল প্রদান তথ্য';
+          // Check if forced
+          const config = stateManager.getDashboardConfig();
+          const isForced = config.isForced && String(config.forceAssignmentId) === String(taskId);
+          
+          elements.assignmentStatusTitle.innerHTML = isForced 
+            ? 'এসাইনমেন্ট ফলাফল প্রদান তথ্য <span class="ml-2 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">ম্যানুয়াল ফোর্স</span>'
+            : 'এসাইনমেন্ট ফলাফল প্রদান তথ্য';
+            
           if (elements.latestAssignmentLabel) elements.latestAssignmentLabel.textContent = 'এসাইনমেন্ট';
       }
   }
@@ -914,9 +965,13 @@ function _updateDashboardForTask(taskId) {
   });
 
   if (elements.progressBar) {
-      elements.progressBar.style.width = `${progressPercent}%`;
-      // Force a reflow to ensure animation triggers if needed (though usually not required for simple width change)
-      // elements.progressBar.offsetHeight; 
+      // Force a reflow before setting width
+      void elements.progressBar.offsetHeight;
+      
+      // Use setTimeout to ensure DOM is ready and transition triggers
+      setTimeout(() => {
+          elements.progressBar.style.setProperty('width', `${progressPercent}%`, 'important');
+      }, 50);
   }
   if (elements.progressBarLabel) {
       elements.progressBarLabel.textContent = `${helpers.convertToBanglaNumber(progressPercent)}%`;
@@ -947,17 +1002,13 @@ function _updateDashboardForTask(taskId) {
   // The user request implies seeing data for *that* assignment.
   // Let's calculate the average for this specific assignment.
   
-  const assignmentAverageStats = _calculateAssignmentAverageStats([targetTask], evaluations);
+  const assignmentAverageStats = _calculateAssignmentAverageStats([targetTask], filteredEvaluations);
   const avg = assignmentAverageStats.assignmentAverageMap.get(targetTask.id) || 0;
   
   if (elements.latestAssignmentAverage) elements.latestAssignmentAverage.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
   
   // For "Overall Progress" circle in the context of a single assignment, it usually mirrors the assignment average 
-  // OR we can keep it as the global overall. 
-  // However, the UI groups them under the assignment card. Let's make it reflect the assignment's completion or score?
-  // The design labels it "সামগ্রিক ‍উন্নতি" (Overall Improvement). 
-  // If we filter by assignment, maybe this should show the assignment's average score vs total possible?
-  // Or just keep it as the assignment average for consistency with the "Latest" view logic.
+  // OR we can keep it as the assignment average for consistency with the "Latest" view logic.
   if (elements.overallProgress) elements.overallProgress.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
 
 }

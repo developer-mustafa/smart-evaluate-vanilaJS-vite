@@ -98,6 +98,7 @@ export function render() {
   }
   console.log('Rendering Evaluation page...');
   _populateSelectors();
+  _renderDashboardConfig(); // Add this line
   _renderEvaluationList();
   if (!currentEditingEvaluationId) {
     uiManager.clearContainer(elements.evaluationFormContainer);
@@ -115,6 +116,7 @@ function _cacheDOMElements() {
     elements.evaluationTaskSelect = elements.page.querySelector('#evaluationTaskSelect');
     elements.evaluationGroupSelect = elements.page.querySelector('#evaluationGroupSelect');
     elements.startEvaluationBtn = elements.page.querySelector('#startEvaluationBtn');
+    elements.dashboardConfigContainer = elements.page.querySelector('#dashboardConfigContainer'); // Add this
     elements.evaluationFormContainer = elements.page.querySelector('#evaluationForm');
     elements.evaluationListTableBody = elements.page.querySelector('#evaluationListTable');
   } else {
@@ -754,5 +756,108 @@ function _handleDeleteEvaluation(evaluationId) {
     } finally {
       uiManager.hideLoading();
     }
+  });
+}
+
+/**
+ * ড্যাশবোর্ড ডিসপ্লে কনফিগারেশন রেন্ডার করে।
+ * @private
+ */
+function _renderDashboardConfig() {
+  if (!elements.dashboardConfigContainer) return;
+  
+  // Permission check: Only admins should see this
+  const canEdit = permissionHelper?.canEdit();
+  
+  if (!canEdit) {
+      elements.dashboardConfigContainer.classList.add('hidden');
+      return;
+  }
+  elements.dashboardConfigContainer.classList.remove('hidden');
+
+  const config = stateManager.getDashboardConfig();
+  const tasks = stateManager.get('tasks') || [];
+  
+  // Sort tasks by date (newest first)
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    return dateB - dateA;
+  });
+
+  const isForced = config.isForced;
+  const forcedId = config.forceAssignmentId;
+
+  elements.dashboardConfigContainer.innerHTML = `
+    <div class="card card-body mb-6 border-l-4 border-indigo-500">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">ড্যাশবোর্ড ডিসপ্লে কনফিগারেশন</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">ড্যাশবোর্ডে কোন এসাইনমেন্টের ডেটা দেখানো হবে তা নির্ধারণ করুন।</p>
+        </div>
+        <div class="flex items-center gap-3">
+             <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="forceDashboardToggle" class="sr-only peer" ${isForced ? 'checked' : ''}>
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">ম্যানুয়াল ফোর্স</span>
+            </label>
+        </div>
+      </div>
+      
+      <div id="forceConfigControls" class="mt-4 pt-4 border-t dark:border-gray-700 transition-all duration-300 ${isForced ? '' : 'hidden opacity-50 pointer-events-none'}">
+          <div class="flex flex-col sm:flex-row gap-3 items-end">
+            <div class="w-full sm:w-1/2">
+                <label for="forceAssignmentSelect" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">এসাইনমেন্ট নির্বাচন করুন</label>
+                <select id="forceAssignmentSelect" class="form-select w-full">
+                    <option value="" disabled ${!forcedId ? 'selected' : ''}>এসাইনমেন্ট বেছে নিন...</option>
+                    ${sortedTasks.map(t => `<option value="${t.id}" ${t.id === forcedId ? 'selected' : ''}>${t.name}</option>`).join('')}
+                </select>
+            </div>
+            <button id="saveDashboardConfigBtn" class="btn btn-primary whitespace-nowrap">
+                <i class="fas fa-save mr-2"></i> সেভ কনফিগারেশন
+            </button>
+          </div>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-2">
+            <i class="fas fa-info-circle"></i> এটি চালু থাকলে ড্যাশবোর্ডে সবসময় নির্বাচিত এসাইনমেন্টের ডেটা দেখাবে।
+          </p>
+      </div>
+    </div>
+  `;
+
+  // Attach Listeners
+  const toggle = elements.dashboardConfigContainer.querySelector('#forceDashboardToggle');
+  const controls = elements.dashboardConfigContainer.querySelector('#forceConfigControls');
+  const saveBtn = elements.dashboardConfigContainer.querySelector('#saveDashboardConfigBtn');
+  const select = elements.dashboardConfigContainer.querySelector('#forceAssignmentSelect');
+
+  toggle.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      if (checked) {
+          controls.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+      } else {
+          controls.classList.add('hidden', 'opacity-50', 'pointer-events-none');
+          // Auto-save when disabling
+          stateManager.setDashboardConfig({
+              isForced: false
+          });
+          uiManager.showToast('ম্যানুয়াল ফোর্স বন্ধ করা হয়েছে।', 'info');
+      }
+  });
+
+  saveBtn.addEventListener('click', () => {
+      const shouldForce = toggle.checked;
+      const selectedId = select.value;
+
+      if (shouldForce && !selectedId) {
+          uiManager.showToast('অনুগ্রহ করে একটি এসাইনমেন্ট নির্বাচন করুন।', 'warning');
+          return;
+      }
+
+      stateManager.setDashboardConfig({
+          isForced: shouldForce,
+          forceAssignmentId: selectedId
+      });
+
+      uiManager.showToast('ড্যাশবোর্ড কনফিগারেশন সেভ হয়েছে।', 'success');
   });
 }

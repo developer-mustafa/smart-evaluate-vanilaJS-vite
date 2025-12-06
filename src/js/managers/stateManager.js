@@ -71,6 +71,12 @@ class StateManager {
           searchTerm: '',
         },
       },
+      
+      // Dashboard Configuration (Forced Assignment)
+      dashboardConfig: {
+        forceAssignmentId: null,
+        isForced: false
+      },
 
       // Other UI State
       activePage: 'dashboard',
@@ -180,6 +186,26 @@ class StateManager {
   // --- Loading State ---
   setLoading(isLoading) {
     this.set('isLoading', isLoading);
+  }
+
+  // --- Dashboard Config Persistence ---
+
+  getDashboardConfig() {
+    const stored = localStorage.getItem('dashboardConfig');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error('Failed to parse dashboardConfig from local storage', e);
+      }
+    }
+    return this.state.dashboardConfig || { forceAssignmentId: null, isForced: false };
+  }
+
+  setDashboardConfig(config) {
+    this.state.dashboardConfig = { ...this.state.dashboardConfig, ...config };
+    localStorage.setItem('dashboardConfig', JSON.stringify(this.state.dashboardConfig));
+    // console.log('Dashboard config updated:', this.state.dashboardConfig);
   }
 }
 
