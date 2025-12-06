@@ -42,7 +42,7 @@ const renderScopeKeys = {
 let lastGroupOptionsSignature = '';
 let lastAcademicOptionsSignature = '';
 
-const BADGE_BASE_CLASS = 'inline-flex items-center px-2 py-2 text-xs font-semibold rounded-full border';
+const BADGE_BASE_CLASS = 'inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full border';
 
 const ROLE_BADGE_META = {
   'team-leader': {
@@ -163,7 +163,7 @@ function _ensureSoft3DStyles() {
 }
 
 function _renderStudentRoleBadge(roleCode) {
-  const baseClasses = `${BADGE_BASE_CLASS} badge-3d mt-1`;
+  const baseClasses = `${BADGE_BASE_CLASS} badge-3d`;
   if (!roleCode) {
     return `<span class="${baseClasses} bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">দায়িত্ব নির্ধারিত নয়</span>`;
   }
@@ -432,7 +432,136 @@ function _setupEventListeners() {
         }
       });
     });
+
+    // Print Button Listener
+    const printBtn = elements.cardsPage.querySelector('#printStudentsBtn');
+    if (printBtn) {
+      uiManager.addListener(printBtn, 'click', _handlePrintStudents);
+    }
   }
+}
+
+/**
+ * Handles printing the filtered student list.
+ * @private
+ */
+function _handlePrintStudents() {
+  const filters = stateManager.getFilterSection('studentCards');
+  const allStudents = stateManager.get('students') || [];
+  
+  // Filter students based on current filters
+  const filteredStudents = allStudents.filter(student => {
+    const matchesGroup = filters.groupFilter === 'all' || student.groupId === filters.groupFilter;
+    const matchesAcademic = filters.academicFilter === 'all' || student.academicGroup === filters.academicFilter;
+    const matchesSearch = !filters.searchTerm || 
+      student.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      String(student.roll || '').includes(filters.searchTerm) ||
+      (student.phone && student.phone.includes(filters.searchTerm));
+      
+    return matchesGroup && matchesAcademic && matchesSearch;
+  });
+
+  if (filteredStudents.length === 0) {
+    uiManager.showToast('প্রিন্ট করার জন্য কোনো শিক্ষার্থী পাওয়া যায়নি।', 'warning');
+    return;
+  }
+
+  // Generate Print HTML
+  const date = new Date().toLocaleDateString('bn-BD');
+  const groups = stateManager.get('groups') || [];
+  
+  const rows = filteredStudents.map((s, index) => {
+    const group = groups.find(g => g.id === s.groupId);
+    const groupName = group ? helpers.ensureBengaliText(group.name) : 'N/A';
+    const roleText = helpers.getStudentRoleText(s.role);
+    const isLeader = s.role === 'leader' || s.role === 'team-leader';
+    const roleStyle = isLeader ? 'color: #ef4444; font-weight: bold;' : '';
+
+    return `
+      <tr>
+        <td>${helpers.convertToBanglaNumber(index + 1)}</td>
+        <td>${s.name}</td>
+        <td>${helpers.convertToBanglaNumber(s.roll)}</td>
+        <td>${groupName}</td>
+        <td>${s.academicGroup || '-'}</td>
+        <td>${s.session || '-'}</td>
+        <td>${s.gender || '-'}</td>
+        <td style="${roleStyle}">${roleText}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="bn">
+    <head>
+      <meta charset="UTF-8">
+      <title>Students List - ${date}</title>
+      <style>
+        body { font-family: 'Kalpurush', sans-serif; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 10px; }
+        .meta { text-align: center; margin-bottom: 20px; color: #666; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        @media print {
+          .no-print { display: none; }
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Students Directory</h1>
+      <div class="meta">
+        Total Students: ${helpers.convertToBanglaNumber(filteredStudents.length)} | Date: ${date}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ক্রমিক</th>
+            <th>নাম</th>
+            <th>রোল</th>
+            <th>গ্রুপ</th>
+            <th>একাডেমিক গ্রুপ</th>
+            <th>সেশন</th>
+            <th>লিঙ্গ</th>
+            <th>পদবী</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  // Use Iframe for printing to avoid about:blank issues
+  let printFrame = document.getElementById('printFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'printFrame';
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = '0';
+    document.body.appendChild(printFrame);
+  }
+
+  const frameDoc = printFrame.contentWindow.document;
+  frameDoc.open();
+  frameDoc.write(html);
+  frameDoc.close();
+
+  // Wait for content to load then print
+  printFrame.contentWindow.focus();
+  setTimeout(() => {
+    printFrame.contentWindow.print();
+  }, 500);
 }
 
 /**
@@ -518,7 +647,7 @@ export function populateFilters() {
 
     if (app.components.groups && app.components.groups.populateGroupSelects) {
       if (filterSelectIds.length) {
-        app.components.groups.populateGroupSelects(filterSelectIds, 'সমস্ত গ্রুপ');
+        app.components.groups.populateGroupSelects(filterSelectIds, 'সকল গ্রুপ');
       }
       if (elements.studentGroupInput) {
         app.components.groups.populateGroupSelects(['studentGroupInput'], 'একটি গ্রুপ নির্বাচন করুন');
@@ -750,14 +879,10 @@ function _renderStudentCardsList() {
       const session = _formatLabel(student.session || 'N/A');
       const gender = _formatLabel(student.gender || 'N/A');
       const academicGroup = _formatLabel(student.academicGroup || 'N/A');
-      const contactText = student.contact ? _formatLabel(student.contact) : '';
-      const contactBlock = contactText
-        ? `<div class="flex items-center gap-2 rounded-xl bg-gray-100/80 px-3 py-2 text-xs text-gray-600 shadow-sm dark:bg-gray-800/70 dark:text-gray-200"><i class="fas fa-phone text-emerald-500"></i><span>${contactText}</span></div>`
-        : '';
 
       return `
   <article
-    class="card-3d relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
+    class="card-3d relative mx-auto w-full max-w-lg md:max-w-xl rounded-2xl border ${
       palette.panelBorder || 'border-gray-200 dark:border-gray-700'
     } bg-white dark:bg-gray-900/80 hover:shadow-lg transition duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-2"
     data-student-id="${student.id}"
@@ -773,7 +898,7 @@ function _renderStudentCardsList() {
     } rounded-t-2xl"></div>
 
     <!-- Body (kept compact) -->
-    <div class="relative px-4 pt-8 pb-4 flex flex-col items-center gap-3">
+    <div class="relative px-2 pt-8 pb-4 flex flex-col items-center gap-2">
 
       <!-- Roll: top-center -->
       <span
@@ -794,34 +919,34 @@ function _renderStudentCardsList() {
       </h4>
 
       <!-- Badges (tight wrap) -->
-      <div class="flex flex-wrap justify-center gap-1.5">
-        ${_renderAcademicBadge(student.academicGroup)}
-        ${_renderStudentRoleBadge(student.role)}
+      <!-- Badges (tight wrap) -->
+      <div class="flex flex-col items-center gap-1.5 w-full">
+        <div class="flex flex-wrap justify-center gap-1.5 w-full">
+          ${_renderAcademicBadge(student.academicGroup)}
+          ${_renderStudentRoleBadge(student.role)}
+        </div>
         <span class="${BADGE_BASE_CLASS} ${
         palette.chipBg ||
         'bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600'
-      } badge-3d">গ্রুপ: ${groupName}</span>
+      } badge-3d max-w-full whitespace-normal text-center leading-tight justify-center px-3 py-1.5 text-[11px]" title="গ্রুপ: ${groupName}">গ্রুপ: ${groupName}</span>
       </div>
 
       <!-- Info grid (compact, non-overlapping) -->
-      <section
-        class="w-full grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))] text-[13px] font-medium"
-        aria-label="Student details"
-      >
-        <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
-          <i class="fas fa-calendar text-indigo-500"></i>
-          <span class="text-gray-600 dark:text-gray-300">সেশন:</span>
-          <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${session}</span>
-        </div>
-
-        <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-2.5 py-1.5">
-          <i class="fas fa-venus-mars text-pink-500"></i>
-          <span class="text-gray-600 dark:text-gray-300">লিঙ্গ:</span>
-          <span class="text-gray-900 dark:text-gray-100 font-semibold ml-1 break-words">${gender}</span>
+      <!-- Info grid (compact, non-overlapping) -->
+      <section class="w-full" aria-label="Student details">
+        <div class="flex items-center justify-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/50 px-3 py-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] text-gray-500 dark:text-gray-400">সেশন:</span>
+            <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200">${session}</span>
+          </div>
+          <div class="h-3 w-px bg-gray-300 dark:bg-gray-600"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] text-gray-500 dark:text-gray-400">লিঙ্গ:</span>
+            <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200">${gender}</span>
+          </div>
         </div>
       </section>
 
-      ${contactBlock}
     </div>
   </article>
 `;

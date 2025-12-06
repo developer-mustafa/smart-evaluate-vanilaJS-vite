@@ -212,3 +212,25 @@ export function addListener(element, event, handler, options = false) {
     console.warn(`addListener: Invalid handler provided for element and event "${event}".`, element);
   }
 }
+
+/**
+ * Gets the Bengali text for a student role.
+ * @param {string} role - The role key (e.g., 'leader', 'member').
+ * @returns {string} The Bengali role text.
+ */
+export function getStudentRoleText(role) {
+  const roles = {
+    leader: 'টিম লিডার',
+    'team-leader': 'টিম লিডার',
+    'co-leader': 'কো-লিডার',
+    member: 'সদস্য',
+    monitor: 'মনিটর',
+    'resource-manager': 'রিসোর্স ম্যানেজার',
+    'time-keeper': 'টাইম কিপার',
+    'peace-maker': 'পিস মেকার',
+    reporter: 'রিপোর্টার',
+    facilitator: 'ফ্যাসিলিটেটর',
+  };
+  return roles[role] || role || 'সদস্য';
+}
+
