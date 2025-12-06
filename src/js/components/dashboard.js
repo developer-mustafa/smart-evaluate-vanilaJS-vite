@@ -383,7 +383,7 @@ function _getDashboardHTMLStructure() {
                 <p id="latestAssignmentAverage" class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">-</p>
               </div>
             </div>
-            <p class="text-[0.8rem] sm:text-sm font-bold text-emerald-800 dark:text-white/80 text-center">
+            <p id="latestAssignmentAverageLabelText" class="text-[0.8rem] sm:text-sm font-bold text-emerald-800 dark:text-white/80 text-center">
               সর্বশেষ এসাইনমেন্ট গড়
             </p>
           </div>
@@ -785,6 +785,7 @@ function _cacheInnerDOMElements() {
     'overallProgress',
     'overallProgressCircle',
     'latestAssignmentAverage',
+    'latestAssignmentAverageLabelText',
     'latestAssignmentCircle',
     'latestTaskTitle',
     'latestAssignmentUpdated',
@@ -824,6 +825,12 @@ function _populateAssignmentFilter(tasks) {
     return tsB - tsA;
   });
 
+  // Add Global Rank Option
+  const globalOption = document.createElement('option');
+  globalOption.value = 'global_rank';
+  globalOption.textContent = 'সকল এসাইনমেন্ট ভিত্তিক গ্লোবাল রেঙ্ক';
+  elements.dashboardAssignmentFilter.appendChild(globalOption);
+
   sortedTasks.forEach(task => {
     const option = document.createElement('option');
     option.value = task.id;
@@ -837,16 +844,10 @@ function _populateAssignmentFilter(tasks) {
   if (dashboardConfig.isForced && dashboardConfig.forceAssignmentId) {
       // Force the selection
       elements.dashboardAssignmentFilter.value = dashboardConfig.forceAssignmentId;
-      elements.dashboardAssignmentFilter.disabled = true; // Optional: Disable it so they can't change it
-      
-      // Add a visual indicator or title change?
-      // Maybe just log it for now
+      elements.dashboardAssignmentFilter.disabled = true; 
       console.log('🔒 Dashboard forced to assignment:', dashboardConfig.forceAssignmentId);
-      
-      // Trigger update
       _updateDashboardForTask(dashboardConfig.forceAssignmentId);
   } else {
-      // Normal behavior
       elements.dashboardAssignmentFilter.disabled = false;
       elements.dashboardAssignmentFilter.value = currentFilterValue;
       _updateDashboardForTask(currentFilterValue);
@@ -854,7 +855,7 @@ function _populateAssignmentFilter(tasks) {
 
   // Attach listener
   elements.dashboardAssignmentFilter.addEventListener('change', (e) => {
-    currentFilterValue = e.target.value; // Update persisted state
+    currentFilterValue = e.target.value; 
     _updateDashboardForTask(e.target.value);
   });
 }
@@ -866,6 +867,126 @@ function _updateDashboardForTask(taskId) {
   let targetTask = null;
   let summary = null;
   let filteredEvaluations = evaluations;
+
+  if (taskId === 'global_rank') {
+      // --- Global Rank Logic ---
+      
+      // 1. Calculate Stats using ALL evaluations
+      const stats = _calculateStats(groups, students, tasks, evaluations);
+      
+      // 2. Render Rankings (This is the core request)
+      _renderTopGroups(stats.groupPerformanceData);
+      _renderAcademicGroups(stats.academicGroupStats);
+      _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+
+      // 3. Update Titles & Labels
+      if (elements.latestTaskTitle) {
+          elements.latestTaskTitle.textContent = 'সামগ্রিক পারফরম্যান্স (সকল এসাইনমেন্ট)';
+          elements.latestTaskTitle.title = 'সকল এসাইনমেন্টের গড় ফলাফলের ভিত্তিতে';
+      }
+      
+      if (elements.assignmentStatusTitle) {
+          elements.assignmentStatusTitle.textContent = 'গ্লোবাল পারফরম্যান্স স্ট্যাটাস';
+      }
+      if (elements.latestAssignmentLabel) {
+          elements.latestAssignmentLabel.textContent = 'গ্লোবাল';
+      }
+
+      if (elements.latestAssignmentUpdated) {
+          elements.latestAssignmentUpdated.textContent = 'হালনাগাদ';
+      }
+
+      // 4. Calculate Global Aggregate Data for Cards
+      // Total possible student-evaluations = Students * Tasks
+      const totalPossibleEvaluations = students.length * tasks.length;
+      
+      // Actual evaluations count
+      let totalEvaluatedCount = 0;
+      evaluations.forEach(e => {
+          if (e.scores) totalEvaluatedCount += Object.keys(e.scores).length;
+      });
+
+      const globalAverage = stats.overallAssignmentAverage || 0;
+      const progressPercent = totalPossibleEvaluations > 0 ? Math.round((totalEvaluatedCount / totalPossibleEvaluations) * 100) : 0;
+
+      // 5. Update Progress Bar
+      if (elements.progressBar) {
+          void elements.progressBar.offsetHeight;
+          setTimeout(() => {
+              elements.progressBar.style.setProperty('width', `${progressPercent}%`, 'important');
+          }, 50);
+      }
+      if (elements.progressBarLabel) {
+          elements.progressBarLabel.textContent = `${helpers.convertToBanglaNumber(progressPercent)}%`;
+      }
+
+      // 6. Update Stats Cards
+      if (elements.latestAssignmentEvaluated) elements.latestAssignmentEvaluated.textContent = helpers.convertToBanglaNumber(totalEvaluatedCount);
+      if (elements.latestAssignmentPending) elements.latestAssignmentPending.textContent = helpers.convertToBanglaNumber(totalPossibleEvaluations - totalEvaluatedCount);
+      if (elements.latestAssignmentStudentTotal) elements.latestAssignmentStudentTotal.textContent = helpers.convertToBanglaNumber(totalPossibleEvaluations);
+
+      // Group Stats (Evaluated = Groups * Tasks)
+      const totalPossibleGroupEvaluations = groups.length * tasks.length;
+      let totalGroupEvaluatedCount = 0;
+      // We can count unique group-task pairs in evaluations
+      const groupTaskPairs = new Set();
+      evaluations.forEach(e => {
+          if (e.groupId && e.taskId) groupTaskPairs.add(`${e.groupId}_${e.taskId}`);
+      });
+      totalGroupEvaluatedCount = groupTaskPairs.size;
+
+      if (elements.latestAssignmentGroupEvaluated) elements.latestAssignmentGroupEvaluated.textContent = helpers.convertToBanglaNumber(totalGroupEvaluatedCount);
+      if (elements.latestAssignmentGroupPending) elements.latestAssignmentGroupPending.textContent = helpers.convertToBanglaNumber(totalPossibleGroupEvaluations - totalGroupEvaluatedCount);
+      if (elements.latestAssignmentGroupTotal) elements.latestAssignmentGroupTotal.textContent = helpers.convertToBanglaNumber(totalPossibleGroupEvaluations);
+
+      // Average
+      // Average
+      
+      // 1. Global Average for "Overall Progress"
+      if (elements.overallProgress) elements.overallProgress.textContent = helpers.convertToBanglaNumber(globalAverage.toFixed(1));
+
+      // 2. Latest Assignment Average for "Latest Assignment Average" Card
+      // 2. Latest Assignment Average for "Latest Assignment Average" Card
+      // We need to find the latest assignment that has evaluations to show meaningful data
+      const sortedTasks = [...tasks].sort((a, b) => _getTaskScheduleTimestamp(b) - _getTaskScheduleTimestamp(a));
+      
+      // Find the first task that has evaluations
+      let targetTask = sortedTasks.find(t => evaluations.some(e => String(e.taskId) === String(t.id)));
+      
+      // Fallback to the absolute latest task if no evaluations found for any task
+      if (!targetTask) {
+          targetTask = sortedTasks[0];
+      }
+
+      let latestAvg = 0;
+      if (targetTask) {
+          const latestTaskEvals = evaluations.filter(e => String(e.taskId) === String(targetTask.id));
+          const latestTaskStats = _calculateAssignmentAverageStats([targetTask], latestTaskEvals);
+          latestAvg = latestTaskStats.assignmentAverageMap.get(String(targetTask.id)) || 0;
+          
+          // Update the Title and Date for the Latest Assignment Card
+          if (elements.latestTaskTitle) {
+              elements.latestTaskTitle.textContent = targetTask.title || targetTask.name || 'অজ্ঞাত এসাইনমেন্ট';
+              elements.latestTaskTitle.title = targetTask.title || targetTask.name || '';
+          }
+          if (elements.latestAssignmentUpdated) {
+              const ts = _getTaskScheduleTimestamp(targetTask);
+              elements.latestAssignmentUpdated.textContent = ts ? _formatDateOnly(ts) : '-';
+          }
+      } else {
+           if (elements.latestTaskTitle) elements.latestTaskTitle.textContent = '-';
+           if (elements.latestAssignmentUpdated) elements.latestAssignmentUpdated.textContent = '-';
+      }
+      
+      if (elements.latestAssignmentAverage) elements.latestAssignmentAverage.textContent = helpers.convertToBanglaNumber(latestAvg.toFixed(1));
+
+      // Update Label for Global Rank
+      if (elements.latestAssignmentAverageLabelText) {
+          elements.latestAssignmentAverageLabelText.textContent = 'সর্বশেষ এসাইনমেন্ট গড়';
+      }
+
+      return; // Exit early for global rank
+  }
 
   if (taskId === 'latest') {
     // Find the latest task first
@@ -881,11 +1002,11 @@ function _updateDashboardForTask(taskId) {
             // Calculate stats based ONLY on this latest task's evaluations
             const stats = _calculateStats(groups, students, tasks, filteredEvaluations);
             summary = stats.latestAssignmentSummary;
-
-            // Re-render dynamic sections with filtered stats
-            _renderTopGroups(stats.groupPerformanceData);
-            _renderAcademicGroups(stats.academicGroupStats);
-            _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+            
+            // Update Label for Latest Task
+            if (elements.latestAssignmentAverageLabelText) {
+                elements.latestAssignmentAverageLabelText.textContent = 'সর্বশেষ এসাইনমেন্ট গড়';
+            }
         }
     } else {
         // Fallback if no latest task found (e.g. no data)
@@ -907,6 +1028,11 @@ function _updateDashboardForTask(taskId) {
        _renderTopGroups(stats.groupPerformanceData);
        _renderAcademicGroups(stats.academicGroupStats);
        _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+
+       // Update Label for Specific Task
+       if (elements.latestAssignmentAverageLabelText) {
+           elements.latestAssignmentAverageLabelText.textContent = 'এসাইনমেন্ট গড়';
+       }
     }
   }
 
@@ -1003,13 +1129,15 @@ function _updateDashboardForTask(taskId) {
   // Let's calculate the average for this specific assignment.
   
   const assignmentAverageStats = _calculateAssignmentAverageStats([targetTask], filteredEvaluations);
-  const avg = assignmentAverageStats.assignmentAverageMap.get(targetTask.id) || 0;
+  const avg = assignmentAverageStats.assignmentAverageMap.get(String(targetTask.id)) || 0;
   
   if (elements.latestAssignmentAverage) elements.latestAssignmentAverage.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
   
-  // For "Overall Progress" circle in the context of a single assignment, it usually mirrors the assignment average 
-  // OR we can keep it as the assignment average for consistency with the "Latest" view logic.
-  if (elements.overallProgress) elements.overallProgress.textContent = helpers.convertToBanglaNumber(avg.toFixed(1));
+  // Calculate Global Average for "Overall Progress" (Always Global)
+  const globalStatsForOverall = _calculateAssignmentAverageStats(tasks, evaluations);
+  const globalAverage = globalStatsForOverall.overallAverage || 0;
+
+  if (elements.overallProgress) elements.overallProgress.textContent = helpers.convertToBanglaNumber(globalAverage.toFixed(1));
 
 }
 
@@ -1051,7 +1179,7 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
   const assignmentOverview = _buildAssignmentOverview(tasks, latestAssignmentSummary);
   const latestAssignmentAverage =
     latestAssignmentSummary?.taskId && assignmentAverageStats.assignmentAverageMap
-      ? assignmentAverageStats.assignmentAverageMap.get(latestAssignmentSummary.taskId) ?? null
+      ? assignmentAverageStats.assignmentAverageMap.get(String(latestAssignmentSummary.taskId)) ?? null
       : null;
   return {
     totalGroups,
@@ -1206,6 +1334,7 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
           evalCount: 0,
           totalScore: 0,
           maxScoreSum: 0,
+          sumOfPercentages: 0, // Initialize for simple average calculation
           latestMs: null,
           participants: new Set(),
         };
@@ -1215,8 +1344,21 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
         rec.evalCount += 1;
         countedGroups.add(normalizedGroupId);
       }
-      rec.totalScore += parseFloat(scoreData?.totalScore) || 0;
-      rec.maxScoreSum += maxScore;
+      // const rec = groupAgg[normalizedGroupId]; // Removed duplicate declaration
+      if (!countedGroups.has(normalizedGroupId)) {
+        rec.evalCount += 1;
+        countedGroups.add(normalizedGroupId);
+      }
+      
+      // Calculate percentage for this specific evaluation
+      const currentMaxScore = maxScore > 0 ? maxScore : 100;
+      const currentTotalScore = parseFloat(scoreData?.totalScore) || 0;
+      const currentPercent = (currentTotalScore / currentMaxScore) * 100;
+
+      rec.totalScore += currentTotalScore; // Keep tracking total score for reference
+      rec.maxScoreSum += currentMaxScore;
+      rec.sumOfPercentages += currentPercent; // Track sum of percentages for simple average
+      
       rec.participants.add(sid);
       if (ts) rec.latestMs = rec.latestMs ? Math.max(rec.latestMs, ts) : ts;
     });
@@ -1225,12 +1367,15 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
   const ranked = Object.entries(groupAgg)
     .map(([gid, agg]) => {
       if (agg.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
-      const efficiency = agg.maxScoreSum > 0 ? (agg.totalScore / agg.maxScoreSum) * 100 : 0;
+      
+      // Use Simple Average: Sum of Percentages / Number of Evaluations
+      const efficiency = agg.evalCount > 0 ? (agg.sumOfPercentages / agg.evalCount) : 0;
+      
       const size = groupSize[gid] || 0;
       const participantsCount = agg.participants.size;
       return {
         groupId: gid,
-        efficiency,
+        efficiency, // This is now the Simple Average
         evalCount: agg.evalCount,
         totalScore: agg.totalScore,
         maxScoreSum: agg.maxScoreSum,
@@ -1244,8 +1389,7 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
     .sort((a, b) => {
       if (b.efficiency !== a.efficiency) return b.efficiency - a.efficiency;
       if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
-      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-      if (b.maxScoreSum !== a.maxScoreSum) return b.maxScoreSum - a.maxScoreSum;
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore; // Secondary tie-breaker
       return (b.latestEvaluationMs || 0) - (a.latestEvaluationMs || 0);
     });
 
@@ -1270,7 +1414,7 @@ function _getEvaluationAveragePercent(evaluation, taskMap) {
   if (!Number.isNaN(avgEvalScorePercent)) return avgEvalScorePercent;
 
   if (!evaluation.scores) return null;
-  const task = taskMap.get(evaluation.taskId);
+  const task = taskMap.get(String(evaluation.taskId));
   const maxScore = parseFloat(task?.maxScore) || parseFloat(evaluation.maxPossibleScore) || 100;
   if (!(maxScore > 0)) return null;
 
@@ -1462,19 +1606,23 @@ function _calculateAssignmentAverageStats(tasks = [], evaluations = []) {
   if (!evaluations.length) {
     return { assignmentSummaries: [], overallAverage: 0, assignmentAverageMap: new Map() };
   }
-  const taskMap = new Map(tasks.map((task) => [task.id, task]));
+  // Use String keys for robust matching
+  const taskMap = new Map(tasks.map((task) => [String(task.id), task]));
   const aggregates = new Map();
 
   evaluations.forEach((evaluation) => {
     if (!evaluation.taskId) return;
+    const taskIdStr = String(evaluation.taskId);
+    
     const avgPct = _getEvaluationAveragePercent(evaluation, taskMap);
     if (typeof avgPct !== 'number' || Number.isNaN(avgPct)) return;
-    if (!aggregates.has(evaluation.taskId)) {
-      aggregates.set(evaluation.taskId, { total: 0, count: 0 });
+    
+    if (!aggregates.has(taskIdStr)) {
+      aggregates.set(taskIdStr, { total: 0, count: 0 });
     }
-    const bucket = aggregates.get(evaluation.taskId);
-    bucket.total += avgPct;
-    bucket.count += 1;
+    const agg = aggregates.get(taskIdStr);
+    agg.total += avgPct;
+    agg.count++;
   });
 
   const assignmentSummaries = [];
