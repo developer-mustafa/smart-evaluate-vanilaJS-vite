@@ -771,7 +771,10 @@ function _renderStudentsList() {
             : '';
 
           return `
-            <article class="card-3d rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-4 hover:shadow-md transition">
+            <article 
+              class="card-3d rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-4 hover:shadow-md transition cursor-pointer"
+              onclick="window.openStudentModalById && window.openStudentModalById('${student.id}')"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <h5 class="text-base font-semibold text-gray-900 dark:text-white">${name || 'নাম নেই'}</h5>
@@ -795,10 +798,10 @@ function _renderStudentsList() {
               <div class="mt-4 flex justify-end gap-2">
                 <button data-id="${
                   student.id
-                }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা"><i class="fas fa-edit pointer-events-none"></i></button>
+                }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা" onclick="event.stopPropagation()"><i class="fas fa-edit pointer-events-none"></i></button>
                 <button data-id="${
                   student.id
-                }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট"><i class="fas fa-trash pointer-events-none"></i></button>
+                }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট" onclick="event.stopPropagation()"><i class="fas fa-trash pointer-events-none"></i></button>
               </div>
             </article>
           `;
@@ -889,8 +892,7 @@ function _renderStudentCardsList() {
     role="button"
     tabindex="0"
     aria-label="${name} - বিস্তারিত"
-    onclick="_handleStudentCardActivation && _handleStudentCardActivation(event)"
-    onkeydown="_handleStudentCardActivation && _handleStudentCardActivation(event)"
+    onclick="window.openStudentModalById && window.openStudentModalById('${student.id}')"
   >
     <!-- Top gradient bar -->
     <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
