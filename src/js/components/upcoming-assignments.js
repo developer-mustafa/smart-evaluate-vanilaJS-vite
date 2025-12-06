@@ -250,13 +250,28 @@ function _ensureTabStyles() {
   .ua-tab-desc { display: none; }
 
   @media (max-width: 640px) {
-    .ua-tab {
-      padding: 0.5rem 0.8rem;
-      min-width: calc(50% - 0.5rem);
-      justify-content: center;
+    .ua-tabbar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
     }
-    .ua-tab-label { font-size: 0.85rem; }
-    .ua-tab-count { font-size: 0.75rem; }
+    .ua-tab {
+      padding: 0.75rem 0.5rem;
+      min-width: 0;
+      width: 100%;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.5rem;
+      text-align: center;
+    }
+    .ua-tab-label { 
+      font-size: 0.8rem; 
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .ua-tab-count { 
+      font-size: 0.75rem; 
+    }
   }
   `;
   document.head.appendChild(style);

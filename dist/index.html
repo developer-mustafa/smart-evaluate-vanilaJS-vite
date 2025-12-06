@@ -26,8 +26,8 @@
 
     <!-- Google API scripts are loaded dynamically in export.js -->
 
-    <script type="module" crossorigin src="/assets/index-Xmc-XPi8.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CxZD5-3u.css">
+    <script type="module" crossorigin src="/assets/index-BDnlR3kx.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-EXSeVM1P.css">
   </head>
 
   <body
@@ -413,10 +413,10 @@
       ></div>
 
       <main
-        class="flex-1 lg:ml-64 page-content transition-margin duration-300 ease-in-out p-4  overflow-y-auto"
+        class="flex-1 lg:ml-64 page-content transition-margin duration-300 ease-in-out px-4  overflow-y-auto"
       >
-        <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
-          <div id="page-dashboard" class="page space-y-6 hidden">
+        <div id="appContainer" class="space-y-2 max-w-7xl mx-auto">
+          <div id="page-dashboard" class="page space-y-2 hidden">
 
             <!-- Elite Group (Top 3) -->
             <section id="elite-groups" aria-label="Elite Groups">
@@ -592,47 +592,64 @@
             </div>
           </div>
 
-                    <div id="page-all-students" class="page space-y-4 hidden">
-            <h2 class="text-2xl font-bold mb-4">Students Directory</h2>
-            <div class="card overflow-hidden">
-              <div class="card-body space-y-4">
-                <!-- Simplified Filter Panel -->
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-                  <label class="flex flex-col gap-1.5">
-                    <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Group</span>
-                    <div class="relative flex items-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-3 py-2.5 text-sm transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                      <span class="pointer-events-none mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        <i class="fas fa-layer-group text-sm"></i>
-                      </span>
-                      <select id="cardsFilterGroup" class="w-full bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none" aria-label="Filter by group">
-                        <option value="all">All groups</option>
-                      </select>
+          <div id="page-all-students" class="page hidden w-full">
+            <div class="mb-5 w-full">
+             
+              <!-- Simplified Filter Grid (No outer card) -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <!-- Group Filter (Span 3) -->
+                <div class="md:col-span-3">
+                 
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fas fa-layer-group text-gray-400 text-xs"></i>
                     </div>
-                  </label>
-                  <label class="flex flex-col gap-1.5">
-                    <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Stream</span>
-                    <div class="relative flex items-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-3 py-2.5 text-sm transition-all focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
-                      <span class="pointer-events-none mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        <i class="fas fa-graduation-cap text-sm"></i>
-                      </span>
-                      <select id="cardsFilterAcademicGroup" class="w-full bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none" aria-label="Filter by academic group">
-                        <option value="all">All streams</option>
-                      </select>
+                    <select id="cardsFilterGroup" class="w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors" aria-label="Filter by group">
+                      <option value="all">All groups</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
                     </div>
-                  </label>
-                  <label class="flex flex-col gap-1.5">
-                    <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Search</span>
-                    <div class="relative flex items-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-3 py-2.5 text-sm transition-all focus-within:ring-2 focus-within:ring-pink-500/20 focus-within:border-pink-500">
-                      <span class="pointer-events-none mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-pink-500/10 text-pink-600 dark:text-pink-400">
-                        <i class="fas fa-magnifying-glass text-sm"></i>
-                      </span>
-                      <input id="allStudentsSearchInput" type="search" placeholder="Name, roll or contact..." class="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none" aria-label="Search students" />
+                  </div>
+                </div>
+
+                <!-- Stream Filter (Span 3) -->
+                <div class="md:col-span-3">
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fas fa-graduation-cap text-gray-400 text-xs"></i>
                     </div>
-                  </label>
+                    <select id="cardsFilterAcademicGroup" class="w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors" aria-label="Filter by academic group">
+                      <option value="all">All streams</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search (Span 4) -->
+                <div class="md:col-span-4">
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fas fa-magnifying-glass text-gray-400 text-xs"></i>
+                    </div>
+                    <input id="allStudentsSearchInput" type="search" placeholder="Name, roll or contact..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2.5 pl-9 pr-4 text-sm placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors" aria-label="Search students" />
+                  </div>
+                </div>
+
+                <!-- Print Button (Span 2) -->
+                <div class="md:col-span-2">
+                  <label class="mb-1.5 block text-xs font-medium text-transparent select-none">Print</label>
+                  <button id="printStudentsBtn" class="w-full h-[42px] flex items-center justify-center gap-2 rounded-lg bg-gray-900 dark:bg-gray-700 text-white hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors shadow-sm">
+                    <i class="fas fa-print text-xs"></i>
+                    <span class="font-medium text-sm">Print List</span>
+                  </button>
                 </div>
               </div>
             </div>
-          <div id="allStudentsCards" class="">
+
+            <div id="allStudentsCards" class="">
               <div class="placeholder-content col-span-full">
                 <i class="fas fa-spinner fa-spin mr-2"></i>
                 কার্ড লোড হচ্ছে...
