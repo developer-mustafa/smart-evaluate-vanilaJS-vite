@@ -1,17 +1,19 @@
 import stateManager from '../managers/stateManager.js';
 import uiManager from '../managers/uiManager.js';
 import * as dataService from '../services/dataService.js';
+import themeManager from '../managers/themeManager.js';
 
 // Default settings structure
 const DEFAULT_SETTINGS = {
   dashboardSections: {
     hero: true,
     stats: true,
-    eliteGroups: true, // This is now 'topGroups' in UI but keeping key for backward compat or mapping
+    eliteGroups: true,
     topGroups: true,
     academicStats: true,
     ranking: true
   },
+  theme: 'theme-blue',
   sidebar: {
     dashboard: { visible: true, type: 'public', label: 'ড্যাশবোর্ড', icon: 'fa-tachometer-alt', locked: true },
     'upcoming-assignments': { visible: true, type: 'public', label: 'আপকামিং এসাইনমেন্ট', icon: 'fa-calendar-week' },
@@ -19,10 +21,11 @@ const DEFAULT_SETTINGS = {
     'all-students': { visible: true, type: 'public', label: 'শিক্ষার্থী তথ্য', icon: 'fa-user-graduate' },
     'student-filter': { visible: true, type: 'public', label: 'শিক্ষার্থী ফিল্টার', icon: 'fa-filter' },
     'group-analysis': { visible: true, type: 'public', label: 'ফলাফল সামারি', icon: 'fa-chart-bar' },
-    'graph-analysis': { visible: true, type: 'public', label: 'মূল্যায়ন বিশ্লেষণ', icon: 'fa-chart-line' },
+    'graph-analysis': { visible: true, type: 'public', label: 'মূল্যায়ন বিশ্লেষণ', icon: 'fa-chart-line' },
     statistics: { visible: true, type: 'public', label: 'গ্রুপ পরিসংখ্যান', icon: 'fa-calculator' },
     'group-policy': { visible: true, type: 'public', label: 'গ্রুপ পলিসি', icon: 'fa-book' },
     export: { visible: true, type: 'public', label: 'এক্সপোর্ট', icon: 'fa-file-export' },
+    'public-settings': { visible: true, type: 'public', label: 'পাবলিক সেটিংস', icon: 'fa-cog' },
     groups: { visible: true, type: 'private', label: 'গ্রুপ ব্যবস্থাপনা', icon: 'fa-layer-group' },
     members: { visible: true, type: 'private', label: 'শিক্ষার্থী ব্যবস্থাপনা', icon: 'fa-users' },
     tasks: { visible: true, type: 'private', label: 'টাস্ক ব্যবস্থাপনা', icon: 'fa-tasks' },
@@ -46,12 +49,13 @@ export function init(dependencies) {
     isPagePublic,
     toggleSidebarType,
     toggleDashboardSection,
-    toggleSidebarVisibility
+    toggleSidebarVisibility,
+    setTheme
   };
 }
 
 function _mergeDefaults() {
-  // 1. Clean up stale keys from _settings.sidebar that are not in DEFAULT_SETTINGS.sidebar
+  // 1. Clean up stale keys from _settings.sidebar
   Object.keys(_settings.sidebar).forEach(key => {
     if (!DEFAULT_SETTINGS.sidebar.hasOwnProperty(key)) {
       delete _settings.sidebar[key];
@@ -83,20 +87,100 @@ function _mergeDefaults() {
   });
 }
 
+// --- FIX: Added export function render() wrapper here ---
 export function render() {
   const container = document.getElementById('settingsContent');
   if (!container) return;
 
+  const activePage = stateManager.get('activePage');
+  const isPublicSettings = activePage === 'public-settings';
+  const currentUser = stateManager.get('currentUserData');
+  const isAdmin = currentUser && (currentUser.type === 'admin' || currentUser.type === 'super-admin');
+
+  // Theme Section HTML
+  const themes = themeManager.getThemes();
+  const currentTheme = _settings.theme || 'theme-blue';
+  
+  const themeSectionHtml = `
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center text-pink-600 dark:text-pink-400">
+            <i class="fas fa-palette"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-gray-800 dark:text-white">থিম কনফিগারেশন</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">অ্যাপ্লিকেশনের কালার থিম পরিবর্তন করুন</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          ${Object.entries(themes).map(([name, value]) => {
+            const isSelected = currentTheme === value;
+            const colorMap = {
+              'theme-blue': 'bg-blue-500',
+              'theme-emerald': 'bg-emerald-500',
+              'theme-violet': 'bg-violet-500',
+              'theme-amber': 'bg-amber-500'
+            };
+            const labelMap = {
+              'theme-blue': 'Blue',
+              'theme-emerald': 'Emerald',
+              'theme-violet': 'Violet',
+              'theme-amber': 'Amber'
+            };
+            return `
+              <button onclick="window.smartEvaluator.components.settings.setTheme('${value}')" 
+                class="relative group p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-3 ${isSelected ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10' : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}">
+                <div class="w-12 h-12 rounded-full ${colorMap[value]} shadow-lg group-hover:scale-110 transition-transform duration-200 flex items-center justify-center">
+                  ${isSelected ? '<i class="fas fa-check text-white"></i>' : ''}
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${labelMap[value]}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        ${isAdmin ? `
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div>
+            <p class="font-medium text-gray-800 dark:text-white">গ্লোবাল থিম হিসেবে সেভ করুন</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">সকল ব্যবহারকারীর জন্য এই থিমটি ডিফল্ট হবে</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="globalThemeToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+          </label>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  if (isPublicSettings) {
+    // Render ONLY Theme Section for Public Settings
+    container.innerHTML = `
+      <div class="space-y-8 max-w-4xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">পাবলিক সেটিংস</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">আপনার ব্যক্তিগত পছন্দ অনুযায়ী থিম পরিবর্তন করুন। এটি শুধুমাত্র আপনার ব্রাউজারে সংরক্ষিত থাকবে।</p>
+        </div>
+        ${themeSectionHtml}
+      </div>
+    `;
+    return;
+  }
+
+  // Admin View (Full Settings)
   container.innerHTML = `
     <div class="space-y-8">
-      <!-- Header Section -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">অ্যাপ্লিকেশন কনফিগারেশন</h3>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">আপনার ড্যাশবোর্ড এবং মেনু পছন্দমত সাজিয়ে নিন।</p>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">আপনার ড্যাশবোর্ড এবং মেনু পছন্দমত সাজিয়ে নিন।</p>
       </div>
 
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <!-- Sidebar Management (Left - Wider) -->
         <div class="xl:col-span-2 space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
@@ -128,9 +212,9 @@ export function render() {
           </div>
         </div>
 
-        <!-- Dashboard & Other Settings (Right) -->
         <div class="space-y-6">
-          <!-- Dashboard Sections -->
+          ${themeSectionHtml}
+
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
               <div class="flex items-center gap-3">
@@ -139,7 +223,7 @@ export function render() {
                 </div>
                 <div>
                   <h4 class="font-bold text-gray-800 dark:text-white">ড্যাশবোর্ড সেকশন</h4>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">ড্যাশবোর্ডের কন্টেন্ট নিয়ন্ত্রণ করুন</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">ড্যাশবোর্ডের কন্টেন্ট নিয়ন্ত্রণ করুন</p>
                 </div>
               </div>
             </div>
@@ -152,7 +236,6 @@ export function render() {
             </div>
           </div>
           
-          <!-- Info Card -->
           <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/30">
             <div class="flex gap-3">
               <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1"></i>
@@ -168,29 +251,28 @@ export function render() {
       </div>
     </div>
   `;
-}
+} 
+// --- End of render function ---
 
 function _renderDashboardToggle(key, title, subtitle, icon, color) {
   const isChecked = _settings.dashboardSections[key];
-  return `
-    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-500/30 transition-colors">
-      <div class="flex items-center gap-4">
-        <div class="w-10 h-10 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400 shadow-sm">
-          <i class="fas ${icon}"></i>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-900 dark:text-white">${title}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${subtitle}</p>
-        </div>
-      </div>
-      <label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" class="sr-only peer" 
-          ${isChecked ? 'checked' : ''}
-          onchange="window.smartEvaluator.components.settings.toggleDashboardSection('${key}', this.checked)">
-        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300/50 dark:peer-focus:ring-purple-800/50 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-      </label>
-    </div>
-  `;
+  return (
+    '<div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-500/30 transition-colors">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-10 h-10 rounded-lg bg-' + color + '-100 dark:bg-' + color + '-900/30 flex items-center justify-center text-' + color + '-600 dark:text-' + color + '-400 shadow-sm">' +
+          '<i class="fas ' + icon + '"></i>' +
+        '</div>' +
+        '<div>' +
+          '<p class="font-semibold text-gray-900 dark:text-white">' + title + '</p>' +
+          '<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">' + subtitle + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<label class="relative inline-flex items-center cursor-pointer">' +
+        '<input type="checkbox" class="sr-only peer" ' + (isChecked ? 'checked' : '') + ' onchange="window.smartEvaluator.components.settings.toggleDashboardSection(\'' + key + '\', this.checked)">' +
+        '<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300/50 dark:peer-focus:ring-purple-800/50 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after-content-empty after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>' +
+      '</label>' +
+    '</div>'
+  );
 }
 
 function _renderSidebarRows() {
@@ -200,38 +282,33 @@ function _renderSidebarRows() {
     if (!item) return ''; // Should not happen due to _mergeDefaults
 
     const isLocked = item.locked;
-    return `
-    <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0">
-      <td class="px-6 py-4">
-        <div class="flex items-center gap-4">
-          <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-white group-hover:shadow-sm dark:group-hover:bg-gray-600 transition-all">
-            <i class="fas ${item.icon}"></i>
-          </div>
-          <span class="font-medium text-gray-700 dark:text-gray-200">${item.label}</span>
-        </div>
-      </td>
-      <td class="px-6 py-4 text-center">
-        <label class="relative inline-flex items-center ${isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}">
-          <input type="checkbox" class="sr-only peer" 
-            ${item.visible ? 'checked' : ''} 
-            ${isLocked ? 'disabled' : ''}
-            onchange="window.smartEvaluator.components.settings.toggleSidebarVisibility('${key}', this.checked)">
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-        </label>
-      </td>
-      <td class="px-6 py-4 text-center">
-        <button 
-          class="relative inline-flex items-center justify-center px-4 py-1.5 overflow-hidden text-xs font-medium transition-all duration-300 ease-out rounded-full group-btn ${isLocked ? 'cursor-not-allowed opacity-60' : 'hover:shadow-md cursor-pointer'} ${item.type === 'private' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'}"
-          ${isLocked ? 'disabled' : ''}
-          onclick="window.smartEvaluator.components.settings.toggleSidebarType('${key}')">
-          <span class="mr-1.5">
-            <i class="fas ${item.type === 'private' ? 'fa-lock' : 'fa-globe'}"></i>
-          </span>
-          ${item.type === 'private' ? 'প্রাইভেট' : 'পাবলিক'}
-        </button>
-      </td>
-    </tr>
-  `}).join('');
+    return (
+      '<tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0">' +
+        '<td class="px-6 py-4">' +
+          '<div class="flex items-center gap-4">' +
+            '<div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-white group-hover:shadow-sm dark:group-hover:bg-gray-600 transition-all">' +
+              '<i class="fas ' + item.icon + '"></i>' +
+            '</div>' +
+            '<span class="font-medium text-gray-700 dark:text-gray-200">' + item.label + '</span>' +
+          '</div>' +
+        '</td>' +
+        '<td class="px-6 py-4 text-center">' +
+          '<label class="relative inline-flex items-center ' + (isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer') + '">' +
+            '<input type="checkbox" class="sr-only peer" ' + (item.visible ? 'checked' : '') + ' ' + (isLocked ? 'disabled' : '') + ' onchange="window.smartEvaluator.components.settings.toggleSidebarVisibility(\'' + key + '\', this.checked)">' +
+            '<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after-content-empty after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>' +
+          '</label>' +
+        '</td>' +
+        '<td class="px-6 py-4 text-center">' +
+          '<button class="relative inline-flex items-center justify-center px-4 py-1.5 overflow-hidden text-xs font-medium transition-all duration-300 ease-out rounded-full group-btn ' + (isLocked ? 'cursor-not-allowed opacity-60' : 'hover:shadow-md cursor-pointer') + ' ' + (item.type === 'private' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800') + '" ' + (isLocked ? 'disabled' : '') + ' onclick="window.smartEvaluator.components.settings.toggleSidebarType(\'' + key + '\')">' +
+            '<span class="mr-1.5">' +
+              '<i class="fas ' + (item.type === 'private' ? 'fa-lock' : 'fa-globe') + '"></i>' +
+            '</span>' +
+            (item.type === 'private' ? 'প্রাইভেট' : 'পাবলিক') +
+          '</button>' +
+        '</td>' +
+      '</tr>'
+    );
+  }).join('');
 }
 
 // --- Public Actions ---
@@ -261,6 +338,18 @@ export async function toggleDashboardSection(section, isVisible) {
   }
 }
 
+export async function setTheme(themeName) {
+  _settings.theme = themeName;
+  
+  // Check if global save is requested (only for admins)
+  const globalToggle = document.getElementById('globalThemeToggle');
+  const saveGlobal = globalToggle && globalToggle.checked;
+
+  await _saveSettings(saveGlobal);
+  _applySettings();
+  render(); // Re-render to show active state
+}
+
 // --- Helper Methods ---
 
 export function isPagePublic(pageId) {
@@ -271,24 +360,33 @@ export function isPagePublic(pageId) {
 }
 
 async function _loadSettings() {
-  // 1. Load local preferences (Sidebar is still local for now, or hybrid)
+  // 1. Load local preferences (Sidebar & Theme)
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // We still load sidebar from local storage as it might be user-specific preference
       _settings.sidebar = { ..._settings.sidebar, ...parsed.sidebar };
+      if (parsed.theme) {
+        _settings.theme = parsed.theme;
+        console.log('🎨 Local theme loaded:', parsed.theme);
+      }
     } catch (e) {
       console.error('Failed to parse local settings', e);
     }
   }
 
-  // 2. Load Global Settings (Dashboard Sections & Force Config)
+  // 2. Load Global Settings (Dashboard Sections, Force Config, Global Theme)
   try {
     const globalSettings = await dataService.loadGlobalSettings();
-    if (globalSettings && globalSettings.dashboardSections) {
-      _settings.dashboardSections = { ..._settings.dashboardSections, ...globalSettings.dashboardSections };
-      console.log('🌍 Global dashboard settings loaded:', _settings.dashboardSections);
+    if (globalSettings) {
+      if (globalSettings.dashboardSections) {
+        _settings.dashboardSections = { ..._settings.dashboardSections, ...globalSettings.dashboardSections };
+      }
+      // Only apply global theme if NO local theme is set (Local overrides Global)
+      if (globalSettings.theme && !JSON.parse(saved || '{}').theme) {
+        _settings.theme = globalSettings.theme;
+        console.log('🌍 Global theme loaded:', globalSettings.theme);
+      }
     }
     // Apply loaded settings immediately
     _applySettings();
@@ -301,26 +399,33 @@ async function _loadSettings() {
   }
 }
 
-async function _saveSettings() {
-  // 1. Save Sidebar locally (User preference)
+async function _saveSettings(saveGlobalTheme = false) {
+  // 1. Save Sidebar & Theme locally (User preference)
   const localData = {
-    sidebar: _settings.sidebar
-    // We don't save dashboardSections locally anymore, or we could as a fallback/cache
+    sidebar: _settings.sidebar,
+    theme: _settings.theme
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
 
-  // 2. Save Dashboard Sections Globally (Admin only)
-  // We should check permission here, but the UI is already guarded. 
-  // The backend rules should also enforce this.
+  // 2. Save Dashboard Sections & Theme Globally (Admin only)
   if (stateManager.get('currentUserData')?.type === 'super-admin' || stateManager.get('currentUserData')?.type === 'admin') {
     try {
-      await dataService.saveGlobalSettings({
+      const globalData = {
         dashboardSections: _settings.dashboardSections
-      });
-      uiManager.showToast('গ্লোবাল সেটিং সেভ করা হয়েছে', 'success');
+      };
+      
+      if (saveGlobalTheme) {
+        globalData.theme = _settings.theme;
+      }
+
+      await dataService.saveGlobalSettings(globalData);
+      
+      if (saveGlobalTheme) {
+        uiManager.showToast('গ্লোবাল থিম সেভ করা হয়েছে', 'success');
+      }
     } catch (error) {
       console.error('Failed to save global settings:', error);
-      uiManager.showToast('সেটিং সেভ করতে সমস্যা হয়েছে', 'error');
+      uiManager.showToast('সেটিং সেভ করতে সমস্যা হয়েছে', 'error');
     }
   }
 }
@@ -371,6 +476,11 @@ function _applySettings() {
 
   // 3. Auth Check
   _refreshSidebarAuth();
+
+  // 4. Apply Theme
+  if (_settings.theme) {
+    themeManager.applyTheme(_settings.theme);
+  }
 }
 
 function _refreshSidebarAuth() {
@@ -408,6 +518,17 @@ function _refreshSidebarAuth() {
       divider.classList.remove('hidden');
     } else {
       divider.classList.add('hidden');
+    }
+  }
+
+  // Handle Public Settings Button Visibility
+  const publicSettingsBtn = document.querySelector('button[data-page="public-settings"]');
+  if (publicSettingsBtn) {
+    // Show if user is logged in (any role)
+    if (currentUser) {
+      publicSettingsBtn.classList.remove('hidden');
+    } else {
+      publicSettingsBtn.classList.add('hidden');
     }
   }
 }

@@ -4,6 +4,7 @@
 import stateManager from './managers/stateManager.js';
 import uiManager from './managers/uiManager.js';
 import cacheManager from './managers/cacheManager.js';
+import themeManager from './managers/themeManager.js';
 
 // Import Services
 import authService, { loginWithEmail, registerWithEmail, signInWithGoogle, logout } from './services/authService.js';
@@ -39,7 +40,7 @@ class SmartGroupEvaluator {
       dataService,
       auth: { loginWithEmail, registerWithEmail, signInWithGoogle, logout, authServiceInstance: authService },
     };
-    this.managers = { stateManager, uiManager, cacheManager };
+    this.managers = { stateManager, uiManager, cacheManager, themeManager };
     this.utils = { ...helpers, permissionHelper, pdfGenerator }; // <-- helpers এবং permissionHelper অবজেক্ট পাস করা হয়েছে
 
     this.components = {}; // Holds initialized component instances
@@ -69,6 +70,7 @@ class SmartGroupEvaluator {
     uiManager.showLoading('অ্যাপ্লিকেশন লোড হচ্ছে...');
 
     try {
+      this.managers.themeManager.init();
       this._initComponents();
       this._setupGlobalEventListeners(); // Uses uiManager.addListener
       await this._loadInitialData();
@@ -301,6 +303,8 @@ class SmartGroupEvaluator {
         return 'upcomingAssignments';
       case 'student-filter':
         return 'studentFilter';
+      case 'public-settings':
+        return 'settings';
       // ---------------------
       default:
         return pageId; // Assumes 'dashboard', 'groups', 'members', 'tasks', 'evaluation', 'statistics' match keys
@@ -316,6 +320,7 @@ class SmartGroupEvaluator {
     const userType = userData?.type || 'user';
     if (pageId === 'admin-management') return userType === 'super-admin';
     if (pageId === 'settings') return userType === 'admin' || userType === 'super-admin';
+    if (pageId === 'public-settings') return true; // Allow any logged in user
     return userType === 'admin' || userType === 'super-admin';
   }
 
