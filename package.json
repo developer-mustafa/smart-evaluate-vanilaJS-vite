@@ -24,7 +24,7 @@
     "chartjs-plugin-zoom": "^2.2.0",
     "firebase": "^12.5.0",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.3",
+    "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "jszip": "^3.10.1",
     "papaparse": "^5.5.3"
