@@ -149,7 +149,7 @@
                   </h4>
                 </div>
                 <div class="flex items-center justify-start md:justify-end gap-3">
-                  <label for="gdmAssignSelect" class="text-xs text-gray-500 dark:text-gray-400">Assignment</label>
+                  <label for="gdmAssignSelect" class="text-xs text-gray-500">Assignment</label>
                   <select
                     id="gdmAssignSelect"
                     class="text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700"
@@ -280,7 +280,7 @@
         <nav class="space-y-1 p-4">
           <button
             data-page="dashboard"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-700/40 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400"
           >
             <i class="fas fa-tachometer-alt w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">ড্যাশবোর্ড</span>
@@ -313,7 +313,7 @@
 
           <button
             data-page="student-filter"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-violet-700/40 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-400"
           >
             <i class="fas fa-filter w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী ফিল্টার</span>
@@ -355,14 +355,6 @@
             <span class="flex-1 text-left text-sm font-medium">এক্সপোর্ট</span>
           </button>
 
-          <button
-            data-page="public-settings"
-            class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-slate-400 hidden"
-          >
-            <i class="fas fa-cog w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-            <span class="flex-1 text-left text-sm font-medium">পাবলিক সেটিংস</span>
-          </button>
-
           <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden" />
 
           <button
@@ -374,7 +366,7 @@
           </button>
           <button
             data-page="members"
-            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-violet-700/40 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            class="nav-btn private-tab w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled-nav focus:outline-none focus:ring-1 focus:ring-indigo-400"
           >
             <i class="fas fa-users w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
             <span class="flex-1 text-left text-sm font-medium">শিক্ষার্থী ব্যবস্থাপনা</span>
@@ -1239,7 +1231,7 @@
                       <option value="all">সকল গ্রুপ</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <i class="fas fa-chevron-down text-xs text-gray-500 dark:text-gray-400"></i>
+                      <i class="fas fa-chevron-down text-xs text-gray-500"></i>
                     </div>
                   </div>
 
@@ -1254,7 +1246,7 @@
                       <option value="all">সকল একাডেমিক গ্রুপ</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <i class="fas fa-chevron-down text-xs text-gray-500 dark:text-gray-400"></i>
+                      <i class="fas fa-chevron-down text-xs text-gray-500"></i>
                     </div>
                   </div>
                 </div>
@@ -1516,7 +1508,7 @@
         class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
       >
         <div
-          class="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between"
+          class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between"
         >
           <h3 id="sdmTitle" class="text-lg font-semibold">শিক্ষার্থীর ফলাফল</h3>
           <div class="flex items-center gap-2">
@@ -1556,51 +1548,18 @@
                 <div id="sdmContact" class="text-gray-600 dark:text-gray-300"></div>
               </div>
             </div>
-                        <!-- Statistics Cards - Premium Design (Compact Vertical Layout for No Overflow) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-3">
-              <!-- Total Points -->
-              <div class="group relative overflow-hidden rounded-xl border border-blue-200/60 dark:border-blue-700/40 bg-gradient-to-br from-blue-50 via-blue-50/50 to-white dark:from-blue-950/30 dark:via-blue-900/20 dark:to-gray-800 p-2 shadow-sm hover:shadow-md transition-all duration-300">
-                <div class="absolute top-0 right-0 w-16 h-16 bg-blue-200/20 dark:bg-blue-500/10 rounded-full -mr-6 -mt-6 blur-xl group-hover:scale-125 transition-transform duration-500"></div>
-                <div class="relative flex flex-col items-center justify-center text-center h-full gap-1">
-                  <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 shadow-sm">
-                    <i class="fas fa-chart-line text-sm"></i>
-                  </div>
-                  <div class="w-full">
-                    <div class="text-[9px] font-bold text-blue-600/80 dark:text-blue-400/80 uppercase tracking-wide break-words leading-tight mb-0.5">মোট পয়েন্ট</div>
-                    <div id="sdmAvgTotal" class="text-lg lg:text-xl font-extrabold text-blue-700 dark:text-blue-300 tracking-tight leading-none break-words"></div>
-                    <div class="mt-0.5 text-[8px] text-blue-600/60 dark:text-blue-400/60 font-medium break-words leading-tight">Total Points Avg</div>
-                  </div>
-                </div>
+            <div class="grid grid-cols-3 gap-3 text-sm">
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">মোট গড়</div>
+                <div id="sdmAvgTotal" class="text-lg font-semibold"></div>
               </div>
-
-              <!-- Percentage -->
-              <div class="group relative overflow-hidden rounded-xl border border-emerald-200/60 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50 via-emerald-50/50 to-white dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-gray-800 p-2 shadow-sm hover:shadow-md transition-all duration-300">
-                <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-200/20 dark:bg-emerald-500/10 rounded-full -mr-6 -mt-6 blur-xl group-hover:scale-125 transition-transform duration-500"></div>
-                <div class="relative flex flex-col items-center justify-center text-center h-full gap-1">
-                  <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 shadow-sm">
-                    <i class="fas fa-percentage text-sm"></i>
-                  </div>
-                  <div class="w-full">
-                    <div class="text-[9px] font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase tracking-wide break-words leading-tight mb-0.5">পয়েন্ট %</div>
-                    <div id="sdmAvgPct" class="text-lg lg:text-xl font-extrabold text-emerald-700 dark:text-emerald-300 tracking-tight leading-none break-words"></div>
-                    <div class="mt-0.5 text-[8px] text-emerald-600/60 dark:text-emerald-400/60 font-medium break-words leading-tight">Point Percentage</div>
-                  </div>
-                </div>
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">গড় %</div>
+                <div id="sdmAvgPct" class="text-lg font-semibold"></div>
               </div>
-
-              <!-- Rank -->
-              <div class="group relative overflow-hidden rounded-xl border border-amber-200/60 dark:border-amber-700/40 bg-gradient-to-br from-amber-50 via-amber-50/50 to-white dark:from-amber-950/30 dark:via-amber-900/20 dark:to-gray-800 p-2 shadow-sm hover:shadow-md transition-all duration-300">
-                <div class="absolute top-0 right-0 w-16 h-16 bg-amber-200/20 dark:bg-amber-500/10 rounded-full -mr-6 -mt-6 blur-xl group-hover:scale-125 transition-transform duration-500"></div>
-                <div class="relative flex flex-col items-center justify-center text-center h-full gap-1">
-                  <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 shadow-sm">
-                    <i class="fas fa-trophy text-sm"></i>
-                  </div>
-                  <div class="w-full">
-                    <div class="text-[9px] font-bold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wide break-words leading-tight mb-0.5">পদ</div>
-                    <div id="sdmRank" class="text-lg lg:text-xl font-extrabold text-amber-700 dark:text-amber-300 tracking-tight leading-none break-words"></div>
-                    <div class="mt-0.5 text-[8px] text-amber-600/60 dark:text-amber-400/60 font-medium break-words leading-tight">Rank Position</div>
-                  </div>
-                </div>
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">রেঙ্ক</div>
+                <div id="sdmRank" class="text-lg font-semibold"></div>
               </div>
             </div>
           </div>

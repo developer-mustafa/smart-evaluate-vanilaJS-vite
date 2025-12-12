@@ -175,7 +175,7 @@ function _renderBackupRestoreUI() {
                   <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
                 </div>
                 <div class="relative flex justify-center">
-                  <span class="bg-white dark:bg-gray-800 px-2 text-xs text-gray-500">অথবা রিস্টোর করুন</span>
+                  <span class="bg-white dark:bg-gray-800 px-2 text-xs text-gray-500 dark:text-gray-400">অথবা রিস্টোর করুন</span>
                 </div>
               </div>
 

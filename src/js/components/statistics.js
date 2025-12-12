@@ -136,25 +136,25 @@ function _renderFilters(filters, statsData) {
       ${_createSummaryCard(
         'মোট মূল্যায়ন',
         summary.totalEvaluations,
-        'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
+        'bg-blue-50 text-blue-700 dark:bg-gray-800/80 dark:text-white',
         'fa-clipboard-list'
       )}
       ${_createSummaryCard(
         'MCQ মূল্যায়ন',
         summary.totalMcqEvaluations,
-        'bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-200',
+        'bg-purple-50 text-purple-700 dark:bg-gray-800/80 dark:text-white',
         'fa-brain'
       )}
       ${_createSummaryCard(
         'গড় স্কোর (%)',
         _formatPercent(summary.averageScore),
-        'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+        'bg-emerald-50 text-emerald-700 dark:bg-gray-800/80 dark:text-white',
         'fa-gauge'
       )}
       ${_createSummaryCard(
         'বাকি শিক্ষার্থী',
         summary.pendingStudents,
-        'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200',
+        'bg-rose-50 text-rose-700 dark:bg-gray-800/80 dark:text-white',
         'fa-user-clock'
       )}
     </div>

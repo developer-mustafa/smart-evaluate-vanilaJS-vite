@@ -236,12 +236,12 @@ export function render() {
             </div>
           </div>
           
-          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/30">
+          <div class="bg-sky-50 dark:bg-gray-700/60 rounded-2xl p-6 border border-sky-100 dark:border-gray-600">
             <div class="flex gap-3">
-              <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1"></i>
+              <i class="fas fa-info-circle text-sky-600 dark:text-sky-400 mt-1"></i>
               <div>
-                <h5 class="font-semibold text-blue-800 dark:text-blue-300 text-sm">গুরুত্বপূর্ণ তথ্য</h5>
-                <p class="text-xs text-blue-700/80 dark:text-blue-300/70 mt-1 leading-relaxed">
+                <h5 class="font-semibold text-sky-800 dark:text-white text-sm">গুরুত্বপূর্ণ তথ্য</h5>
+                <p class="text-xs text-sky-700/90 dark:text-gray-200 mt-1 leading-relaxed">
                   'প্রাইভেট' হিসেবে মার্ক করা পেজগুলো শুধুমাত্র অ্যাডমিনরা দেখতে পাবেন। 'পাবলিক' পেজগুলো লগইন করা বা না করা সকল ব্যবহারকারী দেখতে পাবেন।
                 </p>
               </div>

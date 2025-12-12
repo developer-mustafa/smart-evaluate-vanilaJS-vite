@@ -550,25 +550,25 @@ function _renderGroupOverviewCards(metric) {
       ${_createSummaryCard(
         'মোট মূল্যায়ন',
         metric.evaluationCount,
-        'bg-blue-50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+        'bg-blue-50 text-blue-800 dark:bg-gray-800/80 dark:text-white',
         'fa-clipboard-check'
       )}
       ${_createSummaryCard(
         'গড় মোট স্কোর (%)',
         _formatPercent(metric.averageScore),
-        'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+        'bg-emerald-50 text-emerald-800 dark:bg-gray-800/80 dark:text-white',
         'fa-gauge'
       )}
       ${_createSummaryCard(
         'অংশগ্রহণের হার',
         _formatPercent(metric.participationRate),
-        'bg-indigo-50 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-100',
+        'bg-indigo-50 text-indigo-800 dark:bg-gray-800/80 dark:text-white',
         'fa-people-group'
       )}
       ${_createSummaryCard(
         'লম্বিত শিক্ষার্থী',
         _formatNumber(metric.pendingStudents),
-        'bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+        'bg-amber-50 text-amber-800 dark:bg-gray-800/80 dark:text-white',
         'fa-user-clock'
       )}
     </div>
@@ -2126,12 +2126,12 @@ function _renderCriteriaHistoryRow(record) {
   const topicLabel = _getCriteriaLabel(record.topicId) || 'মানদণ্ড অনুপস্থিত';
   const attendanceLabel = record.attendance ? 'উপস্থিত' : 'অনুপস্থিত';
   const attendanceClass = record.attendance
-    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
-    : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-100';
+    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-50'
+    : 'bg-rose-100 text-rose-800 dark:bg-rose-700/50 dark:text-rose-50';
   const homeworkLabel = record.homework ? 'হোমওয়ার্ক সম্পন্ন' : 'হোমওয়ার্ক বাকি';
   const homeworkClass = record.homework
-    ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-100'
-    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-100';
+    ? 'bg-violet-100 text-violet-800 dark:bg-violet-700/50 dark:text-violet-50'
+    : 'bg-amber-100 text-amber-800 dark:bg-amber-700/50 dark:text-amber-50';
 
   return `
     <div class="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3 space-y-2">
@@ -2147,7 +2147,7 @@ function _renderCriteriaHistoryRow(record) {
         </div>
       </div>
       <div class="flex flex-wrap gap-2 text-xs">
-        <span class="inline-flex items-center rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-100 px-3 py-1 font-medium">${topicLabel}</span>
+        <span class="inline-flex items-center rounded-full bg-sky-100 text-sky-800 dark:bg-sky-700/50 dark:text-sky-50 px-3 py-1 font-medium">${topicLabel}</span>
         <span class="inline-flex items-center rounded-full px-3 py-1 font-medium ${attendanceClass}">${attendanceLabel}</span>
         <span class="inline-flex items-center rounded-full px-3 py-1 font-medium ${homeworkClass}">${homeworkLabel}</span>
         ${(() => {
@@ -2160,14 +2160,14 @@ function _renderCriteriaHistoryRow(record) {
 
           if (isProblematic) {
              const html = record.problemRecovered
-                ? '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">Problem Resolved</span>'
-                : '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-100">Have a problem</span>';
+                ? '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-700/50 dark:text-green-50">Problem Resolved</span>'
+                : '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-red-100 text-red-800 dark:bg-red-700/50 dark:text-red-50">Have a problem</span>';
              console.log('Generating Tag HTML:', html);
              return html;
           }
           
           if (topicKey === 'learnedWell' && record.problemRecovered) {
-             const html = '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">Problem Resolved</span>';
+             const html = '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-700/50 dark:text-green-50">Problem Resolved</span>';
              console.log('Generating Tag HTML (Resolved 10):', html);
              return html;
           }
@@ -2199,25 +2199,25 @@ function _renderSummaryCards(summary) {
       ${_createSummaryCard(
         'মোট মূল্যায়ন',
         summary.totalEvaluations,
-        'bg-blue-50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+        'bg-blue-50 text-blue-800 dark:bg-gray-800/80 dark:text-white',
         'fa-clipboard-list'
       )}
       ${_createSummaryCard(
         'MCQ মূল্যায়ন',
         summary.totalMcqEvaluations,
-        'bg-purple-50 text-purple-800 dark:bg-purple-900/40 dark:text-purple-100',
+        'bg-purple-50 text-purple-800 dark:bg-gray-800/80 dark:text-white',
         'fa-brain'
       )}
       ${_createSummaryCard(
         'গড় স্কোর (%)',
         _formatPercent(summary.averageScore),
-        'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+        'bg-emerald-50 text-emerald-800 dark:bg-gray-800/80 dark:text-white',
         'fa-gauge'
       )}
       ${_createSummaryCard(
         'বাকি শিক্ষার্থী',
         summary.pendingStudents,
-        'bg-rose-50 text-rose-800 dark:bg-rose-900/40 dark:text-rose-100',
+        'bg-rose-50 text-rose-800 dark:bg-gray-800/80 dark:text-white',
         'fa-user-clock'
       )}
     </div>
@@ -2528,23 +2528,23 @@ function _renderGroupDetail(metric) {
       const topicTotal = detail.topicCounts.learnedWell + detail.topicCounts.understood + detail.topicCounts.notYet;
       const topicChips = `
         <div class="flex flex-wrap gap-2 text-xs">
-          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100">
+          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-50">
             ভালো করে শিখেছি: ${_formatNumber(detail.topicCounts.learnedWell)}
           </span>
-          <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-100">
+          <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-800 dark:bg-violet-700/50 dark:text-violet-50">
             শুধু বুঝেছি: ${_formatNumber(detail.topicCounts.understood)}
           </span>
-          <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-100">
+          <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-700/50 dark:text-amber-50">
             এখনো এই টপিক পারিনা : ${_formatNumber(detail.topicCounts.notYet)}
           </span>
         </div>
       `;
       const optionChips = `
         <div class="flex flex-wrap gap-2 text-xs mt-2">
-          <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-100">
+          <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-700/50 dark:text-sky-50">
             নিয়মিত উপস্থিতি: ${_formatNumber(detail.optionCounts.attendance)}
           </span>
-          <span class="px-3 py-1 rounded-full bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:text-fuchsia-100">
+          <span class="px-3 py-1 rounded-full bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-700/50 dark:text-fuchsia-50">
             বাড়ির কাজ সম্পন্ন: ${_formatNumber(detail.optionCounts.homework)}
           </span>
         </div>

@@ -644,7 +644,7 @@ function _applyFiltersAndRender() {
       
       // Calculate Specific Score
       let specificDisplay = '-';
-      let specificClass = 'text-gray-500';
+      let specificClass = 'text-gray-500 dark:text-gray-400';
       
       if (activeFilters.assignment !== 'all') {
           const assignEval = studentEvaluations.find(e => e.taskId === activeFilters.assignment);
@@ -674,7 +674,7 @@ function _applyFiltersAndRender() {
         <td class="px-6 py-3 whitespace-nowrap">${_renderAcademicBadge(s.academicGroup)}</td>
         <td class="px-6 py-3">${s.session || '-'}</td>
         <td class="px-6 py-3 whitespace-nowrap">${_renderRoleBadge(s.role)}</td>
-        <td class="px-6 py-3 text-xs text-gray-500">${s.contact || '-'}</td>
+        <td class="px-6 py-3 text-xs text-gray-500 dark:text-gray-400">${s.contact || '-'}</td>
         <td class="px-6 py-3 text-center font-medium">${avgDisplay}</td>
         ${activeFilters.assignment !== 'all' ? `<td class="px-6 py-3 text-center ${specificClass}">${specificDisplay}</td>` : ''}
       `;
@@ -777,17 +777,18 @@ function _renderChart(students, evaluations) {
                         weight: 'bold',
                         size: 11
                     },
-                    color: '#6b7280' // gray-500
+                    color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#6b7280' // theme-aware: gray-200 in dark, gray-500 in light
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.05)',
+                        color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                         borderDash: [5, 5]
                     },
                     ticks: {
+                        color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#6b7280',
                         font: {
                             family: "'Noto Sans Bengali', sans-serif"
                         }
@@ -801,6 +802,7 @@ function _renderChart(students, evaluations) {
                         autoSkip: false,
                         maxRotation: 90,
                         minRotation: 45,
+                        color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#6b7280',
                         font: {
                             size: 10,
                             family: "'Noto Sans Bengali', sans-serif"
@@ -857,6 +859,6 @@ function _renderRoleBadge(role) {
         'resource-manager': { label: 'রিসোর্স ম্যানেজার', cls: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' },
         'peace-maker': { label: 'পিস মেকার', cls: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300' }
     };
-    const info = map[role] || { label: role, cls: 'bg-gray-100 text-gray-800' };
+    const info = map[role] || { label: role, cls: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${info.cls}">${info.label}</span>`;
 }
